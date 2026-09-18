@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
 
-export const metadata = { title: 'Annual Reports' };
+export const metadata = {
+  title: 'Annual Reports',
+  description: 'A year-by-year account of our activities, reach, and finances (2021-22 to 2024-25).',
+};
 
 export default async function AnnualReportsPage() {
   const { ANNUAL_REPORTS_ITEMS } = await getCredibilityContent();

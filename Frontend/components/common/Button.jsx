@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 const BASE =
   'inline-flex items-center justify-center gap-2 font-sans font-semibold rounded-md cursor-pointer border border-transparent transition-all duration-[var(--duration-fast)] ease-[var(--ease-standard)]';
 
@@ -19,17 +21,26 @@ export function Button({
   size = 'md',
   children,
   onClick,
+  href,
   type = 'button',
   disabled = false,
   className = '',
 }) {
+  const classes = `${BASE} ${SIZES[size]} ${VARIANTS[variant]} disabled:opacity-60 disabled:cursor-not-allowed ${className}`;
+
+  // href renders a real <a> (via next/link) styled identically — never nest
+  // a Link inside a <button>, which is invalid HTML and silently drops the
+  // link's content in some browsers.
+  if (href) {
+    return (
+      <Link href={href} className={classes}>
+        {children}
+      </Link>
+    );
+  }
+
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={`${BASE} ${SIZES[size]} ${VARIANTS[variant]} disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
-    >
+    <button type={type} onClick={onClick} disabled={disabled} className={classes}>
       {children}
     </button>
   );

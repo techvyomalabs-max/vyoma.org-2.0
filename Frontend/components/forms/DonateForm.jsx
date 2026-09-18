@@ -60,12 +60,12 @@ export function DonateForm({ onSubmit }) {
         </div>
       </div>
       <div>
-        <span className={label}>Full name</span>
-        <input name="name" required className={field} placeholder="Jane Doe" />
+        <label htmlFor="modal-donate-name" className={label}>Full name</label>
+        <input id="modal-donate-name" name="name" required className={field} placeholder="Jane Doe" />
       </div>
       <div>
-        <span className={label}>Email</span>
-        <input name="email" required type="email" className={field} placeholder="jane@example.com" />
+        <label htmlFor="modal-donate-email" className={label}>Email</label>
+        <input id="modal-donate-email" name="email" required type="email" className={field} placeholder="jane@example.com" />
       </div>
       <Button type="submit" variant="solid" className="w-full rounded-pill" disabled={pending}>
         {pending ? 'Processing…' : `Donate ${amount}`}

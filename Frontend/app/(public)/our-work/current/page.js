@@ -6,7 +6,11 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 // PENDING ROUTE: not in the LLD route table (Phase 1 conflict — LLD defines a
 // single /our-work page). Preserved per instruction until final route
 // approval; see lib/navConfig.js.
-export const metadata = { title: 'Current Work' };
+export const metadata = {
+  title: 'Current Work',
+  description:
+    'Everything Vyoma runs today — the platforms that make Sanskrit accessible to all, and the programmes that carry it into classrooms, homes, and communities.',
+};
 
 export default async function CurrentWorkPage() {
   const { CW_PLATFORMS, CW_PROGRAMMES } = await getOurWorkContent();

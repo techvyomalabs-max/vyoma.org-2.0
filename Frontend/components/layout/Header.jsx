@@ -15,11 +15,11 @@ export function Header() {
 
   return (
     <nav className="relative flex flex-col justify-center gap-2.5 bg-vyoma-blue px-8 py-4 border-b border-white/25">
-      <div className="relative z-10 flex items-center justify-between">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
         <Link href="/">
           <Image src="/images/logo-white.png" alt="Vyoma" width={208} height={101} className="h-[104px] w-auto" />
         </Link>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center justify-end gap-5">
           <SearchBox />
           <NavLink href={CONTACT_LINK.href} active={isActive(CONTACT_LINK.href)}>
             {CONTACT_LINK.label}

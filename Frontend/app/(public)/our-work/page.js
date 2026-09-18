@@ -4,7 +4,11 @@ import { SchoolsGrid } from '@/components/sections/ourWork/SchoolsGrid';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 
-export const metadata = { title: 'Our Work' };
+export const metadata = {
+  title: 'Our Work',
+  description:
+    "From phonetics to applied AI, from children's value education to advanced research — the Seven Schools of Vyoma, backed by scholarship and built to reach millions.",
+};
 
 export default async function OurWorkPage() {
   const { SCHOOLS } = await getOurWorkContent();

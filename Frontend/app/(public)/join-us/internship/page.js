@@ -4,7 +4,11 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 
-export const metadata = { title: 'Internship' };
+export const metadata = {
+  title: 'Internship',
+  description:
+    'Work on real projects at the meeting point of Sanskrit, Indian Knowledge Systems, education, and technology.',
+};
 
 // Mirrors the source's INTERNSHIP_OPENINGS = [] — intentionally empty; the
 // empty-state below is the real, currently-live content, not a placeholder.

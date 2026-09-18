@@ -53,6 +53,7 @@ export function QuickDonate() {
             <input
               type="number"
               min="0"
+              aria-label="Donation amount"
               value={amount}
               onChange={(e) => setAmount(Math.max(0, parseInt(e.target.value || '0', 10)))}
               className="flex-1 border-none bg-transparent px-2 py-3 text-center font-sans text-xl font-bold text-vyoma-blue outline-none"

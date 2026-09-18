@@ -116,7 +116,9 @@ export function CorpusDonateWidget() {
           ))}
         </div>
 
-        <label className="mb-1.5 block font-sans text-[13px] font-semibold text-charcoal">Enter an amount</label>
+        <label htmlFor="corpus-amount" className="mb-1.5 block font-sans text-[13px] font-semibold text-charcoal">
+          Enter an amount
+        </label>
         <div className="mb-[18px] flex items-stretch gap-2">
           <button
             onClick={() => step(-500)}
@@ -127,6 +129,7 @@ export function CorpusDonateWidget() {
           <div className="flex flex-1 items-center rounded-md border border-[var(--border-subtle)] bg-white px-3.5">
             <span className="font-sans text-xl font-bold text-vyoma-blue">{cur.sym}</span>
             <input
+              id="corpus-amount"
               type="number"
               min="0"
               value={amount}

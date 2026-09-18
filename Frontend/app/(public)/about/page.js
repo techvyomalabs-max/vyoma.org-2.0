@@ -5,7 +5,11 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 
-export const metadata = { title: 'About' };
+export const metadata = {
+  title: 'About',
+  description:
+    "Founded in Bengaluru, Vyoma Linguistic Labs Foundation has grown into the organisation behind India's largest free Sanskrit e-learning ecosystem, serving over a lakh learners worldwide.",
+};
 
 export default async function AboutPage() {
   const { EXPLORE_MORE_LINKS } = await getAboutContent();

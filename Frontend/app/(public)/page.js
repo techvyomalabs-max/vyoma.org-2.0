@@ -112,7 +112,7 @@ export default async function HomePage() {
 
       <section className="flex flex-col items-start gap-2.5 bg-white px-8 py-7">
         <div className="font-sans text-[13px] font-bold uppercase tracking-[0.4px] text-charcoal">Co-Sponsors</div>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center gap-5">
           {SPONSORS.map((s) => (
             <div
               key={s.id}

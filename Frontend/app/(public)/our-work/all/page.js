@@ -7,7 +7,11 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 
 // PENDING ROUTE: not in the LLD route table (Phase 1 conflict). Preserved per
 // instruction until final route approval; see lib/navConfig.js.
-export const metadata = { title: 'Our Work — Seven Schools & Current Work' };
+export const metadata = {
+  title: 'Our Work — Seven Schools & Current Work',
+  description:
+    "The Seven Schools of Vyoma alongside everything Vyoma runs today — platforms and programmes carrying Sanskrit into classrooms, homes, and communities.",
+};
 
 export default async function OurWorkAllPage() {
   const { SCHOOLS, CW_PLATFORMS, CW_PROGRAMMES } = await getOurWorkContent();
@@ -22,7 +26,7 @@ export default async function OurWorkAllPage() {
         maxWidth="max-w-[760px]"
       />
       <SchoolsGrid schools={SCHOOLS} />
-      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} />
+      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} headingLevel="h2" />
       <CtaStrip badge="Support & Partnerships" heading="Want to support this work?">
         <DonateCta />
         <ContactCta subject="Institutional partnership">Partner with us</ContactCta>

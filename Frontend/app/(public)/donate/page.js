@@ -6,7 +6,10 @@ import { Button } from '@/components/common/Button';
 import { QuickDonate } from '@/components/sections/donate/QuickDonate';
 import { SchemesGrid } from '@/components/sections/donate/SchemesGrid';
 
-export const metadata = { title: 'Donate' };
+export const metadata = {
+  title: 'Donate',
+  description: 'Your gift keeps Sanskrit education free and open to all across India.',
+};
 
 export default async function DonatePage() {
   const { DONATION_SCHEMES } = await getDonateContent();

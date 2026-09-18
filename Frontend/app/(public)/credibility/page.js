@@ -4,7 +4,11 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 
-export const metadata = { title: 'Credibility' };
+export const metadata = {
+  title: 'Credibility',
+  description:
+    'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
+};
 
 export default async function CredibilityPage() {
   const { CREDIBILITY_SECTIONS } = await getCredibilityContent();

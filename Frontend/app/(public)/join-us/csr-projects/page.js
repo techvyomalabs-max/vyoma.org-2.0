@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CSRProjectsBoard } from '@/components/sections/joinUs/CSRProjectsBoard';
 
-export const metadata = { title: 'CSR Projects' };
+export const metadata = {
+  title: 'CSR Projects',
+  description: "Partner with Vyoma on measurable CSR impact in Sanskrit education and India's knowledge systems.",
+};
 
 export default async function CsrProjectsPage() {
   const { CSR_PROJECTS } = await getJoinUsContent();

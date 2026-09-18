@@ -4,7 +4,11 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 
-export const metadata = { title: 'Our Story' };
+export const metadata = {
+  title: 'Our Story',
+  description:
+    "Vyoma began in 2010 with a single Sanskrit self-learning product. This is the story of how it grew into India's largest free Sanskrit e-learning ecosystem, year by year.",
+};
 
 export default async function OurStoryPage() {
   const { TIMELINE_FULL } = await getAboutContent();

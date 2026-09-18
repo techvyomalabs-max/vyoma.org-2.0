@@ -6,7 +6,11 @@ import { Badge } from '@/components/common/Badge';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { PatronTierTable } from '@/components/sections/about/PatronTierTable';
 
-export const metadata = { title: 'Our Patrons' };
+export const metadata = {
+  title: 'Our Patrons',
+  description:
+    "Vyoma's patrons, donors, and well-wishers help keep authentic Sanskrit learning free and accessible to all.",
+};
 
 export default async function OurPatronsPage() {
   const { PATRON_TIERS, PATRON_TIER_ROWS, GOLDEN_WALL, PATRON_TESTIMONIALS } = await getAboutContent();

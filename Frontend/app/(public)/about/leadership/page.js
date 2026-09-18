@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 
-export const metadata = { title: 'Leadership' };
+export const metadata = {
+  title: 'Leadership',
+  description: 'Vyoma is led by a team of scholars, technologists, and institution-builders, guided by an experienced advisory board.',
+};
 
 function PeopleGroup({ heading, people, bg }) {
   return (

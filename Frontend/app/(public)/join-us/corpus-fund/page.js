@@ -3,7 +3,11 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CorpusDonateWidget } from '@/components/sections/joinUs/CorpusDonateWidget';
 
-export const metadata = { title: 'Corpus Fund' };
+export const metadata = {
+  title: 'Corpus Fund',
+  description:
+    "Vyoma's endowment, invested so its returns fund our work year after year, keeping Sanskrit open to all long into the future.",
+};
 
 export default function CorpusFundPage() {
   return (

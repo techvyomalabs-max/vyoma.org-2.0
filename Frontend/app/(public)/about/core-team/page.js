@@ -4,7 +4,11 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 
-export const metadata = { title: 'Core Team' };
+export const metadata = {
+  title: 'Core Team',
+  description:
+    'Behind every course, tool, and initiative is a dedicated team of teachers, technologists, and coordinators who bring Sanskrit to learners across the world.',
+};
 
 export default async function CoreTeamPage() {
   const { CORE_TEAMS } = await getAboutContent();

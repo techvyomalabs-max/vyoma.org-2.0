@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CareersBoard } from '@/components/sections/joinUs/CareersBoard';
 
-export const metadata = { title: 'Careers' };
+export const metadata = {
+  title: 'Careers',
+  description: 'Would you like to work with a purpose-driven team building free Sanskrit education at scale? Explore our open roles.',
+};
 
 export default async function CareersPage() {
   const { CAREER_ROLES, CAREER_STEPS } = await getJoinUsContent();

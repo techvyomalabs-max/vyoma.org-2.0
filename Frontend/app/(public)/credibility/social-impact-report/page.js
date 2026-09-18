@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
 
-export const metadata = { title: 'Social Impact Report' };
+export const metadata = {
+  title: 'Social Impact Report',
+  description: 'A focused look at outcomes and the communities our work reaches.',
+};
 
 export default async function SocialImpactReportPage() {
   const { SOCIAL_IMPACT_ITEMS } = await getCredibilityContent();

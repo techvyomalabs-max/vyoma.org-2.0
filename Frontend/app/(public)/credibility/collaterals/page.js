@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
 
-export const metadata = { title: 'Collaterals' };
+export const metadata = {
+  title: 'Collaterals',
+  description: "Brochures, presentations, and catalogues that introduce Vyoma and its work.",
+};
 
 export default async function CollateralsPage() {
   const { COLLATERALS_ITEMS } = await getCredibilityContent();

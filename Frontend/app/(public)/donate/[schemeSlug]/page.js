@@ -16,7 +16,7 @@ export async function generateMetadata({ params }) {
   const { schemeSlug } = await params;
   const { DONATION_SCHEMES } = await getDonateContent();
   const scheme = DONATION_SCHEMES.find((s) => s.slug === schemeSlug);
-  return { title: scheme?.name || 'Donate' };
+  return { title: scheme?.name || 'Donate', description: scheme?.body };
 }
 
 export default async function DonationSchemePage({ params }) {

@@ -72,35 +72,45 @@
   --focus-ring: var(--color-teal);
 }
 
-/* base.css resets, ported as-is */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+/*
+ * base.css resets, ported as-is, but wrapped in @layer base: Tailwind's own
+ * utilities live in @layer utilities, and CSS cascade layers give ANY
+ * unlayered rule priority over ALL layered rules regardless of selector
+ * specificity. Without this @layer wrapper, this plain `a { color: ... }`
+ * rule silently wins over every Tailwind text-color utility applied to an
+ * <a> (e.g. text-white on nav links), no matter how specific the utility
+ * class looks — that was a real, site-wide bug caught in QA.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  color: var(--text-body);
-  background: var(--surface-page);
-  -webkit-font-smoothing: antialiased;
-  font-size: var(--text-body-size);
-  line-height: var(--leading-normal);
-}
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--text-body);
+    background: var(--surface-page);
+    -webkit-font-smoothing: antialiased;
+    font-size: var(--text-body-size);
+    line-height: var(--leading-normal);
+  }
 
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-}
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
 
-a {
-  color: var(--color-vyoma-blue);
-  text-decoration: none;
-}
+  a {
+    color: var(--color-vyoma-blue);
+    text-decoration: none;
+  }
 
-a:hover {
-  color: var(--color-charcoal);
+  a:hover {
+    color: var(--color-charcoal);
+  }
 }

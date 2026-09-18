@@ -35,20 +35,21 @@ export function ContactForm({ subject = 'General inquiry' }) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <span className={label}>Organization</span>
-        <input name="organization" className={field} placeholder="Company / Foundation name" />
+        <label htmlFor="modal-contact-org" className={label}>Organization</label>
+        <input id="modal-contact-org" name="organization" className={field} placeholder="Company / Foundation name" />
       </div>
       <div>
-        <span className={label}>Full name</span>
-        <input name="name" required className={field} placeholder="Jane Doe" />
+        <label htmlFor="modal-contact-name" className={label}>Full name</label>
+        <input id="modal-contact-name" name="name" required className={field} placeholder="Jane Doe" />
       </div>
       <div>
-        <span className={label}>Email</span>
-        <input name="email" required type="email" className={field} placeholder="jane@example.com" />
+        <label htmlFor="modal-contact-email" className={label}>Email</label>
+        <input id="modal-contact-email" name="email" required type="email" className={field} placeholder="jane@example.com" />
       </div>
       <div>
-        <span className={label}>Message</span>
+        <label htmlFor="modal-contact-message" className={label}>Message</label>
         <textarea
+          id="modal-contact-message"
           name="message"
           required
           className={`${field} min-h-[90px] resize-y`}

@@ -2,7 +2,11 @@ import { getResources } from '@/services/mediaService';
 import { PageHero } from '@/components/sections/PageHero';
 import { ResourcesTable } from '@/components/sections/media/ResourcesTable';
 
-export const metadata = { title: 'Resources' };
+export const metadata = {
+  title: 'Resources',
+  description:
+    'A curated collection of Sanskrit resources from across the web, compiled as a service to learners, researchers, and knowledge enthusiasts.',
+};
 
 export default async function ResourcesPage() {
   const { categories, rows } = await getResources();

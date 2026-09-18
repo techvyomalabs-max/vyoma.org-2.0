@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { FaqGroup } from '@/components/sections/faq/FaqGroup';
 
-export const metadata = { title: 'FAQ' };
+export const metadata = {
+  title: 'FAQ',
+  description: 'Answers to common questions about donating to Vyoma, tax benefits, partnerships, and learning Sanskrit.',
+};
 
 export default async function FaqPage() {
   const { FAQ_GROUPS } = await getFaqContent();

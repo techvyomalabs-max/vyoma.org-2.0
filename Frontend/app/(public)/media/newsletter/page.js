@@ -5,7 +5,10 @@ import { Button } from '@/components/common/Button';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { NewsletterArchiveClient } from '@/components/sections/media/NewsletterArchiveClient';
 
-export const metadata = { title: 'Newsletter' };
+export const metadata = {
+  title: 'Newsletter',
+  description: "Our journey in Vyoma's own words — milestones, programmes, and moments, issue by issue since 2011.",
+};
 
 export default async function NewsletterPage() {
   const { latest, archive, special } = await getNewsletterIssues();

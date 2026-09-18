@@ -37,7 +37,8 @@ function SocialRow({ slugs }) {
 // animations don't map cleanly to Tailwind utilities, so this section keeps
 // scoped CSS (as the source did) rather than forcing it into arbitrary
 // utility classes.
-export function CurrentWorkStage({ platforms, programmes }) {
+export function CurrentWorkStage({ platforms, programmes, headingLevel = 'h1' }) {
+  const Heading = headingLevel;
   const [active, setActive] = useState(null);
   const platPos = cwPositions(platforms, 28);
   const progPos = cwPositions(programmes, 42);
@@ -84,7 +85,7 @@ export function CurrentWorkStage({ platforms, programmes }) {
       <section className="bg-gradient-to-b from-[#f4f8fc] to-sky-mist px-8 pb-10 pt-14">
         <div className="mx-auto max-w-[900px] text-center">
           <div className="mb-3 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-teal">Our Work</div>
-          <h1 className="mx-auto max-w-[760px] font-sans text-h1 font-bold leading-tight text-vyoma-blue">Current Work</h1>
+          <Heading className="mx-auto max-w-[760px] font-sans text-h1 font-bold leading-tight text-vyoma-blue">Current Work</Heading>
           <p className="mx-auto mt-4 max-w-[680px] font-sans text-lg leading-normal text-charcoal">
             Everything Vyoma runs today, the platforms that make Sanskrit accessible to all, and the programmes
             that carry it into classrooms, homes, and communities.

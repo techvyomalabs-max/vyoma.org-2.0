@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/common/Button';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { useModal } from '@/components/layout/ModalProvider';
@@ -36,12 +35,12 @@ export function HeroCarousel({ slides }) {
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
             {slide.cta === 'Volunteer' ? (
-              <Button variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5">
-                <Link href="/join-us/volunteer">Volunteer</Link>
+              <Button href="/join-us/volunteer" variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5">
+                Volunteer
               </Button>
             ) : (
-              <Button variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5">
-                <Link href="/about">Explore our work</Link>
+              <Button href="/about" variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5">
+                Explore our work
               </Button>
             )}
             <Button variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5" onClick={openDonate}>

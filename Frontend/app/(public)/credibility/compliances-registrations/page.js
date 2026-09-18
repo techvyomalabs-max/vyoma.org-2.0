@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
 
-export const metadata = { title: 'Compliances & Registrations' };
+export const metadata = {
+  title: 'Compliances & Registrations',
+  description: 'Our statutory approvals and registrations, including 80G, 12AA, FCRA, CSR, and MSME.',
+};
 
 export default async function CompliancesRegistrationsPage() {
   const { COMPLIANCES_ITEMS } = await getCredibilityContent();

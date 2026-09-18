@@ -4,7 +4,10 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { PressCard, RadioCard } from '@/components/sections/media/PressCard';
 
-export const metadata = { title: 'Press' };
+export const metadata = {
+  title: 'Press',
+  description: "Vyoma's work in the words of others, across newspapers, radio, and magazines.",
+};
 
 export default async function PressPage() {
   const { publications, featured, clippings, radio } = await getPressCoverage();

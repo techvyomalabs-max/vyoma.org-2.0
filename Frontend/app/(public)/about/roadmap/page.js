@@ -4,7 +4,11 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 
-export const metadata = { title: 'Roadmap' };
+export const metadata = {
+  title: 'Roadmap',
+  description:
+    "Vyoma's seven Schools are growing, step by step, into a Vyoma Global Virtual University for Sanskrit and Indian Knowledge Systems.",
+};
 
 const SCHOOLS_TEXT =
   'core linguistics, advanced shastras, distance learning, IKS research, applied AI, inclusive learning, and value education for children';

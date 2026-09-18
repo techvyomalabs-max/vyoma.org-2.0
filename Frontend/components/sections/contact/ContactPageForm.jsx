@@ -43,16 +43,16 @@ export function ContactPageForm({ reasons }) {
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
-        <label className={label}>Name</label>
-        <input name="name" required type="text" className={field} placeholder="Your name" />
+        <label htmlFor="contact-name" className={label}>Name</label>
+        <input id="contact-name" name="name" required type="text" className={field} placeholder="Your name" />
       </div>
       <div className="mb-4">
-        <label className={label}>Email</label>
-        <input name="email" required type="email" className={field} placeholder="you@example.com" />
+        <label htmlFor="contact-email" className={label}>Email</label>
+        <input id="contact-email" name="email" required type="email" className={field} placeholder="you@example.com" />
       </div>
       <div className="mb-4">
-        <label className={label}>Reason for contact</label>
-        <select name="reason" required className={field} defaultValue="">
+        <label htmlFor="contact-reason" className={label}>Reason for contact</label>
+        <select id="contact-reason" name="reason" required className={field} defaultValue="">
           <option value="" disabled>
             Select a reason…
           </option>
@@ -64,8 +64,8 @@ export function ContactPageForm({ reasons }) {
         </select>
       </div>
       <div className="mb-5">
-        <label className={label}>Message</label>
-        <textarea name="message" required rows={5} className={`${field} resize-y`} placeholder="How can we help?" />
+        <label htmlFor="contact-message" className={label}>Message</label>
+        <textarea id="contact-message" name="message" required rows={5} className={`${field} resize-y`} placeholder="How can we help?" />
       </div>
       <Button type="submit" variant="solid" size="lg" className="w-full" disabled={pending}>
         {pending ? 'Sending…' : 'Send Message'}

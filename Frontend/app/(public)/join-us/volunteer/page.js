@@ -4,7 +4,11 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 
-export const metadata = { title: 'Volunteer' };
+export const metadata = {
+  title: 'Volunteer',
+  description:
+    "Begin your seva journey. Vyoma's mission runs on people who give their time and skills, and Sanskrit knowledge is not required.",
+};
 
 export default async function VolunteerPage() {
   const { VOLUNTEER_CATEGORIES, VOLUNTEER_FEATURED } = await getJoinUsContent();

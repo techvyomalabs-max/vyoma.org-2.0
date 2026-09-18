@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { AwardBlocks } from '@/components/sections/credibility/AwardBlocks';
 
-export const metadata = { title: 'Awards & Recognition' };
+export const metadata = {
+  title: 'Awards & Recognition',
+  description: 'Honours earned across 10+ years of Saṃskṛta-Saṃskṛti-Saṃskāra seva.',
+};
 
 export default async function AwardsRecognitionPage() {
   const { AWARDS_ITEMS } = await getCredibilityContent();

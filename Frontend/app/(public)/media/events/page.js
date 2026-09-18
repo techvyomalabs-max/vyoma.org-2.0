@@ -10,7 +10,10 @@ import { EventsPastClient } from '@/components/sections/media/EventsPastClient';
 // mediaService.getEvents() only returns { upcoming, past } (LLD content
 // items), so this constant is imported directly, same treatment as
 // BLOG_CATEGORIES on /media/blog.
-export const metadata = { title: 'Events' };
+export const metadata = {
+  title: 'Events',
+  description: "Where Vyoma's work meets people — talks, workshops, visits, and gatherings through the year.",
+};
 
 export default async function EventsPage() {
   const { upcoming, past } = await getEvents();

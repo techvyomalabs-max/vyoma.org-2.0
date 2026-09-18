@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { GalleryLightbox } from '@/components/sections/media/GalleryLightbox';
 
-export const metadata = { title: 'Gallery' };
+export const metadata = {
+  title: 'Gallery',
+  description: "Moments from Vyoma's work, events, outreach, and recognition.",
+};
 
 export default async function GalleryPage() {
   const albums = await getGalleryAlbums();

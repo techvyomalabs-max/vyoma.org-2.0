@@ -70,24 +70,29 @@ export function CSRProjectsBoard({ projects }) {
           >
             <input
               placeholder="Name"
+              aria-label="Name"
               className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
             />
             <input
               placeholder="Email"
+              aria-label="Email"
               type="email"
               className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
             />
             <input
               placeholder="Organisation Name"
+              aria-label="Organisation Name"
               className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
             />
             <input
               placeholder="Mobile Number"
+              aria-label="Mobile Number"
               className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
             />
             <select
               value={selected}
               onChange={(e) => setSelected(e.target.value)}
+              aria-label="Project of interest"
               className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px] text-charcoal"
             >
               <option value="">Project of interest</option>
@@ -98,6 +103,7 @@ export function CSRProjectsBoard({ projects }) {
             </select>
             <textarea
               placeholder="Comment / Message"
+              aria-label="Comment / Message"
               rows={4}
               className="resize-y rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
             />

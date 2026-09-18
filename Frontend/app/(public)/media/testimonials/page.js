@@ -4,7 +4,10 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { TestimonialCard } from '@/components/sections/media/TestimonialCard';
 
-export const metadata = { title: 'Testimonials' };
+export const metadata = {
+  title: 'Testimonials',
+  description: 'In their own words, learners across India and the world on what Vyoma has meant to them.',
+};
 
 export default async function TestimonialsPage() {
   const { featured, all } = await getTestimonials();

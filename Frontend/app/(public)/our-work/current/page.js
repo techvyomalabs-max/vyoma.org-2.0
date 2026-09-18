@@ -1,0 +1,23 @@
+import { getOurWorkContent } from '@/services/pageService';
+import { CurrentWorkStage } from '@/components/sections/ourWork/CurrentWorkStage';
+import { CtaStrip } from '@/components/sections/CtaStrip';
+import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
+
+// PENDING ROUTE: not in the LLD route table (Phase 1 conflict — LLD defines a
+// single /our-work page). Preserved per instruction until final route
+// approval; see lib/navConfig.js.
+export const metadata = { title: 'Current Work' };
+
+export default async function CurrentWorkPage() {
+  const { CW_PLATFORMS, CW_PROGRAMMES } = await getOurWorkContent();
+
+  return (
+    <div className="font-sans">
+      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} />
+      <CtaStrip badge="Support & Partnerships" heading="Want to support this work?">
+        <DonateCta />
+        <ContactCta subject="Institutional partnership">Partner with us</ContactCta>
+      </CtaStrip>
+    </div>
+  );
+}

@@ -3,12 +3,13 @@ import { getJoinUsContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/join-us',
   title: 'Join Us',
-  description:
-    "Whether you give your time, your skills, your company's support, or your career, there is a place for you in Vyoma's work.",
-};
+  description: "Whether you give your time, your skills, your company's support, or your career, there is a place for you in Vyoma's work.",
+});
 
 export default async function JoinUsPage() {
   const { TRACKS } = await getJoinUsContent();

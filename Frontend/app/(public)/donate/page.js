@@ -5,11 +5,13 @@ import { DonateCta } from '@/components/sections/CtaButtons';
 import { Button } from '@/components/common/Button';
 import { QuickDonate } from '@/components/sections/donate/QuickDonate';
 import { SchemesGrid } from '@/components/sections/donate/SchemesGrid';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/donate',
   title: 'Donate',
   description: 'Your gift keeps Sanskrit education free and open to all across India.',
-};
+});
 
 export default async function DonatePage() {
   const { DONATION_SCHEMES } = await getDonateContent();

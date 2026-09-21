@@ -4,12 +4,13 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { MetricCard } from '@/components/sections/impact/MetricCard';
 import { KpiDashboard } from '@/components/sections/impact/KpiDashboard';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/impact',
   title: 'Impact',
-  description:
-    "Every number here represents a step in making Sanskrit and India's knowledge systems accessible to all — reported openly, with full financial transparency.",
-};
+  description: "Every number here represents a step in making Sanskrit and India's knowledge systems accessible to all — reported openly, with full financial transparency.",
+});
 
 function MetricSection({ eyebrow, title, items }) {
   return (

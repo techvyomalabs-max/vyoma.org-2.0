@@ -82,8 +82,9 @@ export function KpiDashboard() {
   return (
     <section className="bg-white px-8 pb-2 pt-10">
       <div
-        className="mx-auto grid max-w-[1100px] items-center gap-8 rounded-lg bg-sky-mist px-[34px] py-8"
-        style={{ gridTemplateColumns: 'minmax(260px,1.3fr) minmax(220px,1fr) minmax(160px,0.9fr) minmax(160px,0.9fr)' }}
+        className="mx-auto grid max-w-[1100px] grid-cols-1 items-center gap-8 rounded-lg bg-sky-mist px-[34px] py-8
+          sm:grid-cols-2
+          lg:grid-cols-[minmax(260px,1.3fr)_minmax(220px,1fr)_minmax(160px,0.9fr)_minmax(160px,0.9fr)]"
       >
         <KpiBars />
         <KpiGauge />

@@ -2,12 +2,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CorpusDonateWidget } from '@/components/sections/joinUs/CorpusDonateWidget';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/join-us/corpus-fund',
   title: 'Corpus Fund',
-  description:
-    "Vyoma's endowment, invested so its returns fund our work year after year, keeping Sanskrit open to all long into the future.",
-};
+  description: "Vyoma's endowment, invested so its returns fund our work year after year, keeping Sanskrit open to all long into the future.",
+});
 
 export default function CorpusFundPage() {
   return (

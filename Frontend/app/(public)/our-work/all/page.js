@@ -4,14 +4,15 @@ import { SchoolsGrid } from '@/components/sections/ourWork/SchoolsGrid';
 import { CurrentWorkStage } from '@/components/sections/ourWork/CurrentWorkStage';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
+import { pageMetadata } from '@/lib/seo';
 
 // PENDING ROUTE: not in the LLD route table (Phase 1 conflict). Preserved per
 // instruction until final route approval; see lib/navConfig.js.
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/our-work/all',
   title: 'Our Work — Seven Schools & Current Work',
-  description:
-    "The Seven Schools of Vyoma alongside everything Vyoma runs today — platforms and programmes carrying Sanskrit into classrooms, homes, and communities.",
-};
+  description: "The Seven Schools of Vyoma alongside everything Vyoma runs today — platforms and programmes carrying Sanskrit into classrooms, homes, and communities.",
+});
 
 export default async function OurWorkAllPage() {
   const { SCHOOLS, CW_PLATFORMS, CW_PROGRAMMES } = await getOurWorkContent();

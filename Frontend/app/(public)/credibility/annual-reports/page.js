@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/credibility/annual-reports',
   title: 'Annual Reports',
   description: 'A year-by-year account of our activities, reach, and finances (2021-22 to 2024-25).',
-};
+});
 
 export default async function AnnualReportsPage() {
   const { ANNUAL_REPORTS_ITEMS } = await getCredibilityContent();

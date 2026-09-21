@@ -3,12 +3,13 @@ import { getCredibilityContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/credibility',
   title: 'Credibility',
-  description:
-    'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
-};
+  description: 'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
+});
 
 export default async function CredibilityPage() {
   const { CREDIBILITY_SECTIONS } = await getCredibilityContent();

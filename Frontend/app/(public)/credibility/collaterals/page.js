@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/credibility/collaterals',
   title: 'Collaterals',
   description: "Brochures, presentations, and catalogues that introduce Vyoma and its work.",
-};
+});
 
 export default async function CollateralsPage() {
   const { COLLATERALS_ITEMS } = await getCredibilityContent();

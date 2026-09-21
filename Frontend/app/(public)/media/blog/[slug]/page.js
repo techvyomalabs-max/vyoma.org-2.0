@@ -17,7 +17,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const post = await getBlogPost(slug);
-  return { title: post?.title || 'Blog', description: post?.excerpt };
+  return {
+    title: post?.title || 'Blog',
+    description: post?.excerpt,
+    alternates: { canonical: `/media/blog/${slug}` },
+  };
 }
 
 export default async function BlogPostPage({ params }) {

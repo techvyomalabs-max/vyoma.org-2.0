@@ -1,12 +1,13 @@
 import { getContactContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { ContactPageForm } from '@/components/sections/contact/ContactPageForm';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/contact',
   title: 'Contact Us',
-  description:
-    "We'd love to hear from you — whether you're considering a donation, exploring a CSR partnership, or simply have a question about our work.",
-};
+  description: "We'd love to hear from you — whether you're considering a donation, exploring a CSR partnership, or simply have a question about our work.",
+});
 
 const socialIconPath = {
   facebook: 'M13 3h4v4h-2c-.6 0-1 .4-1 1v2h3v4h-3v7h-4v-7H8v-4h2V7c0-2.2 1.8-4 4-4z',

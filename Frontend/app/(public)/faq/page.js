@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { FaqGroup } from '@/components/sections/faq/FaqGroup';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/faq',
   title: 'FAQ',
   description: 'Answers to common questions about donating to Vyoma, tax benefits, partnerships, and learning Sanskrit.',
-};
+});
 
 export default async function FaqPage() {
   const { FAQ_GROUPS } = await getFaqContent();

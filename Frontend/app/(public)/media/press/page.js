@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { PressCard, RadioCard } from '@/components/sections/media/PressCard';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media/press',
   title: 'Press',
   description: "Vyoma's work in the words of others, across newspapers, radio, and magazines.",
-};
+});
 
 export default async function PressPage() {
   const { publications, featured, clippings, radio } = await getPressCoverage();

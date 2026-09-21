@@ -2,12 +2,13 @@ import Link from 'next/link';
 import { getMediaContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { MediaCta } from '@/components/sections/media/MediaCta';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media',
   title: 'Media',
-  description:
-    "How Vyoma's work is seen, shared, and remembered — our writing, our press coverage, and moments from the field.",
-};
+  description: "How Vyoma's work is seen, shared, and remembered — our writing, our press coverage, and moments from the field.",
+});
 
 export default async function MediaPage() {
   const { MEDIA_SECTIONS } = await getMediaContent();

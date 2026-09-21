@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { DocBlocks } from '@/components/sections/credibility/DocBlocks';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/credibility/social-impact-report',
   title: 'Social Impact Report',
   description: 'A focused look at outcomes and the communities our work reaches.',
-};
+});
 
 export default async function SocialImpactReportPage() {
   const { SOCIAL_IMPACT_ITEMS } = await getCredibilityContent();

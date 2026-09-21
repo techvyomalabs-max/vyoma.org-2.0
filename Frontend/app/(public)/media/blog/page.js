@@ -2,11 +2,13 @@ import { getBlogPosts } from '@/services/blogService';
 import { PageHero } from '@/components/sections/PageHero';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { BlogListClient } from '@/components/sections/media/BlogListClient';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media/blog',
   title: 'Blog',
   description: 'Long-form stories and updates from classrooms, research, and the field.',
-};
+});
 
 export default async function BlogPage() {
   const posts = await getBlogPosts();

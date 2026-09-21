@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { GalleryLightbox } from '@/components/sections/media/GalleryLightbox';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media/gallery',
   title: 'Gallery',
   description: "Moments from Vyoma's work, events, outreach, and recognition.",
-};
+});
 
 export default async function GalleryPage() {
   const albums = await getGalleryAlbums();

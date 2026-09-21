@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CareersBoard } from '@/components/sections/joinUs/CareersBoard';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/join-us/careers',
   title: 'Careers',
   description: 'Would you like to work with a purpose-driven team building free Sanskrit education at scale? Explore our open roles.',
-};
+});
 
 export default async function CareersPage() {
   const { CAREER_ROLES, CAREER_STEPS } = await getJoinUsContent();

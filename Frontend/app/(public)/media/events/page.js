@@ -5,15 +5,17 @@ import { PageHero } from '@/components/sections/PageHero';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { EventCard } from '@/components/sections/media/EventCard';
 import { EventsPastClient } from '@/components/sections/media/EventsPastClient';
+import { pageMetadata } from '@/lib/seo';
 
 // EVENT_CATEGORIES is static filter-chip config, not fetched content —
 // mediaService.getEvents() only returns { upcoming, past } (LLD content
 // items), so this constant is imported directly, same treatment as
 // BLOG_CATEGORIES on /media/blog.
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media/events',
   title: 'Events',
   description: "Where Vyoma's work meets people — talks, workshops, visits, and gatherings through the year.",
-};
+});
 
 export default async function EventsPage() {
   const { upcoming, past } = await getEvents();

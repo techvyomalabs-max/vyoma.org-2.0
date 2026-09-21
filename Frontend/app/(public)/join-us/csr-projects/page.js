@@ -3,11 +3,13 @@ import { Badge } from '@/components/common/Badge';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CSRProjectsBoard } from '@/components/sections/joinUs/CSRProjectsBoard';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/join-us/csr-projects',
   title: 'CSR Projects',
   description: "Partner with Vyoma on measurable CSR impact in Sanskrit education and India's knowledge systems.",
-};
+});
 
 export default async function CsrProjectsPage() {
   const { CSR_PROJECTS } = await getJoinUsContent();

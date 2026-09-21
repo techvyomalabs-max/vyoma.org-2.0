@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { TestimonialCard } from '@/components/sections/media/TestimonialCard';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media/testimonials',
   title: 'Testimonials',
   description: 'In their own words, learners across India and the world on what Vyoma has meant to them.',
-};
+});
 
 export default async function TestimonialsPage() {
   const { featured, all } = await getTestimonials();

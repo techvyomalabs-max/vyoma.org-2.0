@@ -4,11 +4,13 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { Button } from '@/components/common/Button';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { NewsletterArchiveClient } from '@/components/sections/media/NewsletterArchiveClient';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/media/newsletter',
   title: 'Newsletter',
   description: "Our journey in Vyoma's own words — milestones, programmes, and moments, issue by issue since 2011.",
-};
+});
 
 export default async function NewsletterPage() {
   const { latest, archive, special } = await getNewsletterIssues();

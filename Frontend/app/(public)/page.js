@@ -7,6 +7,8 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { HeroCarousel } from '@/components/sections/home/HeroCarousel';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 
+export const metadata = { alternates: { canonical: '/' } };
+
 export default async function HomePage() {
   const { HERO_SLIDES, STATS, TOPICS, REGISTRATIONS, HOME_ACTIVITIES, HOME_TESTIMONIALS, SPONSORS } =
     await getHomeContent();

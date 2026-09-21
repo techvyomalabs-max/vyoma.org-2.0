@@ -1,6 +1,22 @@
 'use client';
 
+import { useEffect, useId } from 'react';
+
 export function Modal({ open, title, onClose, children }) {
+  const titleId = useId();
+
+  // Escape-to-dismiss: expected behavior for any dialog (WCAG dialog
+  // pattern), and there was previously no keyboard way to close this at all
+  // — backdrop click and the X button both require a pointer.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div
@@ -9,6 +25,9 @@ export function Modal({ open, title, onClose, children }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="relative w-full max-w-[440px] rounded-lg bg-white p-8 font-sans shadow-hover"
       >
         <button
@@ -18,7 +37,7 @@ export function Modal({ open, title, onClose, children }) {
         >
           ×
         </button>
-        <h3 className="text-h3 font-bold text-vyoma-blue mb-5">{title}</h3>
+        <h3 id={titleId} className="text-h3 font-bold text-vyoma-blue mb-5">{title}</h3>
         {children}
       </div>
     </div>

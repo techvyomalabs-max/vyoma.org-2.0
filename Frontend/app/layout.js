@@ -23,6 +23,14 @@ export const metadata = {
   },
   description:
     "Support India's largest free Sanskrit e-learning platform, making Saṃskṛtam accessible to all, at global scale, with full financial transparency.",
+  // Presence of this object (even with no title/description of its own) is
+  // enough for Next.js to synthesize og:title/og:description per page from
+  // each page's own title/description — no per-page duplication needed.
+  openGraph: {
+    type: 'website',
+    siteName: 'Vyoma Linguistic Labs Foundation',
+    locale: 'en_US',
+  },
 };
 
 export default function RootLayout({ children }) {

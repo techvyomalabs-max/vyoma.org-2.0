@@ -28,7 +28,7 @@ export function BlogListClient({ posts, categories }) {
       </section>
 
       <section className="bg-sky-mist px-8 py-14">
-        <div className="mx-auto grid max-w-[1100px] gap-8" style={{ gridTemplateColumns: '1fr 300px' }}>
+        <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-8 lg:grid-cols-[1fr_300px]">
           <div>
             <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
               {feed.map((post) => (

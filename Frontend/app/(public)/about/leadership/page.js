@@ -3,11 +3,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/about/leadership',
   title: 'Leadership',
   description: 'Vyoma is led by a team of scholars, technologists, and institution-builders, guided by an experienced advisory board.',
-};
+});
 
 function PeopleGroup({ heading, people, bg }) {
   return (

@@ -5,12 +5,13 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { Badge } from '@/components/common/Badge';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { PatronTierTable } from '@/components/sections/about/PatronTierTable';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/about/patrons',
   title: 'Our Patrons',
-  description:
-    "Vyoma's patrons, donors, and well-wishers help keep authentic Sanskrit learning free and accessible to all.",
-};
+  description: "Vyoma's patrons, donors, and well-wishers help keep authentic Sanskrit learning free and accessible to all.",
+});
 
 export default async function OurPatronsPage() {
   const { PATRON_TIERS, PATRON_TIER_ROWS, GOLDEN_WALL, PATRON_TESTIMONIALS } = await getAboutContent();

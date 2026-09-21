@@ -3,12 +3,13 @@ import { getAboutContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
+import { pageMetadata } from '@/lib/seo';
 
-export const metadata = {
+export const metadata = pageMetadata({
+  path: '/about/our-story',
   title: 'Our Story',
-  description:
-    "Vyoma began in 2010 with a single Sanskrit self-learning product. This is the story of how it grew into India's largest free Sanskrit e-learning ecosystem, year by year.",
-};
+  description: "Vyoma began in 2010 with a single Sanskrit self-learning product. This is the story of how it grew into India's largest free Sanskrit e-learning ecosystem, year by year.",
+});
 
 export default async function OurStoryPage() {
   const { TIMELINE_FULL } = await getAboutContent();

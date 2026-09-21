@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -10,6 +10,15 @@ import { useModal } from './ModalProvider';
 export function Header() {
   const pathname = usePathname();
   const { openDonate } = useModal();
+  // Which parent's dropdown is open via the touch/keyboard disclosure control
+  // (mouse hover keeps working independently of this — see NavItem). Only one
+  // open at a time; reset on navigation so a stale open panel doesn't persist
+  // across route changes (this layout isn't remounted by App Router).
+  const [openItem, setOpenItem] = useState(null);
+
+  useEffect(() => {
+    setOpenItem(null);
+  }, [pathname]);
 
   const isActive = (href) => pathname === href || (href !== '/' && pathname.startsWith(href));
 
@@ -36,25 +45,58 @@ export function Header() {
       </div>
       <div className="relative z-10 flex items-center justify-end gap-7 flex-wrap">
         {NAV.map((item) => (
-          <NavItem key={item.label} item={item} isActive={isActive} />
+          <NavItem key={item.label} item={item} isActive={isActive} openItem={openItem} setOpenItem={setOpenItem} />
         ))}
       </div>
     </nav>
   );
 }
 
-function NavItem({ item, isActive }) {
+function NavItem({ item, isActive, openItem, setOpenItem }) {
   const active = isActive(item.href) || item.children?.some((c) => isActive(c.href));
+  const hasChildren = !!item.children;
+  const isOpen = hasChildren && openItem === item.label;
+  const dropdownId = `nav-dropdown-${item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+
   return (
     <div className="group relative">
-      <NavLink href={item.href} active={active}>
-        {item.label}
-      </NavLink>
-      {item.children && (
+      <span className="inline-flex items-center">
+        <NavLink href={item.href} active={active}>
+          {item.label}
+        </NavLink>
+        {hasChildren && (
+          <button
+            type="button"
+            aria-expanded={isOpen}
+            aria-controls={dropdownId}
+            aria-label={`${isOpen ? 'Close' : 'Open'} ${item.label} submenu`}
+            onClick={() => setOpenItem(isOpen ? null : item.label)}
+            className="ml-1.5 flex items-center justify-center p-2 text-white/70 hover:text-white"
+          >
+            <svg
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`transition-transform duration-[var(--duration-fast)] ${isOpen ? 'rotate-180' : ''}`}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        )}
+      </span>
+      {hasChildren && (
         <div
-          className="invisible absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white
-            py-2 shadow-hover opacity-0 transition-opacity duration-[var(--duration-fast)]
-            group-hover:visible group-hover:opacity-100"
+          id={dropdownId}
+          className={
+            isOpen
+              ? 'absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white py-2 shadow-hover transition-opacity duration-[var(--duration-fast)]'
+              : 'invisible absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white py-2 shadow-hover opacity-0 transition-opacity duration-[var(--duration-fast)] group-hover:visible group-hover:opacity-100'
+          }
         >
           {item.children.map((c) => (
             <Link

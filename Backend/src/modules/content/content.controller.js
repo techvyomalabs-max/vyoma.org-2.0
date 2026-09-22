@@ -8,8 +8,11 @@ import { ApiError } from '../../utils/apiResponse.js';
 export async function getPublicContentByType(req, res, next) {
   try {
     const type = req.params[0];
-    const doc = await ContentModel.findOne({ type }).lean();
-    if (!doc) {
+    // status: { $ne: 'draft' } — every Phase 1 document predates the status
+    // field entirely and must stay publicly visible (see content.model.js);
+    // only a document explicitly in 'draft' status is hidden here.
+    const doc = await ContentModel.findOne({ type, status: { $ne: 'draft' } }).lean();
+    if (!doc || doc.data == null) {
       throw new ApiError(404, 'CONTENT_NOT_FOUND', `No published content for type "${type}"`);
     }
     return sendSuccess(res, doc.data);

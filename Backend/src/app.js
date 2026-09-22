@@ -13,7 +13,7 @@ import {
   razorpayWebhookRouter,
 } from './modules/donations/donations.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
-import { auditRouter } from './modules/audit/audit.routes.js';
+import { adminRouter } from './routes/admin.routes.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -41,7 +41,7 @@ export function createApp() {
   app.use('/api/v1/donations', donationsRouter);
   app.use('/api/v1/webhooks/razorpay', razorpayWebhookRouter);
   app.use('/api/v1/auth', authRouter);
-  app.use('/api/v1/admin/audit-logs', auditRouter);
+  app.use('/api/v1/admin', adminRouter);
 
   app.use(notFound);
   app.use(errorHandler);

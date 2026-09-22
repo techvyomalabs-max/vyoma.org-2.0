@@ -104,10 +104,9 @@ function NavItem({ item, isActive, openItem, setOpenItem }) {
               href={c.href}
               className={`block whitespace-nowrap px-4.5 py-2.5 font-sans text-base text-vyoma-blue ${
                 isActive(c.href) ? 'font-bold' : 'font-normal'
-              } ${c.pending ? 'opacity-70' : ''}`}
+              }`}
             >
               {c.label}
-              {c.pending && <span className="ml-1.5 text-xs text-amber-gold">(draft)</span>}
             </Link>
           ))}
         </div>

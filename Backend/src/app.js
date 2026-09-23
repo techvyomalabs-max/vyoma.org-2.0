@@ -14,6 +14,7 @@ import {
 } from './modules/donations/donations.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { redirectMiddleware } from './middleware/redirectMiddleware.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -42,6 +43,11 @@ export function createApp() {
   app.use('/api/v1/webhooks/razorpay', razorpayWebhookRouter);
   app.use('/api/v1/auth', authRouter);
   app.use('/api/v1/admin', adminRouter);
+
+  // After every real route has had a chance to match, before the generic
+  // 404 — see redirectMiddleware.js for exactly what this does and doesn't
+  // cover in the current dev topology.
+  app.use(redirectMiddleware);
 
   app.use(notFound);
   app.use(errorHandler);

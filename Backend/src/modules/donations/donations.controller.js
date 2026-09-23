@@ -2,6 +2,7 @@ import { DonationSchemeModel } from './donationScheme.model.js';
 import { DonationModel } from './donation.model.js';
 import { PaymentEventModel } from './paymentEvent.model.js';
 import { createOrder, verifyCheckoutSignature, verifyWebhookSignature } from './razorpay.adapter.js';
+import { sendDonationReceiptIfNeeded } from './receipt.service.js';
 import { isRazorpayConfigured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 
@@ -94,6 +95,14 @@ export async function verifyDonation(req, res, next) {
     donation.status = 'paid_verified';
     await donation.save();
 
+    // Best-effort, never lets a receipt-send problem affect this response —
+    // the payment is already verified regardless of what happens next.
+    try {
+      await sendDonationReceiptIfNeeded(donation._id);
+    } catch (receiptErr) {
+      console.error('[donations] receipt attempt threw unexpectedly:', receiptErr.message);
+    }
+
     return sendSuccess(res, { status: donation.status });
   } catch (err) {
     next(err);
@@ -130,6 +139,14 @@ export async function razorpayWebhook(req, res, next) {
         if (event.event === 'payment.captured') donation.status = 'paid_verified';
         else if (event.event === 'payment.failed') donation.status = 'failed';
         await donation.save();
+
+        if (event.event === 'payment.captured') {
+          try {
+            await sendDonationReceiptIfNeeded(donation._id);
+          } catch (receiptErr) {
+            console.error('[donations] receipt attempt threw unexpectedly:', receiptErr.message);
+          }
+        }
       }
     }
 

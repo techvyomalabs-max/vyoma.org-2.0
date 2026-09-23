@@ -46,7 +46,7 @@ export default async function DonationSchemePage({ params }) {
         </div>
       </section>
 
-      <QuickDonate />
+      <QuickDonate schemeSlug={scheme.slug} />
     </div>
   );
 }

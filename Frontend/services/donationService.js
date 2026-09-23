@@ -24,3 +24,17 @@ export async function createDonationOrder({ schemeSlug, amount, currency, donor 
     body: { schemeSlug, amount, currency, donor },
   });
 }
+
+// LLD 9.3: the browser's Razorpay Checkout "success" callback is never
+// trusted on its own — this call is what actually determines whether a
+// donation is verified, checked server-side against the real signature.
+export async function verifyDonation({ donationId, razorpayPaymentId, razorpaySignature }) {
+  if (USE_MOCK) {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return { status: 'paid_verified' };
+  }
+  return apiRequest('/donations/verify', {
+    method: 'POST',
+    body: { donationId, razorpayPaymentId, razorpaySignature },
+  });
+}

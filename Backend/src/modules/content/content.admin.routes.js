@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  listContentTypes,
   getAdminContent,
   upsertDraftContent,
   previewContent,
@@ -18,6 +19,7 @@ import { requirePermission } from '../../middleware/requireRole.js';
 // param sidesteps that entirely.
 export const contentAdminRouter = Router();
 
+contentAdminRouter.get('/types', requirePermission('content:read'), listContentTypes);
 contentAdminRouter.get('/', requirePermission('content:read'), getAdminContent);
 contentAdminRouter.put('/', requirePermission('content:write'), upsertDraftContent);
 contentAdminRouter.get('/preview', requirePermission('content:read'), previewContent);

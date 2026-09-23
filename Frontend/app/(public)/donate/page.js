@@ -57,7 +57,7 @@ export default async function DonatePage() {
               </div>
             </div>
           </div>
-          <div className="rounded-md bg-sky-mist px-[26px] py-7">
+          <div id="bank-transfer" className="rounded-md bg-sky-mist px-[26px] py-7">
             <div className="mb-4 font-sans text-lg font-bold text-vyoma-blue">Direct bank transfer</div>
             <div className="mb-4 grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
               <div>

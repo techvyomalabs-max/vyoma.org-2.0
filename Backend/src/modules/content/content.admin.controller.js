@@ -31,6 +31,22 @@ async function pruneOldRevisions(contentType) {
   }
 }
 
+// GET /api/v1/admin/content/types — Week 4 Decision W4-1: the authoritative
+// list of content types is whatever actually exists as a Content document
+// (ContentModel.distinct), not a second hardcoded list maintained in
+// parallel — a type only ever appears here because upsertDraftContent
+// already created it. Returns type strings only, never any `data`/
+// `draftData` — this is a discovery endpoint, not a content-read endpoint.
+export async function listContentTypes(req, res, next) {
+  try {
+    const types = await ContentModel.distinct('type');
+    types.sort();
+    return sendSuccess(res, types);
+  } catch (err) {
+    next(err);
+  }
+}
+
 // GET /api/v1/admin/content?type=pages/home — full admin view (published +
 // pending draft + status), so an editor UI can load both without guessing.
 export async function getAdminContent(req, res, next) {

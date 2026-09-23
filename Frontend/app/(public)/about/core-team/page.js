@@ -32,7 +32,7 @@ export default async function CoreTeamPage() {
             {t.people.map((p, i) => (
               <div key={p.name} className="text-center">
                 <div className="mx-auto mb-2.5 h-[140px] w-[140px]">
-                  <ImagePlaceholder shape="rounded" caption="Photo" />
+                  <ImagePlaceholder src={p.imageUrl || undefined} alt={p.name} shape="rounded" caption="Photo" />
                 </div>
                 <div className="font-sans text-base font-bold text-vyoma-blue">{p.name}</div>
                 <div className="font-sans text-sm text-charcoal">{p.role}</div>

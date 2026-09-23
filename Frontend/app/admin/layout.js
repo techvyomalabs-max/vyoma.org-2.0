@@ -1,5 +1,5 @@
 import { AdminAuthProvider } from '@/lib/AdminAuthContext';
-import { AdminNav } from '@/components/admin/AdminNav';
+import { AdminShell } from '@/components/admin/AdminShell';
 
 export const metadata = {
   robots: { index: false, follow: false },
@@ -8,8 +8,7 @@ export const metadata = {
 export default function AdminLayout({ children }) {
   return (
     <AdminAuthProvider>
-      <AdminNav />
-      {children}
+      <AdminShell>{children}</AdminShell>
     </AdminAuthProvider>
   );
 }

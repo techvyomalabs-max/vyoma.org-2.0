@@ -19,7 +19,7 @@ function PeopleGroup({ heading, people, bg }) {
         {people.map((p) => (
           <div key={p.name} className="rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-white px-[22px] py-6">
             <div className="mx-auto mb-4 h-[140px] w-[140px]">
-              <ImagePlaceholder shape="rounded" caption="Photo" />
+              <ImagePlaceholder src={p.imageUrl || undefined} alt={p.name} shape="rounded" caption="Photo" />
             </div>
             <div className="mb-1 font-sans text-[17px] font-bold text-vyoma-blue">{p.name}</div>
             <div className={`font-sans text-sm font-bold uppercase tracking-[0.4px] text-charcoal ${p.bio ? 'mb-2.5' : ''}`}>

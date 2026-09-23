@@ -74,16 +74,21 @@ export async function logoutSession() {
 // Generic authenticated call for anything under /api/v1 that needs the
 // bearer access token (currently just /auth/me; the same helper will back
 // the admin/* resource pages in Week 4).
+//
+// A FormData body (media upload) is passed through as-is — the browser sets
+// its own multipart Content-Type with boundary, which JSON.stringify-ing it
+// (or forcing application/json) would break.
 export async function authedFetch(path, accessToken, options = {}) {
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const res = await safeFetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',
     headers: {
-      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(options.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       ...options.headers,
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: options.body && !isFormData ? JSON.stringify(options.body) : options.body,
   });
   if (res.status === 401) {
     const err = new Error('Unauthenticated');

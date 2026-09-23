@@ -32,12 +32,34 @@ const CONTENT_SEED = {
   media: media,
 };
 
+function withImageUrl(people) {
+  return people.map((p) => ({ ...p, imageUrl: p.imageUrl ?? '' }));
+}
+
+// BOARD/ADVISORS/COMMITTEE/CORE_TEAMS[].people all share the same
+// { name, role, bio? } shape but never had a photo field — the public page
+// rendered a hardcoded placeholder for every person regardless. Normalizing
+// `imageUrl` onto every person here (rather than hand-editing ~80 literals in
+// seedData/about.js) makes it a real, editable field: the admin Content
+// editor (ContentEditor.jsx) shows a text input for any key that exists on an
+// object, so this alone is what makes "add an image" possible from the admin
+// UI at all.
+function normalizeAbout(mod) {
+  return {
+    ...mod,
+    BOARD: withImageUrl(mod.BOARD),
+    ADVISORS: withImageUrl(mod.ADVISORS),
+    COMMITTEE: withImageUrl(mod.COMMITTEE),
+    CORE_TEAMS: mod.CORE_TEAMS.map((group) => ({ ...group, people: withImageUrl(group.people) })),
+  };
+}
+
 // Shared by the CLI `npm run seed` entrypoint (always upserts, for a real
 // persistent MongoDB) and the server's own startup (auto-seeds only when the
 // in-memory dev fallback boots empty — see server.js).
 export async function runSeed() {
   for (const [type, mod] of Object.entries(CONTENT_SEED)) {
-    const data = { ...mod };
+    const data = type === 'pages/about' ? normalizeAbout(mod) : { ...mod };
     await ContentModel.findOneAndUpdate({ type }, { type, data }, { upsert: true, new: true });
   }
 

@@ -7,6 +7,7 @@ import { formsAdminRouter } from '../modules/forms/forms.admin.routes.js';
 import { settingsRouter } from '../modules/settings/settings.routes.js';
 import { redirectsRouter } from '../modules/redirects/redirects.routes.js';
 import { donationsAdminRouter } from '../modules/donations/donations.admin.routes.js';
+import { mediaAdminRouter } from '../modules/media/media.admin.routes.js';
 
 // Single choke point for every /api/v1/admin/* route: requireAuth runs once
 // here, so leaf routers below only need to add the specific requireRole /
@@ -25,3 +26,4 @@ adminRouter.use('/forms', formsAdminRouter);
 adminRouter.use('/settings', settingsRouter);
 adminRouter.use('/redirects', redirectsRouter);
 adminRouter.use('/donations', donationsAdminRouter);
+adminRouter.use('/media', mediaAdminRouter);

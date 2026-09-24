@@ -23,6 +23,10 @@ const siteSettingsSchema = new mongoose.Schema(
       fcraAccountName: { type: String, default: null },
       fcraBankName: { type: String, default: null },
     },
+    // Phase D decision: kept deliberately separate from contactInboxEmail —
+    // a different operational purpose (bank-transfer/receipt confirmations
+    // routed to finance, not the general contact inbox).
+    financeContactEmail: { type: String, default: null },
     maintenanceMode: { type: Boolean, default: false },
   },
   { timestamps: true }
@@ -33,4 +37,10 @@ export const SiteSettingsModel = mongoose.model('SiteSettings', siteSettingsSche
 // The explicit allowlist of top-level keys a PUT may touch — enforced in
 // settings.controller.js in addition to (not instead of) the schema itself,
 // so an unrecognized key is a clear 422, not a silently-dropped no-op.
-export const ALLOWED_TOP_LEVEL_KEYS = ['contactInboxEmail', 'socialLinks', 'donationBankDetails', 'maintenanceMode'];
+export const ALLOWED_TOP_LEVEL_KEYS = ['contactInboxEmail', 'socialLinks', 'donationBankDetails', 'financeContactEmail', 'maintenanceMode'];
+
+// Phase D: the subset of the above that's safe and intended for the public
+// read endpoint (GET /public/settings) — deliberately an explicit allowlist,
+// not "everything," so a future sensitive field added to this model doesn't
+// silently become public just by existing here.
+export const PUBLIC_KEYS = ['contactInboxEmail', 'socialLinks', 'donationBankDetails', 'financeContactEmail'];

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   listDonationSchemes,
+  getDonationSchemeBySlug,
   createDonationOrder,
   verifyDonation,
   razorpayWebhook,
@@ -11,6 +12,7 @@ import { makeRateLimiter } from '../../middleware/rateLimit.js';
 // wildcard route (which also lives under /public) so this specific path wins.
 export const donationSchemesPublicRouter = Router();
 donationSchemesPublicRouter.get('/donation-schemes', listDonationSchemes);
+donationSchemesPublicRouter.get('/donation-schemes/:slug', getDonationSchemeBySlug);
 
 // Mounted at /api/v1/donations
 export const donationsRouter = Router();

@@ -1,5 +1,6 @@
 import { ContentModel } from '../src/modules/content/content.model.js';
 import { DonationSchemeModel } from '../src/modules/donations/donationScheme.model.js';
+import { SiteSettingsModel } from '../src/modules/settings/setting.model.js';
 
 import * as home from './seedData/home.js';
 import * as about from './seedData/about.js';
@@ -54,22 +55,73 @@ function normalizeAbout(mod) {
   };
 }
 
+// Phase D: DonationSchemeModel is now the sole source of truth for scheme
+// identity/content — DONATION_SCHEMES is no longer part of the pages/donate
+// Content document's data (see seedData/donate.js's header comment). Strip
+// it out of the module spread before it becomes Content `data`, so nothing
+// re-introduces the fork by accident.
+function withoutDonationSchemes(mod) {
+  const { DONATION_SCHEMES, ...pageCopy } = mod;
+  return pageCopy;
+}
+
 // Shared by the CLI `npm run seed` entrypoint (always upserts, for a real
 // persistent MongoDB) and the server's own startup (auto-seeds only when the
 // in-memory dev fallback boots empty — see server.js).
 export async function runSeed() {
   for (const [type, mod] of Object.entries(CONTENT_SEED)) {
-    const data = type === 'pages/about' ? normalizeAbout(mod) : { ...mod };
+    let data = type === 'pages/about' ? normalizeAbout(mod) : { ...mod };
+    if (type === 'pages/donate') data = withoutDonationSchemes(data);
     await ContentModel.findOneAndUpdate({ type }, { type, data }, { upsert: true, new: true });
   }
 
-  for (const s of donate.DONATION_SCHEMES) {
+  // Array index becomes each scheme's initial displayOrder — preserves the
+  // exact pre-migration visible order (see donationScheme.model.js). Using
+  // upsert (not insert) means existing records keep their _id/createdAt;
+  // only the fields listed here are ever touched by seeding, and `status`
+  // is upserted to 'active' only on first creation via $setOnInsert, so a
+  // scheme an admin has since archived is never silently reactivated by a
+  // reseed/restart.
+  for (const [i, s] of donate.DONATION_SCHEMES.entries()) {
     await DonationSchemeModel.findOneAndUpdate(
       { slug: s.slug },
-      { slug: s.slug, name: s.name, description: s.body, note: s.note || null, status: 'active' },
+      {
+        $set: { slug: s.slug, name: s.name, description: s.body, note: s.note || null, displayOrder: i },
+        $setOnInsert: { status: 'active' },
+      },
       { upsert: true, new: true }
     );
   }
+
+  // Phase D: seeded ONLY on first creation ($setOnInsert), so the pages
+  // don't regress to blank the moment they switch to reading Settings, but
+  // an admin's later edit is never overwritten by a reseed/restart.
+  // financeContactEmail (accounts@vyomalabs.in) mirrors the real, currently-
+  // live bank-transfer contact previously hardcoded in donate/page.js.
+  // contactInboxEmail is set per explicit instruction, not the site's
+  // previous hardcoded support@vyomalabs.in. donationBankDetails' account/
+  // bank names were real, live values previously hardcoded in donate/
+  // page.js (only the Branch & IFSC/SWIFT lines were ever "provided on
+  // request" placeholders) — seeded here so the switch to Settings doesn't
+  // regress real content to a placeholder. socialLinks gets no seeded
+  // values — those were always dead "#" placeholders with no real handle to
+  // preserve, so null (hidden on the page) is more honest than inventing one.
+  await SiteSettingsModel.findOneAndUpdate(
+    {},
+    {
+      $setOnInsert: {
+        contactInboxEmail: 'deepalakshmi.vyoma@gmail.com',
+        financeContactEmail: 'accounts@vyomalabs.in',
+        donationBankDetails: {
+          indiaAccountName: 'Vyoma Linguistic Labs Foundation',
+          indiaBankName: 'City Union Bank',
+          fcraAccountName: 'Vyoma Linguistic Labs Foundation',
+          fcraBankName: 'State Bank of India (FCRA)',
+        },
+      },
+    },
+    { upsert: true }
+  );
 
   return { contentTypes: Object.keys(CONTENT_SEED).length, donationSchemes: donate.DONATION_SCHEMES.length };
 }

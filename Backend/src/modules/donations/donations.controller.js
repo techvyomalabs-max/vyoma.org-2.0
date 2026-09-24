@@ -6,12 +6,37 @@ import { sendDonationReceiptIfNeeded } from './receipt.service.js';
 import { isRazorpayConfigured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 
-// GET /api/v1/public/donation-schemes — LLD 9.1.
+// GET /api/v1/public/donation-schemes — LLD 9.1. Active schemes only, sorted
+// by admin-controlled displayOrder (Phase D) — inactive schemes are excluded
+// from the public list entirely, never shown as if available.
 export async function listDonationSchemes(req, res, next) {
   try {
-    const schemes = await DonationSchemeModel.find({ status: 'active' }).sort({ createdAt: 1 }).lean();
+    const schemes = await DonationSchemeModel.find({ status: 'active' }).sort({ displayOrder: 1 }).lean();
     const shaped = schemes.map((s) => ({ slug: s.slug, name: s.name, body: s.description, note: s.note || undefined }));
     return sendSuccess(res, shaped);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/v1/public/donation-schemes/:slug — Phase D. Unlike the list
+// above, this returns a scheme regardless of status (including `status`
+// itself in the response) so the detail page can distinguish "doesn't
+// exist" (404, unchanged) from "exists but not currently accepting
+// donations" (a real, distinct donor-facing state, not a fake 404).
+export async function getDonationSchemeBySlug(req, res, next) {
+  try {
+    const scheme = await DonationSchemeModel.findOne({ slug: req.params.slug }).lean();
+    if (!scheme) {
+      throw new ApiError(404, 'SCHEME_NOT_FOUND', `Unknown donation scheme "${req.params.slug}".`);
+    }
+    return sendSuccess(res, {
+      slug: scheme.slug,
+      name: scheme.name,
+      body: scheme.description,
+      note: scheme.note || undefined,
+      status: scheme.status,
+    });
   } catch (err) {
     next(err);
   }

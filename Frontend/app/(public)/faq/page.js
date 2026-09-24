@@ -5,14 +5,20 @@ import { ContactCta } from '@/components/sections/CtaButtons';
 import { FaqGroup } from '@/components/sections/faq/FaqGroup';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/faq',
-  title: 'FAQ',
-  description: 'Answers to common questions about donating to Vyoma, tax benefits, partnerships, and learning Sanskrit.',
-});
+export async function generateMetadata() {
+  const { SEO } = await getFaqContent();
+  const meta = pageMetadata({
+    path: '/faq',
+    title: SEO?.title || undefined,
+    description: SEO?.description || 'Answers to common questions about donating to Vyoma, tax benefits, partnerships, and learning Sanskrit.',
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function FaqPage() {
-  const { FAQ_GROUPS } = await getFaqContent();
+  const { FAQ_GROUPS: GROUPS_ALL } = await getFaqContent();
+  const FAQ_GROUPS = GROUPS_ALL.filter((g) => g.active !== false);
 
   return (
     <div className="font-sans">

@@ -50,6 +50,15 @@ function MediaIcon(props) {
   );
 }
 
+function DonationsIcon(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <circle cx="10" cy="10" r="7" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 6.5v7M7.8 8.2c0-1 .9-1.7 2.2-1.7s2.2.7 2.2 1.6c0 2.2-4.4 1.1-4.4 3.3 0 .9 1 1.6 2.2 1.6s2.2-.7 2.2-1.7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SettingsIcon(props) {
   return (
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -99,9 +108,13 @@ const NAV = [
       { href: '/admin/content/impact', label: 'Impact' },
       { href: '/admin/content/credibility', label: 'Credibility' },
       { href: '/admin/content/join-us', label: 'Join Us' },
+      { href: '/admin/content/donate', label: 'Donate' },
+      { href: '/admin/content/faq', label: 'FAQ' },
+      { href: '/admin/content/contact', label: 'Contact' },
       { href: '/admin/content', label: 'All other pages (legacy editor)' },
     ],
   },
+  { type: 'link', href: '/admin/donations/schemes', label: 'Donation Schemes', Icon: DonationsIcon },
   { type: 'link', href: '/admin/media', label: 'Media', Icon: MediaIcon },
   { type: 'link', href: '/admin/forms', label: 'Forms', Icon: FormsIcon },
   { type: 'link', href: '/admin/settings', label: 'Settings', Icon: SettingsIcon },

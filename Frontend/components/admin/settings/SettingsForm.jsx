@@ -39,6 +39,9 @@ export function SettingsForm({ initial, onSave, saving }) {
     if (values.contactInboxEmail && !EMAIL_RE.test(values.contactInboxEmail.trim())) {
       errors.contactInboxEmail = 'Must be a valid email.';
     }
+    if (values.financeContactEmail && !EMAIL_RE.test(values.financeContactEmail.trim())) {
+      errors.financeContactEmail = 'Must be a valid email.';
+    }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -52,6 +55,7 @@ export function SettingsForm({ initial, onSave, saving }) {
     // untouched sibling field is never wiped by a partial PUT).
     const body = {};
     if (values.contactInboxEmail !== initial.contactInboxEmail) body.contactInboxEmail = values.contactInboxEmail || null;
+    if (values.financeContactEmail !== initial.financeContactEmail) body.financeContactEmail = values.financeContactEmail || null;
     if (values.maintenanceMode !== initial.maintenanceMode) body.maintenanceMode = values.maintenanceMode;
     const changedSocial = Object.fromEntries(
       SOCIAL_FIELDS.filter((k) => values.socialLinks?.[k] !== initial.socialLinks?.[k]).map((k) => [k, values.socialLinks?.[k] || null])
@@ -81,7 +85,26 @@ export function SettingsForm({ initial, onSave, saving }) {
       </div>
 
       <div className="rounded-md border border-[var(--border-subtle)] p-4">
+        <h2 className="mb-3 font-sans text-sm font-bold text-charcoal">Finance</h2>
+        <label className="mb-1 block font-sans text-xs font-bold text-charcoal/60">
+          Bank-transfer / donation-confirmation email
+        </label>
+        <input
+          type="email"
+          value={values.financeContactEmail || ''}
+          onChange={(e) => setField('financeContactEmail', e.target.value)}
+          className={inputClass}
+        />
+        {fieldErrors.financeContactEmail && <p className="mt-1 font-sans text-xs text-red-600">{fieldErrors.financeContactEmail}</p>}
+      </div>
+
+      <div className="rounded-md border border-[var(--border-subtle)] p-4">
         <h2 className="mb-3 font-sans text-sm font-bold text-charcoal">Social links</h2>
+        <p className="mb-3 rounded-sm border border-dashed border-amber-gold bg-amber-gold/10 px-2.5 py-2 font-sans text-xs leading-normal text-[#9a6a00]">
+          <strong>Handoff note:</strong> confirm each handle against the SEO audit&apos;s live accounts before
+          publishing. There was no dedicated Instagram account for vyoma.org as of the last audit — leave it blank
+          unless one now exists. Any field left blank is hidden on the Contact page, not shown broken.
+        </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {SOCIAL_FIELDS.map((key) => (
             <div key={key}>

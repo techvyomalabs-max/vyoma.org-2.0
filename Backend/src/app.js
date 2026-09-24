@@ -12,6 +12,7 @@ import {
   donationsRouter,
   razorpayWebhookRouter,
 } from './modules/donations/donations.routes.js';
+import { settingsPublicRouter } from './modules/settings/settings.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
 import { redirectMiddleware } from './middleware/redirectMiddleware.js';
@@ -37,6 +38,7 @@ export function createApp() {
   // Order matters: the specific /public/donation-schemes route must be
   // registered before the generic /public/* content wildcard.
   app.use('/api/v1/public', donationSchemesPublicRouter);
+  app.use('/api/v1/public', settingsPublicRouter);
   app.use('/api/v1/public', contentRouter);
   app.use('/api/v1/forms', formsRouter);
   app.use('/api/v1/donations', donationsRouter);

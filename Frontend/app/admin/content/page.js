@@ -16,7 +16,7 @@ function ContentListContent() {
         // Every type with its own structured editor (Website Content -> ...)
         // is hidden here so there's exactly one place to edit it, per the CMS
         // redesign's "old editor is a fallback, not a second workflow" rule.
-        const migrated = ['pages/home', 'pages/about', 'pages/our-work', 'pages/impact', 'pages/credibility', 'pages/join-us'];
+        const migrated = ['pages/home', 'pages/about', 'pages/our-work', 'pages/impact', 'pages/credibility', 'pages/join-us', 'pages/donate', 'pages/faq', 'pages/contact'];
         if (!cancelled) setState({ loading: false, error: null, types: types.filter((t) => !migrated.includes(t)) });
       })
       .catch((err) => {

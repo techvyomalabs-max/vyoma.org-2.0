@@ -1,4 +1,4 @@
-import { SiteSettingsModel, ALLOWED_TOP_LEVEL_KEYS } from './setting.model.js';
+import { SiteSettingsModel, ALLOWED_TOP_LEVEL_KEYS, PUBLIC_KEYS } from './setting.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
 
@@ -25,6 +25,22 @@ export async function getSettings(req, res, next) {
   try {
     const doc = await SiteSettingsModel.findOneAndUpdate({}, {}, { upsert: true, new: true, setDefaultsOnInsert: true });
     return sendSuccess(res, doc);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/v1/public/settings — Phase D. Public pages (Contact/Donate) need
+// socialLinks/donationBankDetails/financeContactEmail; this deliberately
+// returns ONLY the PUBLIC_KEYS allowlist, never the full document, so
+// nothing here depends on every field in this model staying non-sensitive
+// forever.
+export async function getPublicSettings(req, res, next) {
+  try {
+    const doc = await SiteSettingsModel.findOneAndUpdate({}, {}, { upsert: true, new: true, setDefaultsOnInsert: true }).lean();
+    const shaped = {};
+    for (const key of PUBLIC_KEYS) shaped[key] = doc[key];
+    return sendSuccess(res, shaped);
   } catch (err) {
     next(err);
   }
@@ -59,6 +75,12 @@ export async function updateSettings(req, res, next) {
       for (const [key, value] of Object.entries(body.donationBankDetails)) {
         update[`donationBankDetails.${key}`] = value;
       }
+    }
+    if (body.financeContactEmail !== undefined) {
+      if (body.financeContactEmail !== null && (typeof body.financeContactEmail !== 'string' || !EMAIL_RE.test(body.financeContactEmail.trim()))) {
+        throw new ApiError(422, 'VALIDATION_ERROR', 'financeContactEmail must be a valid email or null.');
+      }
+      update.financeContactEmail = body.financeContactEmail;
     }
     if (body.maintenanceMode !== undefined) {
       if (typeof body.maintenanceMode !== 'boolean') {

@@ -1,24 +1,42 @@
 import { draftMode } from 'next/headers';
-import { redirect } from 'next/navigation';
 
-// Enables Next.js Draft Mode so a public page can render draftData instead
-// of the published data — this is what "Preview draft" links to (see
-// components/admin/cms/SectionEditorHeader.jsx). Not wired to any real page
-// yet in this phase; Phase B mints the actual secret-bearing links
-// server-side once there's a page to preview, so the secret itself never
-// reaches the browser bundle.
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const secret = searchParams.get('secret');
-  const path = searchParams.get('path') || '/';
+const BACKEND_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
 
-  if (!secret || secret !== process.env.DRAFT_MODE_SECRET) {
-    return new Response('Invalid or missing token.', { status: 401 });
+// Enables Next.js Draft Mode. Redesigned (see security checkpoint): the
+// browser proves it's a logged-in admin by sending its OWN short-lived
+// bearer token (already held in-memory by AdminAuthContext, never
+// persisted) — this route forwards that token server-to-server to the
+// Backend's GET /auth/me (existing auth/RBAC, nothing new) and only enables
+// Draft Mode if the Backend confirms it's valid. No shared static secret is
+// ever sent to or read by the browser for this step. `draftMode().enable()`
+// sets an httpOnly cookie on THIS origin, invisible to JS either way.
+export async function POST(request) {
+  const auth = request.headers.get('authorization') || '';
+  const token = auth.match(/^Bearer\s+(.+)$/i)?.[1];
+  if (!token) {
+    return Response.json({ error: 'Missing admin session.' }, { status: 401 });
   }
-  if (!path.startsWith('/')) {
-    return new Response('path must be a site-relative path.', { status: 400 });
+
+  let path;
+  try {
+    path = (await request.json())?.path;
+  } catch {
+    path = null;
+  }
+  if (!path || typeof path !== 'string' || !path.startsWith('/')) {
+    return Response.json({ error: 'path must be a site-relative path.' }, { status: 400 });
+  }
+
+  let verified;
+  try {
+    verified = await fetch(`${BACKEND_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+  } catch {
+    return Response.json({ error: 'Could not reach the backend to verify this session.' }, { status: 502 });
+  }
+  if (!verified.ok) {
+    return Response.json({ error: 'Not a valid admin session.' }, { status: 401 });
   }
 
   (await draftMode()).enable();
-  redirect(path);
+  return Response.json({ redirect: path });
 }

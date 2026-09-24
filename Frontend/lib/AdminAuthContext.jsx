@@ -90,8 +90,22 @@ export function AdminAuthProvider({ children }) {
     }
   }, []);
 
+  // Enables Draft Mode for a "Preview draft" link — see app/api/draft/
+  // route.js's security note. The access token never leaves this context;
+  // callers only ever get back a path to open, never the token itself.
+  const enablePreview = useCallback(async (path) => {
+    const res = await fetch('/api/draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessTokenRef.current}` },
+      body: JSON.stringify({ path }),
+    });
+    const payload = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(payload?.error || 'Could not start the preview.');
+    return payload.redirect;
+  }, []);
+
   return (
-    <AdminAuthContext.Provider value={{ status, user, login, verifyMfa, logout, apiFetch }}>
+    <AdminAuthContext.Provider value={{ status, user, login, verifyMfa, logout, apiFetch, enablePreview }}>
       {children}
     </AdminAuthContext.Provider>
   );

@@ -10,6 +10,10 @@ export const env = {
     keySecret: process.env.RAZORPAY_KEY_SECRET || null,
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || null,
   },
+  // Shared with the Frontend's DRAFT_MODE_SECRET (same value) — gates
+  // draftData exposure on the public content route for CMS "Preview draft"
+  // links only. Not a third-party credential.
+  previewSecret: process.env.PREVIEW_SECRET || null,
   s3: {
     region: process.env.AWS_REGION || null,
     bucket: process.env.AWS_S3_BUCKET || null,

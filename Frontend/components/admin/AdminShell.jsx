@@ -92,7 +92,10 @@ const NAV = [
     key: 'website-content',
     label: 'Website Content',
     Icon: ContentIcon,
-    items: [{ href: '/admin/content', label: 'All pages (legacy editor)' }],
+    items: [
+      { href: '/admin/content/home', label: 'Home' },
+      { href: '/admin/content', label: 'All other pages (legacy editor)' },
+    ],
   },
   { type: 'link', href: '/admin/media', label: 'Media', Icon: MediaIcon },
   { type: 'link', href: '/admin/forms', label: 'Forms', Icon: FormsIcon },

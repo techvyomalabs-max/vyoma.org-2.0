@@ -7,6 +7,9 @@ import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15MB
+// Extended for the CMS redesign's Document/Excel-resource field types
+// (Credibility reports/collaterals/compliances, Resources page) — images/PDF/
+// text were sufficient for the original Media page alone.
 const ALLOWED_MIME = new Set([
   'image/jpeg',
   'image/png',
@@ -15,12 +18,19 @@ const ALLOWED_MIME = new Set([
   'image/svg+xml',
   'application/pdf',
   'text/plain',
+  'text/csv',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', // .doc
 ]);
 
 function kindOf(mimeType) {
   if (mimeType.startsWith('image/')) return 'image';
   if (mimeType === 'application/pdf') return 'pdf';
-  if (mimeType === 'text/plain') return 'document';
+  if (mimeType === 'text/plain' || mimeType === 'text/csv') return 'document';
+  if (mimeType.includes('spreadsheet') || mimeType === 'application/vnd.ms-excel') return 'document';
+  if (mimeType.includes('wordprocessingml') || mimeType === 'application/msword') return 'document';
   return 'other';
 }
 

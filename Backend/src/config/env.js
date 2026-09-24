@@ -10,6 +10,12 @@ export const env = {
     keySecret: process.env.RAZORPAY_KEY_SECRET || null,
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || null,
   },
+  s3: {
+    region: process.env.AWS_REGION || null,
+    bucket: process.env.AWS_S3_BUCKET || null,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || null,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || null,
+  },
   smtp: {
     host: process.env.SMTP_HOST || null,
     port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : null,
@@ -30,5 +36,6 @@ export const env = {
 };
 
 export const isRazorpayConfigured = () => !!(env.razorpay.keyId && env.razorpay.keySecret);
+export const isS3Configured = () => !!(env.s3.region && env.s3.bucket && env.s3.accessKeyId && env.s3.secretAccessKey);
 export const isSmtpConfigured = () => !!(env.smtp.host && env.smtp.port && env.smtp.user && env.smtp.pass);
 export const isAuthSecretConfigured = () => !!(process.env.JWT_ACCESS_SECRET && process.env.JWT_REFRESH_SECRET);

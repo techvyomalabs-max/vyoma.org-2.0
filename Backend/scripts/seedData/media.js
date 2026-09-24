@@ -1,6 +1,8 @@
-// Mirrors ui_kits/vyoma-org/Media.jsx and its sub-pages (Blog, Press, Events,
-// Testimonials, Newsletter, Gallery, Resources). Feeds services/mediaService.js,
-// services/blogService.js, and getMediaContent() in services/pageService.js.
+// Mirrors ui_kits/vyoma-org/Media.jsx and its sub-pages (Press, Events,
+// Testimonials, Newsletter, Gallery, Resources). Feeds services/mediaService.js
+// and getMediaContent() in services/pageService.js. Blog moved out to its own
+// dedicated seedData/blog.js + BlogPostModel in Phase E — it no longer shares
+// this module's 'blog'/'media' Content-type dataset.
 
 export const MEDIA_SECTIONS = [
   { title: 'Blog', body: 'Long-form stories and updates from classrooms, research, and the field.', href: '/media/blog' },
@@ -9,67 +11,6 @@ export const MEDIA_SECTIONS = [
   { title: 'Testimonials', body: 'Voices from learners, volunteers, and partners on their experience with Vyoma.', href: '/media/testimonials' },
   { title: 'Newsletter', body: 'Subscribe for periodic updates on programs and impact.', href: '/media/newsletter' },
   { title: 'Gallery', body: 'Photographs from our work, events, and recognition.', href: '/media/gallery' },
-];
-
-// --- Blog ---------------------------------------------------------------
-
-export const BLOG_CATEGORIES = ['Stories', 'Research', 'Teaching', 'Camps', 'Community'];
-
-export const BLOG_POSTS = [
-  {
-    slug: 'how-the-pancatantra-teaches-without-teaching',
-    category: 'Stories',
-    title: 'How the Pañcatantra Teaches Without Teaching',
-    excerpt: 'How a scholar taught three careless princes everything, without teaching a single lesson.',
-    author: 'Vyoma',
-    date: '15 Aug 2026',
-    read: '4 min read',
-  },
-  {
-    slug: 'what-a-decade-of-sanskrit-camps-taught-us-about-retention',
-    category: 'Research',
-    title: 'What a Decade of Sanskrit Camps Taught Us About Retention',
-    excerpt: 'Patterns across ten years of summer camps that shaped how we design new programs.',
-    author: 'Vyoma',
-    date: '02 Aug 2026',
-    read: '6 min read',
-  },
-  {
-    slug: 'grammar-as-play-rethinking-the-first-lesson',
-    category: 'Teaching',
-    title: 'Grammar as Play: Rethinking the First Lesson',
-    excerpt: 'Why the first class matters more than the syllabus, and what we changed because of it.',
-    author: 'Vyoma',
-    date: '22 Jul 2026',
-    read: '5 min read',
-  },
-  {
-    slug: 'inside-a-village-sanskrit-camp-a-week-in-photos',
-    category: 'Camps',
-    title: 'Inside a Village Sanskrit Camp: A Week in Photos',
-    excerpt: 'A field diary from a week-long residential camp in rural Karnataka.',
-    author: 'Vyoma',
-    date: '10 Jul 2026',
-    read: '3 min read',
-  },
-  {
-    slug: 'why-volunteers-keep-coming-back',
-    category: 'Community',
-    title: 'Why Volunteers Keep Coming Back',
-    excerpt: 'Conversations with long-time volunteers about what keeps them involved year after year.',
-    author: 'Vyoma',
-    date: '28 Jun 2026',
-    read: '4 min read',
-  },
-  {
-    slug: 'the-grandmother-who-learned-sanskrit-at-71',
-    category: 'Stories',
-    title: 'The Grandmother Who Learned Sanskrit at 71',
-    excerpt: 'A late-in-life learner’s reasons for starting, and what she found along the way.',
-    author: 'Vyoma',
-    date: '14 Jun 2026',
-    read: '3 min read',
-  },
 ];
 
 // --- Press ----------------------------------------------------------------

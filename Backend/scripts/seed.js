@@ -4,7 +4,7 @@ import { runSeed } from './runSeed.js';
 async function main() {
   await connectDb();
   const result = await runSeed();
-  console.log(`[seed] content types: ${result.contentTypes}, donation schemes: ${result.donationSchemes}`);
+  console.log(`[seed] content types: ${result.contentTypes}, donation schemes: ${result.donationSchemes}, blog posts: ${result.blogPosts}`);
   await disconnectDb();
   process.exit(0);
 }

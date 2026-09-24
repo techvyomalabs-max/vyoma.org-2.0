@@ -1,6 +1,8 @@
 import { ContentModel } from '../src/modules/content/content.model.js';
 import { DonationSchemeModel } from '../src/modules/donations/donationScheme.model.js';
 import { SiteSettingsModel } from '../src/modules/settings/setting.model.js';
+import { BlogPostModel } from '../src/modules/blog/blogPost.model.js';
+import { BlogCategoryModel } from '../src/modules/blog/blogCategory.model.js';
 
 import * as home from './seedData/home.js';
 import * as about from './seedData/about.js';
@@ -12,12 +14,14 @@ import * as donate from './seedData/donate.js';
 import * as faq from './seedData/faq.js';
 import * as contact from './seedData/contact.js';
 import * as media from './seedData/media.js';
+import * as blog from './seedData/blog.js';
 
 // One Content document per `type` key the frontend's service layer actually
-// requests (Frontend/services/pageService.js, blogService.js,
-// mediaService.js). "blog", "media", and "pages/media" all point at the same
-// underlying media.js dataset, exactly matching how the mock loader today
-// returns the whole module namespace regardless of which type was asked for.
+// requests (Frontend/services/pageService.js, mediaService.js). "media" and
+// "pages/media" both point at the same underlying media.js dataset, exactly
+// matching how the mock loader today returns the whole module namespace
+// regardless of which type was asked for. Blog is no longer part of this —
+// see seedBlogPosts() below; it has its own dedicated model (Phase E).
 const CONTENT_SEED = {
   'pages/home': home,
   'pages/about': about,
@@ -29,7 +33,6 @@ const CONTENT_SEED = {
   'pages/faq': faq,
   'pages/contact': contact,
   'pages/media': media,
-  blog: media,
   media: media,
 };
 
@@ -63,6 +66,29 @@ function normalizeAbout(mod) {
 function withoutDonationSchemes(mod) {
   const { DONATION_SCHEMES, ...pageCopy } = mod;
   return pageCopy;
+}
+
+// Phase E: seeds the dedicated BlogCategoryModel (the managed list an admin
+// can rename from later) and BlogPostModel (each post upserted by slug, so
+// re-seeding never duplicates or reactivates a post an admin has since
+// unpublished — `status`/`publishedAt` are only ever set via $setOnInsert).
+async function seedBlogCategories() {
+  for (const name of blog.BLOG_CATEGORIES) {
+    // eslint-disable-next-line no-await-in-loop
+    await BlogCategoryModel.findOneAndUpdate({ name }, { name }, { upsert: true, new: true });
+  }
+}
+
+async function seedBlogPosts() {
+  for (const p of blog.BLOG_POSTS) {
+    const data = { title: p.title, excerpt: p.excerpt, body: p.body, featuredImage: null, author: p.author, categories: p.categories, tags: [], seo: {} };
+    // eslint-disable-next-line no-await-in-loop
+    await BlogPostModel.findOneAndUpdate(
+      { slug: p.slug },
+      { $set: { slug: p.slug, data }, $setOnInsert: { status: 'published', publishedAt: p.publishedAt, draftData: null } },
+      { upsert: true, new: true }
+    );
+  }
 }
 
 // Shared by the CLI `npm run seed` entrypoint (always upserts, for a real
@@ -123,5 +149,12 @@ export async function runSeed() {
     { upsert: true }
   );
 
-  return { contentTypes: Object.keys(CONTENT_SEED).length, donationSchemes: donate.DONATION_SCHEMES.length };
+  await seedBlogCategories();
+  await seedBlogPosts();
+
+  return {
+    contentTypes: Object.keys(CONTENT_SEED).length,
+    donationSchemes: donate.DONATION_SCHEMES.length,
+    blogPosts: blog.BLOG_POSTS.length,
+  };
 }

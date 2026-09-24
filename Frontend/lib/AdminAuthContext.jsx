@@ -7,6 +7,7 @@ import {
   refreshSession,
   logoutSession,
   authedFetch,
+  authedFetchWithMeta,
 } from './adminAuthApi';
 
 // Week 3 Decision W3-1: the access token lives ONLY in this ref (in-memory,
@@ -90,6 +91,28 @@ export function AdminAuthProvider({ children }) {
     }
   }, []);
 
+  // Same one-retry-on-401 contract as apiFetch, but also returns `meta` —
+  // for paginated admin lists (Blog, Phase E) that need {page, limit, total}
+  // alongside the items.
+  const apiFetchWithMeta = useCallback(async (path, options) => {
+    try {
+      return await authedFetchWithMeta(path, accessTokenRef.current, options);
+    } catch (err) {
+      if (err.status !== 401) throw err;
+      try {
+        const session = await refreshSession();
+        accessTokenRef.current = session.accessToken;
+        setUser(session.user);
+        return await authedFetchWithMeta(path, accessTokenRef.current, options);
+      } catch {
+        accessTokenRef.current = null;
+        setUser(null);
+        setStatus('unauthenticated');
+        throw err;
+      }
+    }
+  }, []);
+
   // Enables Draft Mode for a "Preview draft" link — see app/api/draft/
   // route.js's security note. The access token never leaves this context;
   // callers only ever get back a path to open, never the token itself.
@@ -105,7 +128,7 @@ export function AdminAuthProvider({ children }) {
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ status, user, login, verifyMfa, logout, apiFetch, enablePreview }}>
+    <AdminAuthContext.Provider value={{ status, user, login, verifyMfa, logout, apiFetch, apiFetchWithMeta, enablePreview }}>
       {children}
     </AdminAuthContext.Provider>
   );

@@ -1,8 +1,10 @@
-import { getBlogPosts } from '@/services/blogService';
+import { getBlogPosts, getBlogCategories } from '@/services/blogService';
 import { PageHero } from '@/components/sections/PageHero';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { BlogListClient } from '@/components/sections/media/BlogListClient';
 import { pageMetadata } from '@/lib/seo';
+
+const PAGE_SIZE = 9;
 
 export const metadata = pageMetadata({
   path: '/media/blog',
@@ -10,12 +12,20 @@ export const metadata = pageMetadata({
   description: 'Long-form stories and updates from classrooms, research, and the field.',
 });
 
-export default async function BlogPage() {
-  const posts = await getBlogPosts();
-  // Category filter chips derive from the posts themselves (first-appearance
-  // order), which matches the source design system's BLOG_CATEGORIES order
-  // exactly, so there is no need for a separate categories fetch here.
-  const categories = [...new Set(posts.map((p) => p.category))];
+// Phase E: category filtering and pagination are now real, server-driven
+// (via ?category=&page=), reading from the dedicated Blog API instead of
+// the previous client-only, single-page mock filter.
+export default async function BlogPage({ searchParams }) {
+  const sp = await searchParams;
+  const category = sp?.category || null;
+  const tag = sp?.tag || null;
+  const page = Math.max(1, Number(sp?.page) || 1);
+
+  const [{ items: posts, meta }, categories, { items: recentPosts }] = await Promise.all([
+    getBlogPosts({ category, tag, page, limit: PAGE_SIZE }),
+    getBlogCategories(),
+    getBlogPosts({ limit: 5 }),
+  ]);
 
   return (
     <div className="font-sans">
@@ -25,7 +35,7 @@ export default async function BlogPage() {
         body="Long-form stories and updates from classrooms, research, and the field."
       />
 
-      <BlogListClient posts={posts} categories={categories} />
+      <BlogListClient posts={posts} meta={meta} categories={categories} activeCategory={category} activeTag={tag} recentPosts={recentPosts} />
 
       <MediaCta />
     </div>

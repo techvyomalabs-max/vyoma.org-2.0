@@ -22,7 +22,7 @@ async function main() {
   if (count === 0) {
     console.log('[server] database is empty — auto-seeding from mock data...');
     const result = await runSeed();
-    console.log(`[server] seeded ${result.contentTypes} content types, ${result.donationSchemes} donation schemes`);
+    console.log(`[server] seeded ${result.contentTypes} content types, ${result.donationSchemes} donation schemes, ${result.blogPosts} blog posts`);
   }
 
   // Roles are seeded independently of content (idempotent upsert either

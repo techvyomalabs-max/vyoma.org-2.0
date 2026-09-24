@@ -20,6 +20,7 @@ const ROLES = [
       'media:read', 'media:write',
       'redirects:read', 'redirects:write',
       'settings:read', 'settings:write',
+      'blog:read', 'blog:write',
     ],
     mfaRequired: false,
   },

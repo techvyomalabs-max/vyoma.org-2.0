@@ -111,6 +111,7 @@ const NAV = [
       { href: '/admin/content/donate', label: 'Donate' },
       { href: '/admin/content/faq', label: 'FAQ' },
       { href: '/admin/content/contact', label: 'Contact' },
+      { href: '/admin/content/blog', label: 'Blog' },
       { href: '/admin/content', label: 'All other pages (legacy editor)' },
     ],
   },

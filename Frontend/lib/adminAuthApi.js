@@ -97,3 +97,34 @@ export async function authedFetch(path, accessToken, options = {}) {
   }
   return parseResponse(res);
 }
+
+// Same contract as authedFetch, but also returns `meta` ({page, limit,
+// total}) — added for the Blog admin list's pagination (Phase E), the first
+// admin page that needs it. authedFetch itself is left untouched so every
+// existing caller is unaffected.
+export async function authedFetchWithMeta(path, accessToken, options = {}) {
+  const res = await safeFetch(`${API_BASE}${path}`, {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...options.headers,
+    },
+    body: options.body ? JSON.stringify(options.body) : undefined,
+  });
+  if (res.status === 401) {
+    const err = new Error('Unauthenticated');
+    err.status = 401;
+    throw err;
+  }
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    const err = new Error(payload?.message || 'Request failed.');
+    err.status = res.status;
+    err.code = payload?.code;
+    err.fieldErrors = payload?.fieldErrors;
+    throw err;
+  }
+  return { data: payload.data, meta: payload.meta };
+}

@@ -1,19 +1,26 @@
-'use client';
-
-import { useState } from 'react';
+import Link from 'next/link';
 import { BlogCard } from './BlogCard';
 
-// Holds the category-filter state for /media/blog: the featured post (top,
-// white section) and the feed grid + sidebar (below, sky-mist section) are
-// both derived from the same filtered list, so one client component owns
-// both blocks rather than splitting state across server/client boundaries.
-export function BlogListClient({ posts, categories }) {
-  const [category, setCategory] = useState(null);
+function pageHref(category, tag, page) {
+  const params = new URLSearchParams();
+  if (category) params.set('category', category);
+  if (tag) params.set('tag', tag);
+  if (page > 1) params.set('page', String(page));
+  const qs = params.toString();
+  return qs ? `/media/blog?${qs}` : '/media/blog';
+}
 
-  const filtered = category ? posts.filter((p) => p.category === category) : posts;
-  const featured = filtered[0];
-  const feed = filtered.slice(1);
-  const recent = posts.slice(0, 5);
+// Phase E: category filtering and pagination are now real server navigation
+// (Links carrying ?category=&page=) instead of client-only state — the
+// featured post (top, white section) and the feed grid + sidebar (below)
+// are both derived from the server-fetched `posts` for the current
+// page/filter. No client JS is needed here any more, so this is a plain
+// server component despite the filename (kept to avoid an unrelated file
+// rename).
+export function BlogListClient({ posts, meta, categories, activeCategory, activeTag, recentPosts }) {
+  const featured = meta.page === 1 && !activeCategory && !activeTag ? posts[0] : null;
+  const feed = featured ? posts.slice(1) : posts;
+  const totalPages = Math.max(1, Math.ceil(meta.total / meta.limit));
 
   return (
     <>
@@ -21,28 +28,49 @@ export function BlogListClient({ posts, categories }) {
         <div className="mx-auto max-w-[1100px]">
           {featured ? (
             <BlogCard post={featured} large />
-          ) : (
+          ) : !posts.length ? (
             <p className="font-sans text-[15px] text-charcoal">No posts in this category yet.</p>
-          )}
+          ) : null}
         </div>
       </section>
 
       <section className="bg-sky-mist px-8 py-14">
         <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-8 lg:grid-cols-[1fr_300px]">
           <div>
+            {activeTag && (
+              <p className="mb-4 font-sans text-sm text-charcoal">
+                Filtered by tag <strong>#{activeTag}</strong> ·{' '}
+                <Link href={pageHref(activeCategory, null, 1)} className="font-semibold text-vyoma-blue">
+                  Clear
+                </Link>
+              </p>
+            )}
             <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
               {feed.map((post) => (
                 <BlogCard key={post.slug} post={post} />
               ))}
             </div>
-            <div className="mt-8 text-center">
-              <button
-                type="button"
-                className="rounded-md border border-vyoma-blue px-[22px] py-[11px] font-sans text-base font-semibold text-vyoma-blue"
-              >
-                Load more
-              </button>
-            </div>
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center gap-3 font-sans text-sm text-charcoal">
+                <Link
+                  href={pageHref(activeCategory, activeTag, meta.page - 1)}
+                  aria-disabled={meta.page <= 1}
+                  className={`rounded-md border border-vyoma-blue px-4 py-2 font-semibold text-vyoma-blue ${meta.page <= 1 ? 'pointer-events-none opacity-40' : ''}`}
+                >
+                  Prev
+                </Link>
+                <span className="text-charcoal/60">
+                  Page {meta.page} of {totalPages}
+                </span>
+                <Link
+                  href={pageHref(activeCategory, activeTag, meta.page + 1)}
+                  aria-disabled={meta.page >= totalPages}
+                  className={`rounded-md border border-vyoma-blue px-4 py-2 font-semibold text-vyoma-blue ${meta.page >= totalPages ? 'pointer-events-none opacity-40' : ''}`}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
           </div>
 
           <aside className="flex flex-col gap-6">
@@ -56,23 +84,21 @@ export function BlogListClient({ posts, categories }) {
               <h3 className="mb-3 font-sans text-base font-bold text-vyoma-blue">Categories</h3>
               <ul className="flex flex-col gap-2">
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => setCategory(null)}
-                    className={`font-sans text-[15px] ${category === null ? 'font-bold text-vyoma-blue' : 'text-charcoal'}`}
+                  <Link
+                    href={pageHref(null, activeTag, 1)}
+                    className={`font-sans text-[15px] ${!activeCategory ? 'font-bold text-vyoma-blue' : 'text-charcoal'}`}
                   >
                     All
-                  </button>
+                  </Link>
                 </li>
                 {categories.map((c) => (
                   <li key={c}>
-                    <button
-                      type="button"
-                      onClick={() => setCategory(c)}
-                      className={`font-sans text-[15px] ${category === c ? 'font-bold text-vyoma-blue' : 'text-charcoal'}`}
+                    <Link
+                      href={pageHref(c, activeTag, 1)}
+                      className={`font-sans text-[15px] ${activeCategory === c ? 'font-bold text-vyoma-blue' : 'text-charcoal'}`}
                     >
                       {c}
-                    </button>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -81,11 +107,11 @@ export function BlogListClient({ posts, categories }) {
             <div className="rounded-md border border-[var(--border-subtle)] bg-white p-5">
               <h3 className="mb-3 font-sans text-base font-bold text-vyoma-blue">Most Recent</h3>
               <ul className="flex flex-col gap-2.5">
-                {recent.map((p) => (
+                {recentPosts.map((p) => (
                   <li key={p.slug}>
-                    <a href="#" className="font-sans text-[14px] text-charcoal">
+                    <Link href={`/media/blog/${p.slug}`} className="font-sans text-[14px] text-charcoal">
                       {p.title}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

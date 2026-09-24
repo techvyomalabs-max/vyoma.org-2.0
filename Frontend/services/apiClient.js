@@ -32,3 +32,31 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
   }
   return payload.data;
 }
+
+// Same contract as apiRequest, but also returns `meta` ({page, limit, total}
+// on a paginated list) — added for Blog's public list/pagination (Phase E),
+// the first public reader that needs it. apiRequest itself is left
+// untouched so every existing caller is unaffected.
+export async function apiRequestWithMeta(path, { method = 'GET', body } = {}) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    const err = new Error('Unable to reach the server. Please try again.');
+    err.networkError = true;
+    throw err;
+  }
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload?.success) {
+    const err = new Error(payload?.message || `Request to ${path} failed`);
+    err.status = res.status;
+    err.code = payload?.code;
+    err.fieldErrors = payload?.fieldErrors;
+    throw err;
+  }
+  return { data: payload.data, meta: payload.meta };
+}

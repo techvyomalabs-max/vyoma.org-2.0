@@ -12,7 +12,8 @@ export const metadata = pageMetadata({
 });
 
 export default async function CredibilityPage() {
-  const { CREDIBILITY_SECTIONS } = await getCredibilityContent();
+  const { CREDIBILITY_SECTIONS: SECTIONS_ALL } = await getCredibilityContent();
+  const CREDIBILITY_SECTIONS = SECTIONS_ALL.filter((s) => s.active !== false);
 
   return (
     <div className="font-sans">

@@ -14,7 +14,10 @@ export const metadata = pageMetadata({
 });
 
 export default async function OurPatronsPage() {
-  const { PATRON_TIERS, PATRON_TIER_ROWS, GOLDEN_WALL, PATRON_TESTIMONIALS } = await getAboutContent();
+  const { PATRON_TIERS: TIERS_ALL, PATRON_TIER_ROWS, GOLDEN_WALL, PATRON_TESTIMONIALS: TESTIMONIALS_ALL } =
+    await getAboutContent();
+  const PATRON_TIERS = TIERS_ALL.filter((t) => t.active !== false);
+  const PATRON_TESTIMONIALS = TESTIMONIALS_ALL.filter((t) => t.active !== false);
 
   return (
     <div className="font-sans">

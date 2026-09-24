@@ -12,7 +12,9 @@ export const metadata = pageMetadata({
 });
 
 export default async function VolunteerPage() {
-  const { VOLUNTEER_CATEGORIES, VOLUNTEER_FEATURED } = await getJoinUsContent();
+  const { VOLUNTEER_CATEGORIES: CATEGORIES_ALL, VOLUNTEER_FEATURED: FEATURED_ALL } = await getJoinUsContent();
+  const VOLUNTEER_CATEGORIES = CATEGORIES_ALL.filter((c) => c.active !== false);
+  const VOLUNTEER_FEATURED = FEATURED_ALL.filter((v) => v.active !== false);
 
   return (
     <div className="font-sans">
@@ -56,7 +58,7 @@ export default async function VolunteerPage() {
             {VOLUNTEER_FEATURED.map((v) => (
               <div key={v.name} className="flex items-stretch gap-[18px] overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
                 <div className="w-[120px] flex-shrink-0 border-r-[3px] border-r-amber-gold">
-                  <ImagePlaceholder shape="rounded" caption="Photo" />
+                  <ImagePlaceholder src={v.image?.url} alt={v.image?.alt || v.name} shape="rounded" caption="Photo" />
                 </div>
                 <div className="flex flex-col justify-center py-[22px] pr-5 pl-1">
                   <div className="mb-2 font-sans text-lg font-bold text-vyoma-blue">{v.name}</div>

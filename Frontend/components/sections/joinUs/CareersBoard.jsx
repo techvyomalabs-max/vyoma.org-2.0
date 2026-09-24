@@ -12,7 +12,8 @@ function chipClass(active) {
 
 // Holds the department/type filter state and the "view role" modal, since both
 // filter the same CAREER_ROLES list and share the resulting `roles` derivation.
-export function CareersBoard({ roles: allRoles }) {
+export function CareersBoard({ roles: rolesInput }) {
+  const allRoles = rolesInput.filter((r) => r.active !== false);
   const depts = ['All', ...Array.from(new Set(allRoles.map((r) => r.dept)))];
   const types = ['All', ...Array.from(new Set(allRoles.map((r) => r.type)))];
   const [dept, setDept] = useState('All');

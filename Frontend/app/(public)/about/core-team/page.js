@@ -12,7 +12,8 @@ export const metadata = pageMetadata({
 });
 
 export default async function CoreTeamPage() {
-  const { CORE_TEAMS } = await getAboutContent();
+  const { CORE_TEAMS: CORE_TEAMS_ALL } = await getAboutContent();
+  const CORE_TEAMS = CORE_TEAMS_ALL.filter((g) => g.active !== false);
 
   return (
     <div className="font-sans">
@@ -29,10 +30,10 @@ export default async function CoreTeamPage() {
             className="mx-auto grid max-w-[1100px] gap-5"
             style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}
           >
-            {t.people.map((p, i) => (
+            {t.people.filter((p) => p.active !== false).map((p, i) => (
               <div key={p.name} className="text-center">
                 <div className="mx-auto mb-2.5 h-[140px] w-[140px]">
-                  <ImagePlaceholder src={p.imageUrl || undefined} alt={p.name} shape="rounded" caption="Photo" />
+                  <ImagePlaceholder src={p.image?.url} alt={p.image?.alt || p.name} shape="rounded" caption="Photo" />
                 </div>
                 <div className="font-sans text-base font-bold text-vyoma-blue">{p.name}</div>
                 <div className="font-sans text-sm text-charcoal">{p.role}</div>

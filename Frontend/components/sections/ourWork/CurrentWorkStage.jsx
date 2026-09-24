@@ -37,9 +37,11 @@ function SocialRow({ slugs }) {
 // animations don't map cleanly to Tailwind utilities, so this section keeps
 // scoped CSS (as the source did) rather than forcing it into arbitrary
 // utility classes.
-export function CurrentWorkStage({ platforms, programmes, headingLevel = 'h1' }) {
+export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgrammes, headingLevel = 'h1' }) {
   const Heading = headingLevel;
   const [active, setActive] = useState(null);
+  const platforms = allPlatforms.filter((p) => p.active !== false);
+  const programmes = allProgrammes.filter((p) => p.active !== false);
   const platPos = cwPositions(platforms, 28);
   const progPos = cwPositions(programmes, 42);
   const openLink = (u) => {

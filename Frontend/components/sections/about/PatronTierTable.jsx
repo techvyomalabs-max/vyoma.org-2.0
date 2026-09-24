@@ -6,7 +6,7 @@ const TABS = ['Prayojakas', 'Rakshakas', 'Samrakshakas', 'Poshakas', 'Mahaposhak
 
 export function PatronTierTable({ rows }) {
   const [active, setActive] = useState('Prayojakas');
-  const activeRows = rows[active] || [];
+  const activeRows = (rows[active] || []).filter((r) => r.active !== false);
 
   return (
     <div className="mx-auto max-w-[1100px]">

@@ -94,6 +94,11 @@ const NAV = [
     Icon: ContentIcon,
     items: [
       { href: '/admin/content/home', label: 'Home' },
+      { href: '/admin/content/about', label: 'About' },
+      { href: '/admin/content/our-work', label: 'Our Work' },
+      { href: '/admin/content/impact', label: 'Impact' },
+      { href: '/admin/content/credibility', label: 'Credibility' },
+      { href: '/admin/content/join-us', label: 'Join Us' },
       { href: '/admin/content', label: 'All other pages (legacy editor)' },
     ],
   },

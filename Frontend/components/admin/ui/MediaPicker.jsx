@@ -18,6 +18,7 @@ export function MediaPicker({ open, onClose, onSelect, accept }) {
   const [notice, setNotice] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [externalUrl, setExternalUrl] = useState('');
+  const [externalUrlError, setExternalUrlError] = useState(null);
 
   useEffect(() => {
     if (!open) return;
@@ -55,8 +56,17 @@ export function MediaPicker({ open, onClose, onSelect, accept }) {
   };
 
   const handleUseExternal = () => {
-    if (!externalUrl.trim()) return;
-    onSelect({ url: externalUrl.trim(), filename: externalUrl.trim().split('/').pop() });
+    const value = externalUrl.trim();
+    if (!value) return;
+    // Must be a real absolute URL or a site-relative path — anything else
+    // would silently become a broken image/document link on the public
+    // page with no indication why.
+    if (!/^https?:\/\//i.test(value) && !value.startsWith('/')) {
+      setExternalUrlError('Enter a full https:// URL, or a path starting with "/".');
+      return;
+    }
+    setExternalUrlError(null);
+    onSelect({ url: value, filename: value.split('/').pop() });
   };
 
   return (
@@ -124,7 +134,10 @@ export function MediaPicker({ open, onClose, onSelect, accept }) {
               <input
                 type="text"
                 value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
+                onChange={(e) => {
+                  setExternalUrl(e.target.value);
+                  setExternalUrlError(null);
+                }}
                 placeholder="https://…"
                 className="flex-1 rounded-md border border-[var(--border-subtle)] px-2.5 py-2 font-sans text-sm text-charcoal"
               />
@@ -137,6 +150,7 @@ export function MediaPicker({ open, onClose, onSelect, accept }) {
                 Use this URL
               </button>
             </div>
+            {externalUrlError && <p className="mt-2 font-sans text-xs text-red-600">{externalUrlError}</p>}
           </div>
         )}
       </div>

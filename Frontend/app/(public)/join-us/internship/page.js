@@ -11,12 +11,9 @@ export const metadata = pageMetadata({
   description: 'Work on real projects at the meeting point of Sanskrit, Indian Knowledge Systems, education, and technology.',
 });
 
-// Mirrors the source's INTERNSHIP_OPENINGS = [] — intentionally empty; the
-// empty-state below is the real, currently-live content, not a placeholder.
-const INTERNSHIP_OPENINGS = [];
-
 export default async function InternshipPage() {
-  const { INTERNSHIP_REASONS } = await getJoinUsContent();
+  const { INTERNSHIP_REASONS, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
+  const INTERNSHIP_OPENINGS = OPENINGS_ALL.filter((o) => o.active !== false);
 
   return (
     <div className="font-sans">

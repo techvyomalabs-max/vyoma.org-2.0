@@ -24,6 +24,17 @@ export function Header() {
 
   return (
     <nav className="relative flex flex-col justify-center gap-2.5 bg-vyoma-blue px-8 py-4 border-b border-white/25">
+      {/* Decorative cloud watermark — three layered puffs, matching the exact
+          position/size/opacity of the approved design reference (see
+          vyoma-org-design-system Vercel preview). The clipping wrapper is
+          scoped to ONLY this layer (not `nav` itself) — the NavItem
+          dropdowns below are also descendants of `nav` and are meant to
+          extend past its bottom edge; clipping `nav` as a whole hid them. */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+        <Image src="/images/cloud-1.png" alt="" width={676} height={213} className="absolute" style={{ top: '-43px', left: '696px', opacity: 0.3 }} />
+        <Image src="/images/cloud-2.png" alt="" width={726} height={166} className="absolute" style={{ top: '72px', left: '-147px', opacity: 0.32 }} />
+        <Image src="/images/cloud-3.png" alt="" width={654} height={167} className="absolute" style={{ top: '0px', left: '66px', opacity: 0.28 }} />
+      </div>
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
         <Link href="/">
           <Image src="/images/logo-white.png" alt="Vyoma" width={208} height={101} className="h-[104px] w-auto" />

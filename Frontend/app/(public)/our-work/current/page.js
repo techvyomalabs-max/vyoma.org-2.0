@@ -1,4 +1,5 @@
 import { getOurWorkContent } from '@/services/pageService';
+import { getPublicSettings } from '@/services/settingsService';
 import { CurrentWorkStage } from '@/components/sections/ourWork/CurrentWorkStage';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
@@ -14,11 +15,11 @@ export const metadata = pageMetadata({
 });
 
 export default async function CurrentWorkPage() {
-  const { CW_PLATFORMS, CW_PROGRAMMES } = await getOurWorkContent();
+  const [{ CW_PLATFORMS, CW_PROGRAMMES }, settings] = await Promise.all([getOurWorkContent(), getPublicSettings()]);
 
   return (
     <div className="font-sans">
-      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} />
+      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} socialLinks={settings.socialLinks} />
       <CtaStrip badge="Support & Partnerships" heading="Want to support this work?">
         <DonateCta />
         <ContactCta subject="Institutional partnership">Partner with us</ContactCta>

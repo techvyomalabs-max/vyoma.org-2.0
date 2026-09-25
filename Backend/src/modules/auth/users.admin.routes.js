@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { listUsers, createUser, disableUser } from './users.admin.controller.js';
+import { listUsers, createUser, disableUser, enableUser } from './users.admin.controller.js';
 import { requireRole } from '../../middleware/requireRole.js';
 
 // Mounted under /api/v1/admin, which already applies requireAuth — every
@@ -12,3 +12,4 @@ export const usersAdminRouter = Router();
 usersAdminRouter.get('/', requireRole('super_admin'), listUsers);
 usersAdminRouter.post('/', requireRole('super_admin'), createUser);
 usersAdminRouter.patch('/:id/disable', requireRole('super_admin'), disableUser);
+usersAdminRouter.patch('/:id/enable', requireRole('super_admin'), enableUser);

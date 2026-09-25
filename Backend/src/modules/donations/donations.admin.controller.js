@@ -12,8 +12,14 @@ function actorOf(req) {
   return { _id: req.user.id, email: req.user.email };
 }
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // GET /api/v1/admin/donations — read-only list/filter/reporting only per
-// Week 3 Decision W3-4: no refund action, no CSV export here.
+// Week 3 Decision W3-4: no refund action, no CSV export here. `?email=`
+// (Phase F, D-F3) is an optional case-insensitive donor-email search;
+// omitting it preserves the exact prior filter/pagination behavior.
 export async function listDonationsAdmin(req, res, next) {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
@@ -27,6 +33,9 @@ export async function listDonationsAdmin(req, res, next) {
       filter.status = req.query.status;
     }
     if (req.query.schemeSlug) filter.schemeSlug = req.query.schemeSlug;
+    if (req.query.email && typeof req.query.email === 'string' && req.query.email.trim()) {
+      filter['donor.email'] = new RegExp(escapeRegex(req.query.email.trim()), 'i');
+    }
     if (req.query.dateFrom || req.query.dateTo) {
       filter.createdAt = {};
       if (req.query.dateFrom) {

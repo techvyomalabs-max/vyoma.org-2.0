@@ -6,6 +6,10 @@ import { recordAudit } from '../audit/audit.service.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function toSafeUser(user) {
   return {
     id: user._id,
@@ -19,15 +23,24 @@ function toSafeUser(user) {
   };
 }
 
-// GET /api/v1/admin/users — Super Admin only.
+// GET /api/v1/admin/users — Super Admin only. `?q=` (Phase F, D-F2) is an
+// optional case-insensitive search over name/email only — both already
+// safe, non-sensitive fields returned by toSafeUser(). Omitting it preserves
+// the exact prior behavior (empty filter, same pagination).
 export async function listUsers(req, res, next) {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
 
+    const filter = {};
+    if (req.query.q && typeof req.query.q === 'string' && req.query.q.trim()) {
+      const q = escapeRegex(req.query.q.trim());
+      filter.$or = [{ name: new RegExp(q, 'i') }, { email: new RegExp(q, 'i') }];
+    }
+
     const [items, total] = await Promise.all([
-      UserModel.find().sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
-      UserModel.countDocuments(),
+      UserModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      UserModel.countDocuments(filter),
     ]);
 
     return sendSuccess(res, items.map(toSafeUser), { meta: { page, limit, total } });
@@ -111,6 +124,39 @@ export async function disableUser(req, res, next) {
     await recordAudit({
       actor: { _id: req.user.id, email: req.user.email },
       action: 'users.disabled',
+      targetType: 'User',
+      targetId: user._id,
+      req,
+    });
+    return sendSuccess(res, toSafeUser(user));
+  } catch (err) {
+    next(err);
+  }
+}
+
+// PATCH /api/v1/admin/users/:id/enable — Super Admin only (Phase F, D-F1).
+// The exact reverse of disableUser's status flip, and nothing more: does
+// NOT touch password/MFA/recovery-code state (an admin re-enabling an
+// account must never silently reset how its owner authenticates), and does
+// NOT bump refreshTokenVersion (there is nothing to invalidate — re-enabling
+// restores access, it doesn't need to kill a session). Only ever re-enables
+// an account that is actually disabled, so this can't be used as a no-op
+// "touch" on an already-active account.
+export async function enableUser(req, res, next) {
+  try {
+    const { id } = req.params;
+    const user = await UserModel.findById(id);
+    if (!user) throw new ApiError(404, 'USER_NOT_FOUND', 'User not found.');
+    if (user.status !== 'disabled') {
+      throw new ApiError(400, 'USER_NOT_DISABLED', 'Only a disabled account can be re-enabled.');
+    }
+
+    user.status = 'active';
+    await user.save();
+
+    await recordAudit({
+      actor: { _id: req.user.id, email: req.user.email },
+      action: 'users.enabled',
       targetType: 'User',
       targetId: user._id,
       req,

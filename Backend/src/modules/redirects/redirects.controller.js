@@ -43,6 +43,31 @@ function validateStatusCode(statusCode) {
   return statusCode;
 }
 
+// Phase F (D-F8): backend-authoritative rejection of the two minimal loop
+// cases — a self-loop (fromPath -> itself) and a direct two-rule reversal
+// (an existing A->B alongside this rule's B->A). Not a general graph walk —
+// deliberately out of scope per your instruction. `excludeId` lets
+// updateRedirect check the FINAL merged state against every OTHER existing
+// rule without the document's own pre-update row falsely matching itself.
+async function assertNoLoop(fromPath, toPath, excludeId) {
+  if (fromPath === toPath) {
+    throw new ApiError(422, 'VALIDATION_ERROR', 'fromPath and toPath cannot be the same path — that would redirect a path to itself.', {
+      toPath: 'Cannot be the same as fromPath.',
+    });
+  }
+  const reverseQuery = { fromPath: toPath, toPath: fromPath };
+  if (excludeId) reverseQuery._id = { $ne: excludeId };
+  const reverse = await RedirectModel.findOne(reverseQuery).lean();
+  if (reverse) {
+    throw new ApiError(
+      422,
+      'VALIDATION_ERROR',
+      `This would create a redirect loop with the existing rule "${toPath}" → "${fromPath}".`,
+      { toPath: 'Would create a two-rule redirect loop with an existing redirect.' }
+    );
+  }
+}
+
 // GET /api/v1/admin/redirects
 export async function listRedirects(req, res, next) {
   try {
@@ -65,6 +90,8 @@ export async function createRedirect(req, res, next) {
     const toPath = validateToPath(req.body?.toPath);
     const statusCode = validateStatusCode(req.body?.statusCode);
     const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim() || null : null;
+
+    await assertNoLoop(fromPath, toPath, null);
 
     let doc;
     try {
@@ -89,10 +116,14 @@ export async function updateRedirect(req, res, next) {
     const doc = await RedirectModel.findById(req.params.id);
     if (!doc) throw new ApiError(404, 'REDIRECT_NOT_FOUND', 'Redirect not found.');
 
-    if (req.body?.fromPath !== undefined) doc.fromPath = validateFromPath(req.body.fromPath);
-    if (req.body?.toPath !== undefined) doc.toPath = validateToPath(req.body.toPath);
+    const nextFromPath = req.body?.fromPath !== undefined ? validateFromPath(req.body.fromPath) : doc.fromPath;
+    const nextToPath = req.body?.toPath !== undefined ? validateToPath(req.body.toPath) : doc.toPath;
     if (req.body?.statusCode !== undefined) doc.statusCode = validateStatusCode(req.body.statusCode);
     if (req.body?.notes !== undefined) doc.notes = typeof req.body.notes === 'string' ? req.body.notes.trim() || null : null;
+
+    await assertNoLoop(nextFromPath, nextToPath, doc._id);
+    doc.fromPath = nextFromPath;
+    doc.toPath = nextToPath;
 
     try {
       await doc.save();

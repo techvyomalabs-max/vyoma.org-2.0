@@ -59,6 +59,51 @@ function DonationsIcon(props) {
   );
 }
 
+function UsersIcon(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <circle cx="7.5" cy="6.5" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2.5 16c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="14.5" cy="6" r="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M12.8 11.2c2.4.3 4.2 2.3 4.2 4.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function TransactionsIcon(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <rect x="2.5" y="4" width="15" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M2.5 8h15" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5.5 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AuditIcon(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path
+        d="M5 2.5h7l3 3v12a.5.5 0 0 1-.5.5h-9.5a.5.5 0 0 1-.5-.5v-14a.5.5 0 0 1 .5-.5Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M7 9.5h6M7 13h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7 6h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RedirectIcon(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <path d="M3 6h9a3.5 3.5 0 0 1 3.5 3.5v0A3.5 3.5 0 0 1 12 13H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8.5 10 6 13l2.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function SettingsIcon(props) {
   return (
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -88,12 +133,13 @@ function MenuIcon(props) {
 
 // Target information architecture (per the approved CMS redesign): "Website
 // Content" is its own group, grouped by public page, kept visually separate
-// from operational admin areas. Right now it holds only the legacy generic
-// content editor, since no page has a structured editor yet (Phase B+) — it
-// stays here, not hidden, because until Phase B ships it is the ONLY way to
-// edit content, not yet a "fallback." `roles` (omitted = visible to every
-// authenticated role) is read but nothing currently needs it — ready for
-// Phase F's Users/Audit Logs additions without another shell rewrite.
+// from operational admin areas. `roles` (omitted = visible to every
+// authenticated role) gates Users and Audit Logs to super_admin only — both
+// are backend-enforced regardless (Users: requireRole('super_admin') on
+// every route; Audit Logs: same), this is purely so admin never sees a nav
+// entry that would just 403. Donations (transactions) and Redirects have no
+// `roles` restriction: the `admin` role already holds donations:read and
+// redirects:read/write, so both are genuinely usable by either role.
 const NAV = [
   { type: 'link', href: '/admin/dashboard', label: 'Dashboard', Icon: DashboardIcon },
   {
@@ -115,6 +161,10 @@ const NAV = [
       { href: '/admin/content', label: 'All other pages (legacy editor)' },
     ],
   },
+  { type: 'link', href: '/admin/users', label: 'Users', Icon: UsersIcon, roles: ['super_admin'] },
+  { type: 'link', href: '/admin/donations/transactions', label: 'Donations', Icon: TransactionsIcon },
+  { type: 'link', href: '/admin/audit-logs', label: 'Audit Logs', Icon: AuditIcon, roles: ['super_admin'] },
+  { type: 'link', href: '/admin/redirects', label: 'Redirects', Icon: RedirectIcon },
   { type: 'link', href: '/admin/donations/schemes', label: 'Donation Schemes', Icon: DonationsIcon },
   { type: 'link', href: '/admin/media', label: 'Media', Icon: MediaIcon },
   { type: 'link', href: '/admin/forms', label: 'Forms', Icon: FormsIcon },

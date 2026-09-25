@@ -67,19 +67,25 @@ export const CONTACT_LINK = { label: 'Contact Us', href: '/contact' };
 export const DONATE_LINK = { label: 'Donate', href: '/donate' };
 export const FAQ_LINK = { label: 'FAQ', href: '/faq' };
 
+// Privacy/Terms point at the current live vyoma.org pages — the new
+// Next.js site has no equivalent internal page yet, so these stay external
+// until one is explicitly built (per instruction). Every other entry here
+// is a real internal route.
 export const FOOTER_LINKS = [
-  { label: 'Privacy', href: '#' },
-  { label: 'Terms', href: '#' },
+  { label: 'Privacy', href: 'https://vyoma.org/privacy/', external: true },
+  { label: 'Terms', href: 'https://vyoma.org/terms/', external: true },
   { label: 'Annual Report', href: '/credibility/annual-reports' },
   { label: 'Contact', href: '/contact' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Join Us', href: '/join-us' },
 ];
 
-export const SOCIAL_LINKS = [
-  { name: 'Facebook', slug: 'facebook' },
-  { name: 'YouTube', slug: 'youtube' },
-  { name: 'X', slug: 'x' },
-  { name: 'LinkedIn', slug: 'linkedin' },
-  { name: 'WhatsApp', slug: 'whatsapp' },
+// Footer "Our Platforms" — Vyoma's own external sites, approved exact URLs.
+// IKS is deliberately not included here: it was scoped separately (Our Work
+// page only) and no redirect/footer change was approved for it.
+export const PLATFORM_LINKS = [
+  { label: 'Sanskrit From Home', href: 'https://www.sanskritfromhome.org/', external: true },
+  { label: 'Digital Sanskrit', href: 'https://digitalsanskrit.com/', external: true },
+  { label: 'Digital Sanskrit Guru', href: 'https://digitalsanskritguru.com/?v=13b5bfe96f3e', external: true },
+  { label: 'Vyoma USA', href: 'https://vyomausa.org/', external: true },
 ];

@@ -129,9 +129,13 @@ export async function runSeed() {
   // bank names were real, live values previously hardcoded in donate/
   // page.js (only the Branch & IFSC/SWIFT lines were ever "provided on
   // request" placeholders) — seeded here so the switch to Settings doesn't
-  // regress real content to a placeholder. socialLinks gets no seeded
-  // values — those were always dead "#" placeholders with no real handle to
-  // preserve, so null (hidden on the page) is more honest than inventing one.
+  // regress real content to a placeholder.
+  //
+  // socialLinks (footer/social reconciliation): facebook/youtube/instagram/x
+  // are the exact, explicitly-approved live URLs — these replace what were
+  // always dead "#" placeholders. linkedin is deliberately left unset (null)
+  // — no approved URL exists yet, and one is never fabricated; it stays
+  // absent from the footer/contact page until a real one is provided.
   await SiteSettingsModel.findOneAndUpdate(
     {},
     {
@@ -143,6 +147,13 @@ export async function runSeed() {
           indiaBankName: 'City Union Bank',
           fcraAccountName: 'Vyoma Linguistic Labs Foundation',
           fcraBankName: 'State Bank of India (FCRA)',
+        },
+        socialLinks: {
+          facebook: 'https://www.facebook.com/Vyomalabs/',
+          youtube: 'https://www.youtube.com/channel/UCp5mvCwXR-drTRyzNUUjdZg',
+          instagram: 'https://www.instagram.com/sanskrit_from_home/',
+          x: 'https://x.com/VyomaSanskrit',
+          linkedin: null,
         },
       },
     },

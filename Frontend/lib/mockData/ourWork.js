@@ -12,12 +12,12 @@ export const SCHOOLS = [
 ];
 
 export const CW_PLATFORMS = [
-  { n: 'SFH', t: 'Sanskrit From Home', d: '400+ free Sanskrit courses, from basics to śāstras.', u: 'https://sanskritfromhome.org', ul: 'sanskritfromhome.org', soc: ['facebook', 'x', 'instagram', 'youtube'], active: true },
-  { n: 'OTT', t: 'Digital Sanskrit (OTT)', d: 'Sanskrit talks, stories, and series, streamed on demand.', u: 'https://digitalsanskrit.com', ul: 'digitalsanskrit.com', soc: ['facebook', 'instagram', 'whatsapp'], active: true },
-  { n: 'DSG', t: 'Digital Sanskrit Guru', d: 'Sanskrit books, digital products, and publications.', u: 'https://digitalsanskritguru.com', ul: 'digitalsanskritguru.com', soc: ['facebook', 'instagram'], active: true },
+  { n: 'SFH', t: 'Sanskrit From Home', d: '400+ free Sanskrit courses, from basics to śāstras.', u: 'https://www.sanskritfromhome.org/', ul: 'sanskritfromhome.org', soc: ['facebook', 'x', 'instagram', 'youtube'], active: true },
+  { n: 'OTT', t: 'Digital Sanskrit (OTT)', d: 'Sanskrit talks, stories, and series, streamed on demand.', u: 'https://digitalsanskrit.com/', ul: 'digitalsanskrit.com', soc: ['facebook', 'instagram', 'whatsapp'], active: true },
+  { n: 'DSG', t: 'Digital Sanskrit Guru', d: 'Sanskrit books, digital products, and publications.', u: 'https://digitalsanskritguru.com/?v=13b5bfe96f3e', ul: 'digitalsanskritguru.com', soc: ['facebook', 'instagram'], active: true },
   { n: 'DSLL', t: 'Sanskrit Language Lab', d: 'Curriculum-mapped Sanskrit e-learning tools for schools, colleges, and institutions.', u: 'https://sanskritlanguagelab.com', ul: 'sanskritlanguagelab.com', active: true },
-  { n: 'IKS', t: 'IKS / VIKALPA Centre', d: 'Research and real-world application of Indian Knowledge Systems.', u: 'https://iks.vyoma.org', ul: 'iks.vyoma.org', active: true },
-  { n: 'USA', t: 'Vyoma USA', d: 'Our US arm, supporting donors and learners abroad.', u: 'https://vyomausa.org', ul: 'vyomausa.org', soc: ['facebook', 'x', 'linkedin'], active: true },
+  { n: 'IKS', t: 'IKS / VIKALPA Centre', d: 'Research and real-world application of Indian Knowledge Systems.', u: 'https://iks.vyoma.org/index.html', ul: 'iks.vyoma.org', active: true },
+  { n: 'USA', t: 'Vyoma USA', d: 'Our US arm, supporting donors and learners abroad.', u: 'https://vyomausa.org/', ul: 'vyomausa.org', soc: ['facebook', 'x', 'linkedin'], active: true },
   { n: 'App', t: 'Sandhi App', d: 'A free Sanskrit learning app, 50,000+ downloads.', u: '#', ul: 'Google Play', active: true },
 ];
 

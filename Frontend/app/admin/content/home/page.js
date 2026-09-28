@@ -10,7 +10,7 @@ import { SectionEditorHeader } from '@/components/admin/cms/SectionEditorHeader'
 import { HeroSlidesForm } from '@/components/admin/cms/home/HeroSlidesForm';
 import { StatsForm } from '@/components/admin/cms/home/StatsForm';
 import { TopicsForm } from '@/components/admin/cms/home/TopicsForm';
-import { RegistrationsForm } from '@/components/admin/cms/home/RegistrationsForm';
+import { ComplianceStripForm } from '@/components/admin/cms/home/ComplianceStripForm';
 import { ActivitiesForm } from '@/components/admin/cms/home/ActivitiesForm';
 import { TestimonialsForm } from '@/components/admin/cms/home/TestimonialsForm';
 import { CsrForm } from '@/components/admin/cms/home/CsrForm';
@@ -42,10 +42,6 @@ function validateHomeContent(data) {
     const err = findLinkError(slide.cta, `Hero Carousel "${slide.heading || 'Untitled'}"`);
     if (err) return err;
   }
-  for (const r of data.REGISTRATIONS || []) {
-    const err = findLinkError(r.link, `Registered and Recognized "${r.title || 'Untitled'}"`);
-    if (err) return err;
-  }
   for (const a of data.HOME_ACTIVITIES || []) {
     const err = findLinkError(a.link, `Vyoma's Activities "${a.title || 'Untitled'}"`);
     if (err) return err;
@@ -60,7 +56,7 @@ const SECTIONS = [
   { key: 'HERO_SLIDES', label: 'Hero Carousel', Form: HeroSlidesForm, description: 'The rotating banner at the top of the homepage.' },
   { key: 'STATS', label: 'Statistics', Form: StatsForm, description: 'The blue strip of impact numbers.' },
   { key: 'TOPICS', label: 'Topics', Form: TopicsForm, description: 'The row of topic pills below the statistics.' },
-  { key: 'REGISTRATIONS', label: 'Registered and Recognized', Form: RegistrationsForm, description: '"Registered and Recognized" section.' },
+  { key: 'COMPLIANCE_STRIP', label: 'Compliance strip', Form: ComplianceStripForm, description: 'The blue compliance strip between Topics and Activities.' },
   { key: 'HOME_ACTIVITIES', label: "Vyoma's Activities", Form: ActivitiesForm, description: 'The four-card "What/Why/How/Where SSS" grid.' },
   { key: 'HOME_TESTIMONIALS', label: 'Testimonials', Form: TestimonialsForm, description: '"What People Are Saying" section.' },
   { key: 'CSR', label: 'CSR', Form: CsrForm, description: 'The CSR partnership banner.' },

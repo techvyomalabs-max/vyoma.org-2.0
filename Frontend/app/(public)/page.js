@@ -20,7 +20,7 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const { HERO_SLIDES, STATS, TOPICS, REGISTRATIONS, HOME_ACTIVITIES, HOME_TESTIMONIALS, CSR, SPONSORS } =
+  const { HERO_SLIDES, STATS, TOPICS, COMPLIANCE_STRIP, HOME_ACTIVITIES, HOME_TESTIMONIALS, CSR, SPONSORS } =
     await getHomeContent();
 
   return (
@@ -48,23 +48,20 @@ export default async function HomePage() {
         ))}
       </section>
 
-      <section className="bg-white px-8 py-14 text-center">
-        <div className="mx-auto max-w-[1100px]">
-          <h2 className="mb-3 font-sans text-h2 font-bold text-vyoma-blue">Registered and Recognized</h2>
-          <p className="mx-auto mb-8 max-w-[680px] font-sans text-lg text-charcoal">
-            Vyoma Linguistic Labs Foundation is a fully registered non-profit, verified for both domestic and
-            international giving.
-          </p>
-          <div className="mx-auto grid max-w-[800px] grid-cols-2 gap-4 lg:grid-cols-4">
-            {active(REGISTRATIONS).map((r) => (
-              <RegistrationCard key={r.title} r={r} />
-            ))}
-          </div>
-          <div className="mt-7">
-            <Link href="/credibility" className="font-sans text-base text-vyoma-blue underline">
-              View our Credibility page
-            </Link>
-          </div>
+      <section className="bg-vyoma-blue px-8 py-6">
+        <div className="mx-auto flex max-w-[1100px] flex-wrap items-center justify-center gap-5 font-sans text-lg text-white">
+          {COMPLIANCE_STRIP.items.map((item, i) => (
+            <span key={item}>
+              {item}
+              {i < COMPLIANCE_STRIP.items.length - 1 && <span className="ml-5 opacity-50">·</span>}
+            </span>
+          ))}
+          <Link
+            href="/credibility/compliances-registrations"
+            className="inline-flex items-center justify-center rounded-md border-[1.5px] border-white px-4 py-1.5 font-sans text-xs font-semibold text-white hover:bg-white hover:text-vyoma-blue"
+          >
+            {COMPLIANCE_STRIP.ctaLabel}
+          </Link>
         </div>
       </section>
 
@@ -128,29 +125,6 @@ export default async function HomePage() {
         </div>
       </section>
     </div>
-  );
-}
-
-function RegistrationCard({ r }) {
-  const content = (
-    <div className="flex flex-col items-center gap-2.5 rounded-md bg-sky-mist px-3 py-5">
-      {r.image?.url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={r.image.url} alt={r.image.alt || r.title} className="h-9 w-9 rounded-full object-contain" />
-      ) : (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-vyoma-blue text-white">✓</div>
-      )}
-      <div className="font-sans text-[17px] font-bold text-charcoal">{r.title}</div>
-      {r.supportingText && <div className="font-sans text-xs text-charcoal/70">{r.supportingText}</div>}
-    </div>
-  );
-  if (!r.link?.href) return content;
-  return r.link.external ? (
-    <a href={r.link.href} target="_blank" rel="noopener noreferrer">
-      {content}
-    </a>
-  ) : (
-    <Link href={r.link.href}>{content}</Link>
   );
 }
 

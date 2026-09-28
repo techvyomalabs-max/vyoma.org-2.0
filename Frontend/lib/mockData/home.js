@@ -61,12 +61,11 @@ export const TOPICS = [
   { label: 'Value Education', active: true },
 ];
 
-export const REGISTRATIONS = [
-  { title: 'FCRA Registered', image: null, supportingText: null, link: null, active: true },
-  { title: '80G Tax Exempt', image: null, supportingText: null, link: null, active: true },
-  { title: '12A Registered', image: null, supportingText: null, link: null, active: true },
-  { title: 'CSR-1 Registered', image: null, supportingText: null, link: null, active: true },
-];
+// Mirrors Backend/scripts/seedData/home.js — see that file's comment.
+export const COMPLIANCE_STRIP = {
+  items: ['80G tax benefit (India)', 'FCRA-registered for foreign gifts', 'Receipt provided'],
+  ctaLabel: 'See our full transparency record',
+};
 
 export const HOME_ACTIVITIES = [
   {

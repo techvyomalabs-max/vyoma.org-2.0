@@ -61,12 +61,15 @@ export const TOPICS = [
   { label: 'Value Education', active: true },
 ];
 
-export const REGISTRATIONS = [
-  { title: 'FCRA Registered', image: null, supportingText: null, link: null, active: true },
-  { title: '80G Tax Exempt', image: null, supportingText: null, link: null, active: true },
-  { title: '12A Registered', image: null, supportingText: null, link: null, active: true },
-  { title: 'CSR-1 Registered', image: null, supportingText: null, link: null, active: true },
-];
+// Mirrors Donate's COMPLIANCE_STRIP (Backend/scripts/seedData/donate.js) —
+// same shape, same blue-strip treatment. The button always goes to the
+// Credibility page's Compliances & Registrations section (the authoritative
+// place for the actual documents) — never to an individual PDF directly, and
+// that destination is fixed in app/(public)/page.js, not editable here.
+export const COMPLIANCE_STRIP = {
+  items: ['80G tax benefit (India)', 'FCRA-registered for foreign gifts', 'Receipt provided'],
+  ctaLabel: 'See our full transparency record',
+};
 
 export const HOME_ACTIVITIES = [
   {

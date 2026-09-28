@@ -13,8 +13,15 @@ export const CREDIBILITY_SECTIONS = [
   { title: 'Awards & Recognition', body: 'Honours earned across 10+ years of Saṃskṛta-Saṃskṛti-Saṃskāra seva.', cta: 'See recognition', href: '/credibility/awards-recognition', active: true },
 ];
 
-function doc(title, body) {
-  return { title, body, document: null, active: true };
+function doc(title, body, document) {
+  return { title, body, document: document || null, active: true };
+}
+
+// Mirrors Backend/scripts/seedData/credibility.js's regDoc() — see that
+// file's header comment for the full rationale.
+const REGISTRATIONS_DOCS_BASE = '/documents/registrations';
+function regDoc(storedName, originalFilename) {
+  return { mediaId: null, url: `${REGISTRATIONS_DOCS_BASE}/${storedName}`, filename: originalFilename, size: null };
 }
 
 export const COLLATERALS_ITEMS = [
@@ -42,14 +49,14 @@ export const SOCIAL_IMPACT_ITEMS = [
 ];
 
 export const COMPLIANCES_ITEMS = [
-  doc('FCRA Registration', 'Approval to legally receive foreign contributions.'),
-  doc('FCRA Renewal', 'The current renewal of that foreign-contribution approval.'),
-  doc('IT 80G Renewal', 'Lets Indian donors claim a tax deduction on gifts to Vyoma.'),
-  doc('IT 12AA Renewal', 'Our income-tax exemption as a registered charitable body.'),
-  doc('NGO Darpan', "Listing on the Government of India's NITI Aayog NGO portal."),
-  doc('MSME Registration', 'Recognition as a registered enterprise (Udyam).'),
-  doc('Section 25 Registration', 'Incorporation as a not-for-profit company.'),
-  doc('CSR Registration', 'The CSR-1 filing that lets companies fund Vyoma from CSR budgets.'),
+  doc('FCRA Registration', 'Approval to legally receive foreign contributions.', regDoc('fcra-registration.pdf', 'FCRA-Registration.pdf')),
+  doc('FCRA Renewal', 'The current renewal of that foreign-contribution approval.', regDoc('fcra-renewal-2022.pdf', 'FCRA-Renewal_2022.pdf')),
+  doc('IT 80G Renewal', 'Lets Indian donors claim a tax deduction on gifts to Vyoma.', regDoc('80g-renewal.pdf', '80G-Renewal.pdf')),
+  doc('IT 12AA Renewal', 'Our income-tax exemption as a registered charitable body.', regDoc('12a-renewal.pdf', '12A_Renewal_Document.pdf')),
+  doc('NGO Darpan', "Listing on the Government of India's NITI Aayog NGO portal.", regDoc('ngo-darpan.pdf', 'NGO Darpan.pdf')),
+  doc('MSME Registration', 'Recognition as a registered enterprise (Udyam).', regDoc('msme-registration.pdf', 'MSME Registration.pdf')),
+  doc('Section 25 Registration', 'Incorporation as a not-for-profit company.', regDoc('certificate-of-incorporation.pdf', 'Certificate of Incorporation-071212.pdf')),
+  doc('CSR Registration', 'The CSR-1 filing that lets companies fund Vyoma from CSR budgets.', regDoc('csr-registration.pdf', 'CSR-Registration.pdf')),
 ];
 
 function award(title, body) {

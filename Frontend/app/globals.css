@@ -1,0 +1,116 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens migrated from Vyoma.org Redesign/tokens/*.css
+ * Primitives live in @theme so Tailwind generates matching utilities
+ * (bg-vyoma-blue, text-h1, rounded-pill, shadow-hover, tracking-eyebrow, ...).
+ * Alias tokens (surface-*, text-*, border-*) are plain custom properties,
+ * consumed via var(...) exactly as the source design system used them.
+ */
+@theme {
+  /* tokens/colors.css */
+  --color-white: #ffffff;
+  --color-charcoal: #2c2c2a;
+  --color-vyoma-blue: #0f62b3;
+  --color-vyoma-blue-deep: #0b4d8f;
+  --color-teal: #0d7c7c;
+  --color-amber-gold: #c9922a;
+  --color-sky-mist: #e6eef5;
+
+  /* tokens/fonts.css */
+  --font-devanagari: var(--font-noto-devanagari), 'Noto Sans Devanagari', serif;
+  --font-sans: var(--font-source-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* tokens/typography.css */
+  --text-eyebrow: 11px;
+  --text-nav: 13px;
+  --text-body-size: 15px;
+  --text-small: 12px;
+  --text-h3: 18px;
+  --text-h2: 32px;
+  --text-h1: 46px;
+  --text-h1-lg: 56px;
+  --tracking-eyebrow: 0.18em;
+  --tracking-wide: 0.02em;
+  --leading-tight: 1.15;
+  --leading-normal: 1.6;
+
+  /* tokens/radius.css */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* tokens/shadow.css */
+  --shadow-sm: 0 1px 2px rgba(44, 44, 42, 0.06);
+  --shadow-card: 0 8px 24px rgba(15, 98, 179, 0.1);
+  --shadow-hover: 0 12px 32px rgba(15, 98, 179, 0.16);
+  --shadow-inverse-hover: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+  /* tokens/motion.css */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 0.2s;
+  --duration-normal: 0.25s;
+}
+
+/* Alias tokens (tokens/colors.css) — derived, not primitives, so kept as plain vars */
+:root {
+  --surface-page: var(--color-white);
+  --surface-tint: var(--color-sky-mist);
+  --surface-inverse: var(--color-vyoma-blue);
+  --text-body: var(--color-charcoal);
+  --text-inverse: #ffffff;
+  --text-inverse-muted: rgba(255, 255, 255, 0.7);
+  --text-heading: var(--color-vyoma-blue);
+  --text-heading-secondary: var(--color-teal);
+  --accent-decorative: var(--color-amber-gold);
+  --border-subtle: rgba(44, 44, 42, 0.12);
+  --border-inverse: rgba(255, 255, 255, 0.14);
+  --border-inverse-strong: rgba(255, 255, 255, 0.25);
+  --surface-glass-inverse: rgba(255, 255, 255, 0.08);
+  --surface-glass-inverse-hover: rgba(255, 255, 255, 0.17);
+  --focus-ring: var(--color-teal);
+}
+
+/*
+ * base.css resets, ported as-is, but wrapped in @layer base: Tailwind's own
+ * utilities live in @layer utilities, and CSS cascade layers give ANY
+ * unlayered rule priority over ALL layered rules regardless of selector
+ * specificity. Without this @layer wrapper, this plain `a { color: ... }`
+ * rule silently wins over every Tailwind text-color utility applied to an
+ * <a> (e.g. text-white on nav links), no matter how specific the utility
+ * class looks — that was a real, site-wide bug caught in QA.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--text-body);
+    background: var(--surface-page);
+    -webkit-font-smoothing: antialiased;
+    font-size: var(--text-body-size);
+    line-height: var(--leading-normal);
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+  }
+
+  a {
+    color: var(--color-vyoma-blue);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--color-charcoal);
+  }
+}

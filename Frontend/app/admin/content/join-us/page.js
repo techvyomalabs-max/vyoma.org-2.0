@@ -1,0 +1,160 @@
+'use client';
+
+import { RequireAdminAuth } from '@/components/admin/RequireAdminAuth';
+import { ContentEditorShell } from '@/components/admin/cms/ContentEditorShell';
+import { SeoForm } from '@/components/admin/cms/SeoForm';
+import { SimpleRepeatableForm } from '@/components/admin/ui/SimpleRepeatableForm';
+import { SimpleTextListForm } from '@/components/admin/ui/SimpleTextListForm';
+import { RepeatableList } from '@/components/admin/ui/RepeatableList';
+
+const TYPE = 'pages/join-us';
+const inputClass = 'w-full rounded-md border border-[var(--border-subtle)] px-2.5 py-1.5 font-sans text-sm text-charcoal';
+
+function TracksForm({ value, onChange }) {
+  return (
+    <SimpleRepeatableForm
+      value={value}
+      onChange={onChange}
+      labelKey="title"
+      newItemTemplate={{ title: '', href: '', body: '', active: true }}
+      fields={[
+        { key: 'title', type: 'text', label: 'Title' },
+        { key: 'href', type: 'text', label: 'Path (e.g. /join-us/volunteer)' },
+        { key: 'body', type: 'textarea', label: 'Description' },
+      ]}
+    />
+  );
+}
+
+function VolunteerCategoriesForm({ value, onChange }) {
+  return (
+    <RepeatableList
+      items={value}
+      onChange={onChange}
+      newItemTemplate={{ title: 'New category', items: [], active: true }}
+      itemLabel={(item) => item.title || 'New category'}
+      renderItem={(cat, onCatChange) => (
+        <div className="space-y-2">
+          <input
+            type="text"
+            value={cat.title}
+            onChange={(e) => onCatChange({ ...cat, title: e.target.value })}
+            placeholder="Category title"
+            className={inputClass}
+          />
+          <SimpleTextListForm value={cat.items} onChange={(items) => onCatChange({ ...cat, items })} placeholder="Way to help" />
+        </div>
+      )}
+    />
+  );
+}
+
+function VolunteerFeaturedForm({ value, onChange }) {
+  return (
+    <SimpleRepeatableForm
+      value={value}
+      onChange={onChange}
+      labelKey="name"
+      newItemTemplate={{ name: '', note: '', image: null, active: true }}
+      fields={[
+        { key: 'name', type: 'text', label: 'Name' },
+        { key: 'note', type: 'textarea', label: 'Note' },
+        { key: 'image', type: 'image', label: 'Photo' },
+      ]}
+    />
+  );
+}
+
+function InternshipReasonsForm({ value, onChange }) {
+  return <SimpleTextListForm value={value} onChange={onChange} placeholder="Reason to intern at Vyoma" />;
+}
+
+function InternshipOpeningsForm({ value, onChange }) {
+  return (
+    <SimpleRepeatableForm
+      value={value}
+      onChange={onChange}
+      labelKey="role"
+      newItemTemplate={{ role: '', skill: '', active: true }}
+      fields={[
+        { key: 'role', type: 'text', label: 'Role' },
+        { key: 'skill', type: 'text', label: 'Skill required' },
+      ]}
+    />
+  );
+}
+
+function CsrProjectsForm({ value, onChange }) {
+  return (
+    <SimpleRepeatableForm
+      value={value}
+      onChange={onChange}
+      labelKey="name"
+      newItemTemplate={{ name: '', category: '', cost: '', body: '', active: true }}
+      fields={[
+        { key: 'name', type: 'text', label: 'Project name' },
+        { key: 'category', type: 'text', label: 'Category' },
+        { key: 'cost', type: 'text', label: 'Cost' },
+        { key: 'body', type: 'textarea', label: 'Description' },
+      ]}
+    />
+  );
+}
+
+function CareerRolesForm({ value, onChange }) {
+  return (
+    <SimpleRepeatableForm
+      value={value}
+      onChange={onChange}
+      labelKey="title"
+      newItemTemplate={{ title: '', dept: '', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true }}
+      fields={[
+        { key: 'title', type: 'text', label: 'Role title' },
+        { key: 'dept', type: 'text', label: 'Department' },
+        { key: 'type', type: 'text', label: 'Employment type' },
+        { key: 'loc', type: 'text', label: 'Location' },
+        { key: 'desc', type: 'textarea', label: 'Description (optional)' },
+      ]}
+    />
+  );
+}
+
+function CareerStepsForm({ value, onChange }) {
+  return (
+    <SimpleRepeatableForm
+      value={value}
+      onChange={onChange}
+      labelKey="t"
+      newItemTemplate={{ n: '', t: '', d: '', active: true }}
+      fields={[
+        { key: 'n', type: 'text', label: 'Step number' },
+        { key: 't', type: 'text', label: 'Step title' },
+        { key: 'd', type: 'textarea', label: 'Description' },
+      ]}
+    />
+  );
+}
+
+const SECTIONS = [
+  { key: 'TRACKS', label: 'Tracks', description: 'The 5 cards on the Join Us landing page.', publicPath: '/join-us', Form: TracksForm },
+  { key: 'VOLUNTEER_CATEGORIES', label: 'Volunteer: Categories', description: '"Where you can help" categories.', publicPath: '/join-us/volunteer', Form: VolunteerCategoriesForm },
+  { key: 'VOLUNTEER_FEATURED', label: 'Volunteer: Featured', description: 'Featured volunteer profiles.', publicPath: '/join-us/volunteer', Form: VolunteerFeaturedForm },
+  { key: 'INTERNSHIP_REASONS', label: 'Internship: Reasons', description: '"Why intern at Vyoma?" list.', publicPath: '/join-us/internship', Form: InternshipReasonsForm },
+  { key: 'INTERNSHIP_OPENINGS', label: 'Internship: Openings', description: 'Current internship openings (empty by default).', publicPath: '/join-us/internship', Form: InternshipOpeningsForm },
+  { key: 'CSR_PROJECTS', label: 'CSR: Projects', description: 'The CSR project cards.', publicPath: '/join-us/csr-projects', Form: CsrProjectsForm },
+  { key: 'CAREER_ROLES', label: 'Careers: Roles', description: 'Open roles.', publicPath: '/join-us/careers', Form: CareerRolesForm },
+  { key: 'CAREER_STEPS', label: 'Careers: Hiring steps', description: '"How we hire" steps.', publicPath: '/join-us/careers', Form: CareerStepsForm },
+  { key: 'SEO', label: 'SEO', description: 'Title, meta description, canonical, social image.', publicPath: '/join-us', Form: SeoForm },
+];
+
+function JoinUsCmsContent() {
+  return <ContentEditorShell pageLabel="Join Us" type={TYPE} sections={SECTIONS} />;
+}
+
+export default function JoinUsCmsPage() {
+  return (
+    <RequireAdminAuth>
+      <JoinUsCmsContent />
+    </RequireAdminAuth>
+  );
+}

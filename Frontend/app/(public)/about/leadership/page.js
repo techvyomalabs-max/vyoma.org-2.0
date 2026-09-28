@@ -16,10 +16,10 @@ function PeopleGroup({ heading, people, bg }) {
     <section className={`px-8 py-16 ${bg}`}>
       <h2 className="mb-9 text-center font-sans text-h2 font-bold text-vyoma-blue">{heading}</h2>
       <div className="mx-auto grid max-w-[1100px] gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
-        {people.map((p) => (
+        {people.filter((p) => p.active !== false).map((p) => (
           <div key={p.name} className="rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-white px-[22px] py-6">
             <div className="mx-auto mb-4 h-[140px] w-[140px]">
-              <ImagePlaceholder shape="rounded" caption="Photo" />
+              <ImagePlaceholder src={p.image?.url} alt={p.image?.alt || p.name} shape="rounded" caption="Photo" />
             </div>
             <div className="mb-1 font-sans text-[17px] font-bold text-vyoma-blue">{p.name}</div>
             <div className={`font-sans text-sm font-bold uppercase tracking-[0.4px] text-charcoal ${p.bio ? 'mb-2.5' : ''}`}>

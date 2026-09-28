@@ -1,4 +1,5 @@
 import { getOurWorkContent } from '@/services/pageService';
+import { getPublicSettings } from '@/services/settingsService';
 import { PageHero } from '@/components/sections/PageHero';
 import { SchoolsGrid } from '@/components/sections/ourWork/SchoolsGrid';
 import { CurrentWorkStage } from '@/components/sections/ourWork/CurrentWorkStage';
@@ -15,7 +16,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function OurWorkAllPage() {
-  const { SCHOOLS, CW_PLATFORMS, CW_PROGRAMMES } = await getOurWorkContent();
+  const [{ SCHOOLS, CW_PLATFORMS, CW_PROGRAMMES }, settings] = await Promise.all([getOurWorkContent(), getPublicSettings()]);
 
   return (
     <div className="font-sans">
@@ -27,7 +28,7 @@ export default async function OurWorkAllPage() {
         maxWidth="max-w-[760px]"
       />
       <SchoolsGrid schools={SCHOOLS} />
-      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} headingLevel="h2" />
+      <CurrentWorkStage platforms={CW_PLATFORMS} programmes={CW_PROGRAMMES} socialLinks={settings.socialLinks} headingLevel="h2" />
       <CtaStrip badge="Support & Partnerships" heading="Want to support this work?">
         <DonateCta />
         <ContactCta subject="Institutional partnership">Partner with us</ContactCta>

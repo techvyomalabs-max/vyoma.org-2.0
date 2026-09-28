@@ -13,7 +13,8 @@ export const metadata = pageMetadata({
 });
 
 export default async function AboutPage() {
-  const { EXPLORE_MORE_LINKS } = await getAboutContent();
+  const { EXPLORE_MORE_LINKS: LINKS_ALL } = await getAboutContent();
+  const EXPLORE_MORE_LINKS = LINKS_ALL.filter((l) => l.active !== false);
 
   return (
     <div className="font-sans">

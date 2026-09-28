@@ -13,6 +13,7 @@ export const metadata = pageMetadata({
 
 export default async function OurStoryPage() {
   const { TIMELINE_FULL } = await getAboutContent();
+  const TIMELINE = TIMELINE_FULL.filter((t) => t.active !== false);
 
   return (
     <div className="font-sans">
@@ -25,7 +26,7 @@ export default async function OurStoryPage() {
       <section className="bg-white px-8 py-[72px]">
         <div className="relative mx-auto max-w-[900px]">
           <div className="absolute bottom-0 left-1/2 top-0 w-0.5 -translate-x-1/2 bg-amber-gold" />
-          {TIMELINE_FULL.map((t, i) => {
+          {TIMELINE.map((t, i) => {
             const left = i % 2 === 0;
             return (
               <div key={i} className="relative mb-10 grid grid-cols-2">

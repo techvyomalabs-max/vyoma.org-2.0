@@ -9,37 +9,53 @@ function cwPositions(list, radiusPct) {
   });
 }
 
-function SocialRow({ slugs }) {
+
+// `hrefs` is optional (default {}) — per-platform rows (see the `active.it.soc`
+// call below) still pass only `slugs` and get the original decorative
+// `href="#"` behavior, byte-for-byte unchanged. Only the center-hub call
+// passes real, Settings-sourced hrefs (see CurrentWorkStage below).
+function SocialRow({ slugs, hrefs = {} }) {
   return (
     <div className="mt-3.5 flex justify-center gap-3">
-      {slugs.map((slug) => (
-        <a
-          key={slug}
-          href="#"
-          title={slug}
-          onClick={(e) => e.stopPropagation()}
-          className="block h-[18px] w-[18px] bg-white"
-          style={{
-            WebkitMaskImage: `url(https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/${slug}.svg)`,
-            maskImage: `url(https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/${slug}.svg)`,
-            WebkitMaskSize: 'contain',
-            maskSize: 'contain',
-            WebkitMaskRepeat: 'no-repeat',
-            maskRepeat: 'no-repeat',
-          }}
-        />
-      ))}
+      {slugs.map((slug) => {
+        const href = hrefs[slug] || '#';
+        return (
+          <a
+            key={slug}
+            href={href}
+            title={slug}
+            onClick={(e) => e.stopPropagation()}
+            {...(href !== '#' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+            className="block h-[18px] w-[18px] bg-white"
+            style={{
+              WebkitMaskImage: `url(https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/${slug}.svg)`,
+              maskImage: `url(https://cdn.jsdelivr.net/npm/simple-icons@v13/icons/${slug}.svg)`,
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat',
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
+
+// Same Settings-backed platform/order Footer.jsx renders (see its
+// SOCIAL_PLATFORMS) — reused here rather than re-declared with its own
+// list, so both places show exactly the same set whenever Settings changes.
+const CENTER_SOCIAL_SLUGS = ['facebook', 'youtube', 'instagram', 'x', 'linkedin'];
 
 // Orbital diagram: precise trig-based node positioning and custom keyframe
 // animations don't map cleanly to Tailwind utilities, so this section keeps
 // scoped CSS (as the source did) rather than forcing it into arbitrary
 // utility classes.
-export function CurrentWorkStage({ platforms, programmes, headingLevel = 'h1' }) {
+export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgrammes, socialLinks, headingLevel = 'h1' }) {
   const Heading = headingLevel;
   const [active, setActive] = useState(null);
+  const platforms = allPlatforms.filter((p) => p.active !== false);
+  const programmes = allProgrammes.filter((p) => p.active !== false);
   const platPos = cwPositions(platforms, 28);
   const progPos = cwPositions(programmes, 42);
   const openLink = (u) => {
@@ -122,7 +138,7 @@ export function CurrentWorkStage({ platforms, programmes, headingLevel = 'h1' })
                 <div className="ey">Our Work Today</div>
                 <h2>Vyoma</h2>
                 <div className="d">Hover any node to see what we run.</div>
-                <SocialRow slugs={['facebook', 'x', 'linkedin', 'whatsapp']} />
+                <SocialRow slugs={CENTER_SOCIAL_SLUGS.filter((slug) => socialLinks?.[slug])} hrefs={socialLinks || {}} />
               </>
             )}
           </div>

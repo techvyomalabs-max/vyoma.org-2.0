@@ -34,10 +34,11 @@ function FaqItem({ q, a, note, open, onToggle }) {
 
 export function FaqGroup({ group, items }) {
   const [openIdx, setOpenIdx] = useState(null);
+  const active = items.filter((it) => it.active !== false);
   return (
     <div className="mb-5 rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold px-[26px] pb-3 pt-2.5">
       <h2 className="mx-1 mb-1.5 mt-4 font-sans text-xl font-bold text-vyoma-blue">{group}</h2>
-      {items.map((it, i) => (
+      {active.map((it, i) => (
         <FaqItem key={i} q={it.q} a={it.a} note={it.note} open={openIdx === i} onToggle={() => setOpenIdx(openIdx === i ? null : i)} />
       ))}
     </div>

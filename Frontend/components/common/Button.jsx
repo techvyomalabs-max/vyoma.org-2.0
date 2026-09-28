@@ -22,6 +22,8 @@ export function Button({
   children,
   onClick,
   href,
+  target,
+  rel,
   type = 'button',
   disabled = false,
   className = '',
@@ -30,10 +32,11 @@ export function Button({
 
   // href renders a real <a> (via next/link) styled identically — never nest
   // a Link inside a <button>, which is invalid HTML and silently drops the
-  // link's content in some browsers.
+  // link's content in some browsers. target/rel (Phase B: CMS-editable
+  // internal-vs-external CTAs) pass straight through to the underlying <a>.
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} target={target} rel={rel} className={classes}>
         {children}
       </Link>
     );

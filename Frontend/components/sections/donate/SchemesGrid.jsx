@@ -3,7 +3,7 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 
 export function SchemesGrid({ schemes }) {
   return (
-    <section className="bg-sky-mist px-8 py-14">
+    <section id="schemes" className="bg-sky-mist px-8 py-14">
       <div className="mx-auto max-w-[1100px]">
         <h2 className="mb-8 text-center font-sans text-h2 font-bold text-vyoma-blue">Choose a scheme</h2>
         <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>

@@ -9,8 +9,7 @@ import { pageMetadata } from '@/lib/seo';
 
 // EVENT_CATEGORIES is static filter-chip config, not fetched content —
 // mediaService.getEvents() only returns { upcoming, past } (LLD content
-// items), so this constant is imported directly, same treatment as
-// BLOG_CATEGORIES on /media/blog.
+// items), so this constant is imported directly.
 export const metadata = pageMetadata({
   path: '/media/events',
   title: 'Events',

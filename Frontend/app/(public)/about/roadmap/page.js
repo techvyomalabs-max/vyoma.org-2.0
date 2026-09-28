@@ -15,7 +15,8 @@ const SCHOOLS_TEXT =
   'core linguistics, advanced shastras, distance learning, IKS research, applied AI, inclusive learning, and value education for children';
 
 export default async function RoadmapPage() {
-  const { PHASES } = await getAboutContent();
+  const { PHASES: PHASES_ALL } = await getAboutContent();
+  const PHASES = PHASES_ALL.filter((p) => p.active !== false);
 
   return (
     <div className="font-sans">

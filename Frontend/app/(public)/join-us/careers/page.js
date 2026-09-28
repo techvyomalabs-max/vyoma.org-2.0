@@ -12,7 +12,8 @@ export const metadata = pageMetadata({
 });
 
 export default async function CareersPage() {
-  const { CAREER_ROLES, CAREER_STEPS } = await getJoinUsContent();
+  const { CAREER_ROLES, CAREER_STEPS: STEPS_ALL } = await getJoinUsContent();
+  const CAREER_STEPS = STEPS_ALL.filter((s) => s.active !== false);
 
   return (
     <div className="font-sans">

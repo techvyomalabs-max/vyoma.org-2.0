@@ -1,5 +1,5 @@
 import { DONATION_SCHEMES } from '@/lib/mockData/donate';
-import { BLOG_POSTS } from '@/lib/mockData/media';
+import { getBlogPosts } from '@/services/blogService';
 
 const BASE_URL = 'https://vyoma.org';
 
@@ -42,7 +42,7 @@ const STATIC_ROUTES = [
   '/contact',
 ];
 
-export default function sitemap() {
+export default async function sitemap() {
   const now = new Date();
 
   const staticEntries = STATIC_ROUTES.map((path) => ({
@@ -59,9 +59,12 @@ export default function sitemap() {
     priority: 0.6,
   }));
 
-  const blogEntries = BLOG_POSTS.map((p) => ({
+  // Phase E: Blog moved off static mock data onto its own live model — the
+  // sitemap now reflects real published posts instead of a frozen list.
+  const { items: posts } = await getBlogPosts({ limit: 50 });
+  const blogEntries = posts.map((p) => ({
     url: `${BASE_URL}/media/blog/${p.slug}`,
-    lastModified: now,
+    lastModified: p.publishedAt ? new Date(p.publishedAt) : now,
     changeFrequency: 'monthly',
     priority: 0.5,
   }));

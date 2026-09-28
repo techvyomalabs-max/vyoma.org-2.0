@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/common/Badge';
 import { Button } from '@/components/common/Button';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { submitForm } from '@/services/formService';
 
 const FLAGSHIP_NAME = 'SSS Experience Center – Vyoma HQ';
 
@@ -24,12 +25,41 @@ function CSRProjectCard({ p, onPick }) {
 // Holds the shared `selected` state for the flagship banner, the CSR_PROJECTS
 // grid, and the enquiry form below, since picking any "Partner on this" button
 // (flagship or grid card) must update the form's select and scroll it into view.
-export function CSRProjectsBoard({ projects }) {
+export function CSRProjectsBoard({ projects: projectsInput }) {
+  const projects = projectsInput.filter((p) => p.active !== false);
   const [selected, setSelected] = useState('');
+  const [fields, setFields] = useState({ name: '', email: '', organisation: '', mobile: '', comment: '' });
+  const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'sent' | 'error'
 
   const pick = (name) => {
     setSelected(name);
     document.getElementById('csr-enquiry-form')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const setField = (key) => (e) => setFields((f) => ({ ...f, [key]: e.target.value }));
+
+  // Reuses the existing generic forms backend (Backend/src/modules/forms —
+  // any formKey is accepted, no new module) with a dedicated key rather than
+  // folding this into the generic 'contact' form, since it captures fields
+  // (organisation, mobile, project of interest) that form doesn't.
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus('submitting');
+    try {
+      // The generic forms backend validates every submission against a
+      // shared {name, email, message} requirement (forms.controller.js) —
+      // this form's "Comment / Message" field maps to `message` so it
+      // satisfies that check; `comment` alone would 422.
+      await submitForm('csr-enquiry', {
+        values: { ...fields, message: fields.comment, projectOfInterest: selected },
+        sourceUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      });
+      setStatus('sent');
+      setFields({ name: '', email: '', organisation: '', mobile: '', comment: '' });
+      setSelected('');
+    } catch {
+      setStatus('error');
+    }
   };
 
   return (
@@ -64,53 +94,72 @@ export function CSRProjectsBoard({ projects }) {
       <section id="csr-enquiry-form" className="bg-sky-mist px-8 py-14">
         <div className="mx-auto max-w-[640px]">
           <h3 className="mb-6 text-center font-sans text-[26px] font-bold text-vyoma-blue">Partner Enquiry</h3>
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="flex flex-col gap-3.5 rounded-md bg-white px-6 py-7"
-          >
-            <input
-              placeholder="Name"
-              aria-label="Name"
-              className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
-            />
-            <input
-              placeholder="Email"
-              aria-label="Email"
-              type="email"
-              className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
-            />
-            <input
-              placeholder="Organisation Name"
-              aria-label="Organisation Name"
-              className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
-            />
-            <input
-              placeholder="Mobile Number"
-              aria-label="Mobile Number"
-              className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
-            />
-            <select
-              value={selected}
-              onChange={(e) => setSelected(e.target.value)}
-              aria-label="Project of interest"
-              className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px] text-charcoal"
-            >
-              <option value="">Project of interest</option>
-              <option>{FLAGSHIP_NAME}</option>
-              {projects.map((p) => (
-                <option key={p.name}>{p.name}</option>
-              ))}
-            </select>
-            <textarea
-              placeholder="Comment / Message"
-              aria-label="Comment / Message"
-              rows={4}
-              className="resize-y rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
-            />
-            <Button variant="solid" type="submit">
-              Submit
-            </Button>
-          </form>
+          {status === 'sent' ? (
+            <div className="rounded-md bg-white px-6 py-7 text-center font-sans text-[15px] text-charcoal">
+              Thank you — we&apos;ve received your enquiry and will be in touch.
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 rounded-md bg-white px-6 py-7">
+              <input
+                placeholder="Name"
+                aria-label="Name"
+                value={fields.name}
+                onChange={setField('name')}
+                required
+                className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
+              />
+              <input
+                placeholder="Email"
+                aria-label="Email"
+                type="email"
+                value={fields.email}
+                onChange={setField('email')}
+                required
+                className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
+              />
+              <input
+                placeholder="Organisation Name"
+                aria-label="Organisation Name"
+                value={fields.organisation}
+                onChange={setField('organisation')}
+                className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
+              />
+              <input
+                placeholder="Mobile Number"
+                aria-label="Mobile Number"
+                value={fields.mobile}
+                onChange={setField('mobile')}
+                className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
+              />
+              <select
+                value={selected}
+                onChange={(e) => setSelected(e.target.value)}
+                aria-label="Project of interest"
+                className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px] text-charcoal"
+              >
+                <option value="">Project of interest</option>
+                <option>{FLAGSHIP_NAME}</option>
+                {projects.map((p) => (
+                  <option key={p.name}>{p.name}</option>
+                ))}
+              </select>
+              <textarea
+                placeholder="Comment / Message"
+                aria-label="Comment / Message"
+                rows={4}
+                value={fields.comment}
+                onChange={setField('comment')}
+                required
+                className="resize-y rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
+              />
+              {status === 'error' && (
+                <p className="font-sans text-sm text-red-600">Something went wrong — please try again.</p>
+              )}
+              <Button variant="solid" type="submit" disabled={status === 'submitting'}>
+                {status === 'submitting' ? 'Sending…' : 'Submit'}
+              </Button>
+            </form>
+          )}
         </div>
       </section>
     </>

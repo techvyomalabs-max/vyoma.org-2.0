@@ -12,7 +12,8 @@ export const metadata = pageMetadata({
 });
 
 export default async function JoinUsPage() {
-  const { TRACKS } = await getJoinUsContent();
+  const { TRACKS: TRACKS_ALL } = await getJoinUsContent();
+  const TRACKS = TRACKS_ALL.filter((t) => t.active !== false);
 
   return (
     <div className="font-sans">

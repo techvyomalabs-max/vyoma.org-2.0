@@ -19,7 +19,7 @@ function MetricSection({ eyebrow, title, items }) {
         <div className="mb-2.5 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
         <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))' }}>
-          {items.map((m) => (
+          {items.filter((m) => m.active !== false).map((m) => (
             <MetricCard key={m.label} value={m.value} label={m.label} />
           ))}
         </div>

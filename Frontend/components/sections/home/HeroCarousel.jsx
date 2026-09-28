@@ -5,21 +5,25 @@ import { Button } from '@/components/common/Button';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { useModal } from '@/components/layout/ModalProvider';
 
-const N = 5;
-
+// Phase B: slide count is now data-driven (was hardcoded `const N = 5`,
+// which silently ignored any slide added/removed/reordered/hidden via the
+// admin CMS). `slides` is expected pre-filtered to `active` items by the
+// caller (Home page.js), same as every other section.
 export function HeroCarousel({ slides }) {
   const [idx, setIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const [hovering, setHovering] = useState(false);
   const { openDonate } = useModal();
+  const n = slides.length;
 
   useEffect(() => {
-    if (paused || hovering) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % N), 7000);
+    if (paused || hovering || n === 0) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % n), 7000);
     return () => clearInterval(t);
-  }, [paused, hovering]);
+  }, [paused, hovering, n]);
 
-  const slide = slides[idx];
+  if (n === 0) return null;
+  const slide = slides[idx % n];
 
   return (
     <section className="bg-vyoma-blue px-8 py-16">
@@ -27,20 +31,23 @@ export function HeroCarousel({ slides }) {
         <div className="flex h-[480px] min-w-[280px] flex-1 basis-[320px] flex-col">
           <div className="flex flex-1 flex-col justify-center">
             <h1 key={idx} className="mb-2.5 break-words font-sans text-h1 font-semibold leading-tight text-white">
-              {slide.title}
+              {slide.heading}
             </h1>
             <p className="max-w-[480px] break-words font-sans text-xl text-[var(--text-inverse-muted)]">
               {slide.body}
             </p>
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
-            {slide.cta === 'Volunteer' ? (
-              <Button href="/join-us/volunteer" variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5">
-                Volunteer
-              </Button>
-            ) : (
-              <Button href="/about" variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5">
-                Explore our work
+            {slide.cta?.label && (
+              <Button
+                href={slide.cta.href}
+                target={slide.cta.external ? '_blank' : undefined}
+                rel={slide.cta.external ? 'noopener noreferrer' : undefined}
+                variant="outline-inverse"
+                size="lg"
+                className="whitespace-nowrap px-3.5"
+              >
+                {slide.cta.label}
               </Button>
             )}
             <Button variant="outline-inverse" size="lg" className="whitespace-nowrap px-3.5" onClick={openDonate}>

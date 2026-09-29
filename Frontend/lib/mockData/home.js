@@ -4,39 +4,44 @@
 // image/link fields where none existed before) — nothing changes on the
 // live site until an admin actually edits something through the new forms.
 
+// Mirrors Backend/scripts/seedData/home.js — see that file's comment.
+function heroImage(storedName, alt) {
+  return { mediaId: null, url: `/images/${storedName}`, alt };
+}
+
 export const HERO_SLIDES = [
   {
     heading: "Support India's largest free Sanskrit e-learning platform",
     body: 'Making Saṃskṛtam accessible to all, at global scale, with full financial transparency.',
-    image: null,
+    image: heroImage('hero-1.png', "Students learning Sanskrit on Vyoma's e-learning platform"),
     cta: { label: 'Explore our work', href: '/about', external: false },
     active: true,
   },
   {
     heading: "Launch of the World's first E-Learning Platform in OTT Format",
     body: 'July 2025 — bringing Sanskrit learning to a familiar, binge-friendly format.',
-    image: null,
+    image: heroImage('hero-2.png', 'Launch of the Digital Sanskrit OTT e-learning platform'),
     cta: { label: 'Explore our work', href: '/about', external: false },
     active: true,
   },
   {
     heading: 'In rural Tyamagondlu, the school year begins with puppet shows',
     body: 'Sanskrit chants, not textbooks — free for every child.',
-    image: null,
+    image: heroImage('hero-3.png', 'Children in rural Tyamagondlu at a puppet-show Sanskrit class'),
     cta: { label: 'Explore our work', href: '/about', external: false },
     active: true,
   },
   {
     heading: 'Inauguration of our IKS VIKALPA Library',
     body: 'By Prof. Ganti S. Murthy, March 2026.',
-    image: null,
+    image: heroImage('hero-4.png', 'Inauguration of the IKS VIKALPA Library'),
     cta: { label: 'Explore our work', href: '/about', external: false },
     active: true,
   },
   {
     heading: 'Follow your passion for seva',
     body: 'Become a Vyoma volunteer.',
-    image: null,
+    image: heroImage('hero-5.jpg', 'Vyoma volunteers engaged in seva'),
     cta: { label: 'Volunteer', href: '/join-us/volunteer', external: false },
     active: true,
   },

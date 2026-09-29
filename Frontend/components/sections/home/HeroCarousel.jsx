@@ -57,25 +57,25 @@ export function HeroCarousel({ slides }) {
         </div>
         <div className="min-w-[280px] flex-[2_1_480px]">
           <div onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
-            <div className="relative aspect-[2/1] w-full overflow-hidden rounded-lg border border-white/30">
-              {slides.map((_, i) => (
+            <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl border border-white/30">
+              {slides.map((s, i) => (
                 <div
                   key={i}
                   className="absolute inset-0 transition-opacity duration-[0.6s]"
                   style={{ opacity: i === idx ? 1 : 0, pointerEvents: i === idx ? 'auto' : 'none' }}
                 >
-                  <ImagePlaceholder alt={`Hero photo ${i + 1}`} caption={`Hero photo ${i + 1}`} shape="rect" />
+                  <ImagePlaceholder src={s.image?.url} alt={s.image?.alt || s.heading} caption={`Hero photo ${i + 1}`} shape="rect" />
                 </div>
               ))}
               <button
-                onClick={() => setIdx((i) => (i - 1 + N) % N)}
+                onClick={() => setIdx((i) => (i - 1 + n) % n)}
                 aria-label="Previous photo"
                 className="absolute bottom-2.5 left-3 z-[2] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/35 text-base text-white"
               >
                 ‹
               </button>
               <button
-                onClick={() => setIdx((i) => (i + 1) % N)}
+                onClick={() => setIdx((i) => (i + 1) % n)}
                 aria-label="Next photo"
                 className="absolute bottom-2.5 right-3 z-[2] flex h-[30px] w-[30px] items-center justify-center rounded-full bg-black/35 text-base text-white"
               >
@@ -90,7 +90,7 @@ export function HeroCarousel({ slides }) {
               >
                 {paused ? '▶' : '❙❙'}
               </button>
-              {[0, 1, 2, 3, 4].map((i) => (
+              {slides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setIdx(i)}

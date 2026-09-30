@@ -3,3 +3,8 @@ node_modules
 !.env.example
 *.log
 .data/
+
+# Raw WordPress migration exports/backups (production content, media,
+# possibly sensitive data) — local-only, never committed. See
+# scripts/wordpress/README.md.
+.migration-data/

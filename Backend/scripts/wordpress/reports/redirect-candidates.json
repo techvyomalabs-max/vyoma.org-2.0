@@ -1,0 +1,738 @@
+[
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "n/a (draft, never public)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "n/a (draft, never public)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "n/a (draft, never public)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": true
+  },
+  {
+    "oldPath": "/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/privacy/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/about/",
+    "proposedNewPath": "/about",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/projects/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/volunteers/",
+    "proposedNewPath": "/join-us/volunteer",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/contact/",
+    "proposedNewPath": "/contact",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/careers120126/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/team/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/events/",
+    "proposedNewPath": "/media/events",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/gallery/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/testimonials/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/roadmap/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/timeline/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/where-sanskrit/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/patrons/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/catalog/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/vsb/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/terms/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/job-openings/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/metrics/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/what-sanskrit/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/new-landing/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/newsletter/",
+    "proposedNewPath": "/media/newsletter",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/testimonials-teacher/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/payment-confirmation/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/payment-failed/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/donors/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/grama-seva/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/veda-seva/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/visheshachatra-seva/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/samskritabhavanam/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/samrakshananidhi/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/samskritsabhaujjeevanam/",
+    "proposedNewPath": "/donate/sabha-ujjivanam",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/svp/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-2/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/vidya_danam_dm/",
+    "proposedNewPath": "/donate/vidya-danam",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/grantha-danam-2/",
+    "proposedNewPath": "/donate/grantha-danam",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/gallery-2-2/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/gallery-2/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/education/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/teachers/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/csr-projects/",
+    "proposedNewPath": "/join-us/csr-projects",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/publication/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/scholarship-rewards/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/sabha-fund/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/vsp/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/nourishment/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/corpus/",
+    "proposedNewPath": "/join-us/corpus-fund",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/donors-3/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/leadership/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/compliances_registrations/",
+    "proposedNewPath": "/credibility/compliances-registrations",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/audit-reports/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/eventscontribution/",
+    "proposedNewPath": "/donate/events-and-projects",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/generaldonation/",
+    "proposedNewPath": "/donate/general-donation",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/productscontribution/",
+    "proposedNewPath": null,
+    "confidence": "low",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blogs/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/awards/",
+    "proposedNewPath": "/credibility/awards-recognition",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/media/",
+    "proposedNewPath": "/media",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/social-impact-report/",
+    "proposedNewPath": "/credibility/social-impact-report",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/annual_reports/",
+    "proposedNewPath": "/credibility/annual-reports",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/collaterals/",
+    "proposedNewPath": "/credibility/collaterals",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/careers/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/where-iks/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/where-iks-2/",
+    "proposedNewPath": null,
+    "confidence": "blocked-on-duplicate-decision",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": true,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/internships/",
+    "proposedNewPath": "/join-us/internship",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/unveiling-the-mysteries-of-ga%e1%b9%87apati/",
+    "proposedNewPath": "/media/blog/unveiling-the-mysteries-of-ga-apati",
+    "confidence": "medium (slug needs de-encoding, confirm final spelling)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga%e1%b9%87esa-puja/",
+    "proposedNewPath": "/media/blog/edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga-esa-puja",
+    "confidence": "medium (slug needs de-encoding, confirm final spelling)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/rathasaptami/",
+    "proposedNewPath": "/media/blog/rathasaptami",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/bhishma-ashtami/",
+    "proposedNewPath": "/media/blog/bhishma-ashtami",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/mahasivaratri/",
+    "proposedNewPath": "/media/blog/mahasivaratri",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/ramanavami/",
+    "proposedNewPath": "/media/blog/ramanavami",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/yoga_day/",
+    "proposedNewPath": "/media/blog/yoga_day",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/guru-purnima/",
+    "proposedNewPath": "/media/blog/guru-purnima",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/what-is-sa%e1%b9%83sk%e1%b9%9btam/",
+    "proposedNewPath": "/media/blog/what-is-sa-sk-tam",
+    "confidence": "medium (slug needs de-encoding, confirm final spelling)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/why-sa%e1%b9%83sk%e1%b9%9btam/",
+    "proposedNewPath": "/media/blog/why-sa-sk-tam",
+    "confidence": "medium (slug needs de-encoding, confirm final spelling)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/how-sa%e1%b9%83sk%e1%b9%9btam/",
+    "proposedNewPath": "/media/blog/how-sa-sk-tam",
+    "confidence": "medium (slug needs de-encoding, confirm final spelling)",
+    "manualReviewFlag": true,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives/",
+    "proposedNewPath": "/media/blog/the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems/",
+    "proposedNewPath": "/media/blog/dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam/",
+    "proposedNewPath": "/media/blog/a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems/",
+    "proposedNewPath": "/media/blog/gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/how-panchatantra-teaches-without-teaching/",
+    "proposedNewPath": "/media/blog/how-panchatantra-teaches-without-teaching",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/why-the-amarakosha-was-written-to-be-sung/",
+    "proposedNewPath": "/media/blog/why-the-amarakosha-was-written-to-be-sung",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/raksha-bandhan-gift-a-year-of-sanskrit/",
+    "proposedNewPath": "/media/blog/raksha-bandhan-gift-a-year-of-sanskrit",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  },
+  {
+    "oldPath": "/blog-post/why-sanskrit-is-not-finished-it-is-alive/",
+    "proposedNewPath": "/media/blog/why-sanskrit-is-not-finished-it-is-alive",
+    "confidence": "high",
+    "manualReviewFlag": false,
+    "isDuplicateOrObsoleteCandidate": false,
+    "isDraft": false
+  }
+]

@@ -1,0 +1,242 @@
+[
+  {
+    "cluster": "donors",
+    "members": [
+      {
+        "title": "Donors backup",
+        "id": "8662",
+        "status": "draft",
+        "date": "2023-10-30 15:37:18",
+        "oldUrl": "https://vyoma.org/?page_id=8662",
+        "contentLength": 35798
+      },
+      {
+        "title": "Donate SSS",
+        "id": "7548",
+        "status": "publish",
+        "date": "2023-09-12 18:02:23",
+        "oldUrl": "https://vyoma.org/donors/",
+        "contentLength": 42044
+      },
+      {
+        "title": "Donate-SSS",
+        "id": "8821",
+        "status": "publish",
+        "date": "2023-10-30 16:00:12",
+        "oldUrl": "https://vyoma.org/donors-3/",
+        "contentLength": 27171
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [donors-2-2, donors, donors-3] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "team",
+    "members": [
+      {
+        "title": "Core Team - back up",
+        "id": "8825",
+        "status": "draft",
+        "date": "2023-10-31 11:04:21",
+        "oldUrl": "https://vyoma.org/?page_id=8825",
+        "contentLength": 110074
+      },
+      {
+        "title": "Core Team",
+        "id": "74",
+        "status": "publish",
+        "date": "2021-11-24 13:07:46",
+        "oldUrl": "https://vyoma.org/team/",
+        "contentLength": 160713
+      },
+      {
+        "title": "Leadership",
+        "id": "8827",
+        "status": "publish",
+        "date": "2023-10-31 10:47:53",
+        "oldUrl": "https://vyoma.org/leadership/",
+        "contentLength": 39361
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [team-1, team, leadership] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "careers",
+    "members": [
+      {
+        "title": "CareersBackup",
+        "id": "10187",
+        "status": "draft",
+        "date": "2024-12-23 09:29:45",
+        "oldUrl": "https://vyoma.org/?page_id=10187",
+        "contentLength": 7090
+      },
+      {
+        "title": "Careersbackup120126",
+        "id": "37",
+        "status": "publish",
+        "date": "2021-11-12 12:24:30",
+        "oldUrl": "https://vyoma.org/careers120126/",
+        "contentLength": 52150
+      },
+      {
+        "title": "Careers",
+        "id": "11687",
+        "status": "publish",
+        "date": "2026-01-08 12:50:26",
+        "oldUrl": "https://vyoma.org/careers/",
+        "contentLength": 147492
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [careers-backup, careers120126, careers] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "sanskrit-topic",
+    "members": [
+      {
+        "title": "Where Sanskrit-IKS",
+        "id": "11766",
+        "status": "draft",
+        "date": "2026-01-30 16:59:07",
+        "oldUrl": "https://vyoma.org/?page_id=11766",
+        "contentLength": 32683
+      },
+      {
+        "title": "Where Sanskrit",
+        "id": "202",
+        "status": "publish",
+        "date": "2021-11-30 13:46:48",
+        "oldUrl": "https://vyoma.org/where-sanskrit/",
+        "contentLength": 25331
+      },
+      {
+        "title": "What Sanskrit",
+        "id": "5698",
+        "status": "publish",
+        "date": "2022-11-08 10:04:30",
+        "oldUrl": "https://vyoma.org/what-sanskrit/",
+        "contentLength": 27387
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [where-sanskrit-3, where-sanskrit, what-sanskrit] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "homepage",
+    "members": [
+      {
+        "title": "Home",
+        "id": "2",
+        "status": "publish",
+        "date": "2021-11-12 06:31:21",
+        "oldUrl": "https://vyoma.org/",
+        "contentLength": 50321
+      },
+      {
+        "title": "New Landing",
+        "id": "6247",
+        "status": "publish",
+        "date": "2022-12-14 11:15:45",
+        "oldUrl": "https://vyoma.org/new-landing/",
+        "contentLength": 1231
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [page1-2, new-landing] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "gallery",
+    "members": [
+      {
+        "title": "Gallery",
+        "id": "89",
+        "status": "publish",
+        "date": "2021-11-24 14:20:07",
+        "oldUrl": "https://vyoma.org/gallery/",
+        "contentLength": 24581
+      },
+      {
+        "title": "Gallery",
+        "id": "8850",
+        "status": "publish",
+        "date": "2024-03-01 14:28:26",
+        "oldUrl": "https://vyoma.org/gallery-2-2/",
+        "contentLength": 24491
+      },
+      {
+        "title": "Gallery",
+        "id": "8928",
+        "status": "publish",
+        "date": "2023-11-06 13:50:36",
+        "oldUrl": "https://vyoma.org/gallery-2/",
+        "contentLength": 14471
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [gallery, gallery-2-2, gallery-2] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "blog",
+    "members": [
+      {
+        "title": "Blog",
+        "id": "199",
+        "status": "publish",
+        "date": "2021-11-30 13:07:43",
+        "oldUrl": "https://vyoma.org/blog/",
+        "contentLength": 709
+      },
+      {
+        "title": "blog-1",
+        "id": "7753",
+        "status": "publish",
+        "date": "2023-09-19 16:39:24",
+        "oldUrl": "https://vyoma.org/blog-2/",
+        "contentLength": 620
+      },
+      {
+        "title": "blogs-new",
+        "id": "9714",
+        "status": "publish",
+        "date": "2024-06-20 17:45:51",
+        "oldUrl": "https://vyoma.org/blogs/",
+        "contentLength": 1173
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [blog, blog-2, blogs] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  },
+  {
+    "cluster": "where-iks",
+    "members": [
+      {
+        "title": "Where IKS",
+        "id": "11907",
+        "status": "publish",
+        "date": "2026-02-02 16:06:27",
+        "oldUrl": "https://vyoma.org/where-iks/",
+        "contentLength": 65880
+      },
+      {
+        "title": "Where IKS - Shashank",
+        "id": "12791",
+        "status": "publish",
+        "date": "2026-04-30 15:31:06",
+        "oldUrl": "https://vyoma.org/where-iks-2/",
+        "contentLength": 70007
+      }
+    ],
+    "contentDiffersMaterially": "Yes — content lengths differ significantly, these are not identical copies.",
+    "mostLikelyCurrent": "Not selected automatically — see decisionNeeded.",
+    "decisionNeeded": "Which of [where-iks, where-iks-2] is the authoritative version to migrate (if any) — the others are candidates for discard or archival."
+  }
+]

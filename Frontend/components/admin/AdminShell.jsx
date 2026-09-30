@@ -162,6 +162,8 @@ const NAV = [
       { href: '/admin/content/events', label: 'Events' },
       { href: '/admin/content/gallery', label: 'Gallery' },
       { href: '/admin/content/newsletter', label: 'Newsletter' },
+      { href: '/admin/content/privacy', label: 'Privacy Policy' },
+      { href: '/admin/content/terms', label: 'Terms & Conditions' },
       { href: '/admin/content', label: 'All other pages (legacy editor)' },
     ],
   },

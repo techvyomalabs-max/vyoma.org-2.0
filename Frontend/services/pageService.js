@@ -15,3 +15,5 @@ export const getDonateContent = () => getPublicContent('pages/donate', () => imp
 export const getFaqContent = () => getPublicContent('pages/faq', () => import('@/lib/mockData/faq'));
 export const getContactContent = () => getPublicContent('pages/contact', () => import('@/lib/mockData/contact'));
 export const getMediaContent = () => getPublicContent('pages/media', () => import('@/lib/mockData/media'));
+export const getPrivacyContent = () => getPublicContent('pages/privacy', () => import('@/lib/mockData/privacy'));
+export const getTermsContent = () => getPublicContent('pages/terms', () => import('@/lib/mockData/terms'));

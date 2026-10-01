@@ -84,6 +84,7 @@ Items that can proceed without further business clarification.
 | D26 | Newsletter/activity-report archive (48 PDFs) | Various | No CMS structure exists for this volume of content (F1) | Decide whether a public archive is worth building at all | Only if pursued — otherwise no blocker |
 | D27 | Formaloo/Google Forms/Mailchimp continuation | Careers, Volunteer, Donor Form, Event signup | External dependencies still active; MERN equivalents mostly don't exist yet (Section J) | Decide whether/when to replace each with a native MERN form | See §7/§8 |
 | D28 | Careers content authority | `/careers/` vs `/careers120126/` | See D4 — duplicated here since it also affects the Careers CMS extension decision (A5) | Which roles are current | Only Careers CMS completeness |
+| D28a | *Addendum to D28 (Batch 3 manual verification, see §10):* native Careers-application form is blocked on resume/file storage, not on form-field complexity | The live Google Careers Form requires a resume upload (max 10MB) that WPForms 13561 never had | S3/AWS access is still unavailable (the same standing blocker as the Media module) | Decide when AWS/S3 lands whether to build the native form then, or keep using the external Google Form indefinitely | Only the native-Careers-application feature; the already-shipped `applyUrl` fallback mechanism (commit `23363ea`) is unaffected and already safe to use with any external URL, including this Google Form, once approved |
 | D29 | Terms/Privacy skipped section & inconsistency | `/privacy/` (missing "3."), `/terms/` (Donation Policy misdirected link) | Source document quirks, not something to silently fix (Section I) | Confirm whether to correct or preserve verbatim | Only these two documents, and only if a legal reviewer wants changes |
 | D29a | *Addendum to D29 (found during Batch 2 implementation):* Terms §21 markup/numbering inconsistency | `/terms/`, real content "Governing Law & Dispute Resolution" | Terms has real Section 21 content (Governing Law & Dispute Resolution); the source markup does not number it consistently with the surrounding sections (numbering visibly jumps 20 -> 22, since §21 is not wrapped in a numbered `<ol>` like every other section) | None — Batch 2 migration preserves this source markup/content behavior exactly; no legal or editorial correction is being made during migration | Neither — resolved, preserved verbatim; only relevant again if a legal reviewer later wants the numbering corrected |
 | D30 | Panchatantra MERN stub | `how-panchatantra-teaches-without-teaching` (WP) vs. demo `how-the-pancatantra-teaches-without-teaching` (MERN) | Confirmed to be modeled on the real post but with placeholder body (Section D) | Overwrite stub with real content, or handle differently | Only this one blog post |
@@ -259,3 +260,36 @@ Exact safe sequence from here:
 7. **Redirect creation** — only once the specific content it targets has actually landed in MERN (not before), using the confirmed/high-confidence list in §6 first, then the pending-decision list as those decisions close.
 8. **Media/S3 migration** — remains blocked until AWS access lands, independent of the above; the media inventory from Sections F/G is already prepared for that day.
 9. **WPCode replication and legal-route creation (Privacy/Terms + footer link flip)** — schedule these before WordPress is actually decommissioned, not necessarily before the content migration finishes, since they're about *retiring WordPress safely*, not about the MERN migration itself.
+
+---
+
+## 10. Careers application mechanism — verified findings (Batch 3)
+
+Manually verified in wp-admin and live browser sessions (fields/status only — no submission/entry data was ever opened). Supersedes the earlier read-only WXR-only inference on this topic; recorded here as the authoritative account.
+
+**Mechanism status on the authoritative `/careers/` page** (post_id 11687, published 2026-01-08, last modified 2026-08-24 — the most recently touched page in the Careers cluster):
+- **Formaloo** (`data-formz-slug="HqwvzJFZ"`) — present in the markup but its wrapping Divi row and text module both carry `disabled="on"` / `disabled_on="on|on|on"` (all breakpoints). **Disabled.**
+- **WPForms 13561** — present in the markup, inside the same disabled `#career-form`-anchored row as Formaloo. **Disabled.**
+- **Google Form** (`docs.google.com/forms/d/e/1FAIpQLSfwop69b6299vzxrqer4h-GGZBmbzOq5nHk4uz59R8Z6LlJ3Q/viewform`) — not disabled, wired directly to the "Apply now" button repeated across every active role row. **The active application mechanism**, confirmed reachable live from the real Apply now CTA.
+
+**Verified live Google Form fields** ("Career Application Form - Vyoma Labs"):
+1. Full Name — required
+2. Email Address — required
+3. Contact Number — required
+4. Job or Internship? — required (Full time Job / Internship)
+5. Department of interest — required (Technology / Linguist / E-learning & Video Editing / Sales & Marketing / PMO office / HR & Finance)
+6. Tell us briefly about yourself — required
+7. LinkedIn or Profile Link, if any — required
+8. **Upload Resume — required, 1 file, max 10MB**
+
+**Department options match WPForms 13561 exactly**, field-for-field, confirming the Google Form is a direct successor to (not a redesign of) WPForms 13561's field design — the sole functional addition is the required resume upload, which WPForms 13561 never had.
+
+**Role context is not transmitted to the Google Form automatically.** All 11 "Apply now" buttons across every role row point to the byte-identical URL with no query string or prefill parameters — applicants reach one shared, generic form and must manually re-select "Job or Internship" and "Department of interest" themselves; the form has no way to know which role's Apply button was clicked.
+
+**One shared Google Form URL for every role matches the authoritative page's actual live behavior** — this was not a migration simplification to invent; it is how `/careers/` itself already works today.
+
+**Native `careers-application` form — reclassified**: READY DESIGN / **BLOCKED IMPLEMENTATION**. The field design (name, email, contact number, job/internship select, department select, about-yourself textarea, LinkedIn link) is fully specified and ready whenever it's built. Implementation is blocked specifically on the required resume upload — no file-upload/multer/S3-backed storage exists anywhere in the current backend, and AWS/S3 access remains unavailable (same standing dependency as the Media module, D6 in the original architecture plan). This specification is preserved here for whenever that dependency clears, rather than being re-derived from scratch.
+
+**Current `applyUrl` behavior (commit `23363ea`, reviewed, not modified)** remains the safest available mechanism: a role with a non-blank `applyUrl` opens that URL directly (new tab); a role with a blank `applyUrl` falls back to the existing generic Careers contact modal. No code change was needed to adopt the verified Google Form URL.
+
+**Update — published.** The shared, verified Google Careers Form URL has now been published as `applyUrl` for exactly 11 MERN career roles with confirmed-active WordPress Apply paths: Executive Assistant to the CEO, AV Engineer, Motion Graphics & Video Creator, BCP Network Engineer, Manager Academic Affairs & Curriculum, Linguist, Senior Linguist, E-Learning Administrator, Learning Path Counsellor, GM Operations, and Director Strategy — all 11 using the identical URL. PMO Lead and UI/UX Designer remain blank: PMO Lead because its WordPress Apply path was explicitly disabled (Divi `disabled="on"`/`disabled_on="on|on|on"`, pointing at a dead `#career-form` anchor, not the live form); UI/UX Designer because its active wiring on the authoritative page could not be confirmed. The update was performed through the normal `pages/join-us` CMS Save Draft + Publish workflow (the existing admin content API, not a direct database write) — no application-code change was needed, and `seedData/joinUs.js` was **not** modified with the production Google Form URL; the value lives only in the published MongoDB Content document. Native `careers-application` remains READY DESIGN / **BLOCKED IMPLEMENTATION**, still blocked on the resume/file-storage dependency (§D28a).

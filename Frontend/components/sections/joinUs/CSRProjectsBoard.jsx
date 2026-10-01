@@ -122,6 +122,7 @@ export function CSRProjectsBoard({ projects: projectsInput }) {
                 aria-label="Organisation Name"
                 value={fields.organisation}
                 onChange={setField('organisation')}
+                required
                 className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
               />
               <input
@@ -129,12 +130,14 @@ export function CSRProjectsBoard({ projects: projectsInput }) {
                 aria-label="Mobile Number"
                 value={fields.mobile}
                 onChange={setField('mobile')}
+                required
                 className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px]"
               />
               <select
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
                 aria-label="Project of interest"
+                required
                 className="rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px] text-charcoal"
               >
                 <option value="">Project of interest</option>

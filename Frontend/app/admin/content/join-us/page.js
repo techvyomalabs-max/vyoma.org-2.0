@@ -107,16 +107,33 @@ function CareerRolesForm({ value, onChange }) {
       value={value}
       onChange={onChange}
       labelKey="title"
-      newItemTemplate={{ title: '', dept: '', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true }}
+      newItemTemplate={{ title: '', dept: '', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true }}
       fields={[
         { key: 'title', type: 'text', label: 'Role title' },
         { key: 'dept', type: 'text', label: 'Department' },
         { key: 'type', type: 'text', label: 'Employment type' },
         { key: 'loc', type: 'text', label: 'Location' },
         { key: 'desc', type: 'textarea', label: 'Description (optional)' },
+        { key: 'applyUrl', type: 'text', label: 'Apply URL (optional)', placeholder: 'https://… — leave blank to use the contact fallback' },
       ]}
     />
   );
+}
+
+// Batch 3: only enforced on save/publish, not per-keystroke — blank/null is
+// always valid (no destination yet is the expected default), and a non-blank
+// value must be a safe http(s) URL so CareersBoard.jsx can never be handed
+// a javascript:/data: URL or similar.
+const APPLY_URL_RE = /^https?:\/\/.+/i;
+function validateJoinUs(data) {
+  const roles = data?.CAREER_ROLES || [];
+  for (const r of roles) {
+    const url = (r.applyUrl || '').trim();
+    if (url && !APPLY_URL_RE.test(url)) {
+      return `Apply URL for "${r.title || 'a role'}" must start with http:// or https:// (or be left blank).`;
+    }
+  }
+  return null;
 }
 
 function CareerStepsForm({ value, onChange }) {
@@ -148,7 +165,7 @@ const SECTIONS = [
 ];
 
 function JoinUsCmsContent() {
-  return <ContentEditorShell pageLabel="Join Us" type={TYPE} sections={SECTIONS} />;
+  return <ContentEditorShell pageLabel="Join Us" type={TYPE} sections={SECTIONS} validate={validateJoinUs} />;
 }
 
 export default function JoinUsCmsPage() {

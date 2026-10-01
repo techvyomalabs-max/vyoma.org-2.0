@@ -3,11 +3,33 @@
 import { useState } from 'react';
 import { Button } from '@/components/common/Button';
 import { Modal } from '@/components/forms/Modal';
+import { useModal } from '@/components/layout/ModalProvider';
 
 function chipClass(active) {
   return `rounded-pill border px-[15px] py-1.5 font-sans text-sm font-semibold ${
     active ? 'border-vyoma-blue bg-vyoma-blue text-white' : 'border-vyoma-blue/30 bg-transparent text-vyoma-blue'
   }`;
+}
+
+// Batch 3: no native Careers-apply form exists yet (resume upload needs S3,
+// still blocked), so a role with an approved `applyUrl` opens it directly;
+// one without falls back to the same contact-modal flow "Send an open
+// application" already uses, just with a role-specific subject instead of
+// inventing a new form.
+function ApplyButton({ role }) {
+  const { openContact } = useModal();
+  if (role.applyUrl) {
+    return (
+      <Button variant="solid" href={role.applyUrl} target="_blank" rel="noopener noreferrer">
+        Apply
+      </Button>
+    );
+  }
+  return (
+    <Button variant="solid" onClick={() => openContact(`Careers: ${role.title}`)}>
+      Apply
+    </Button>
+  );
 }
 
 // Holds the department/type filter state and the "view role" modal, since both
@@ -73,9 +95,7 @@ export function CareersBoard({ roles: rolesInput }) {
                     <Button variant="outline" onClick={() => setViewRole(r)}>
                       View
                     </Button>
-                    <Button variant="solid" onClick={(e) => e.preventDefault()}>
-                      Apply
-                    </Button>
+                    <ApplyButton role={r} />
                   </div>
                 </div>
               ))}
@@ -91,9 +111,7 @@ export function CareersBoard({ roles: rolesInput }) {
               {viewRole.dept} · {viewRole.loc} · {viewRole.type}
             </div>
             {viewRole.desc && <p className="mb-6 font-sans text-[15px] leading-normal text-charcoal">{viewRole.desc}</p>}
-            <Button variant="solid" onClick={(e) => e.preventDefault()}>
-              Apply
-            </Button>
+            <ApplyButton role={viewRole} />
           </div>
         )}
       </Modal>

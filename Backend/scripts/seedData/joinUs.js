@@ -56,20 +56,27 @@ export const CSR_PROJECTS = [
   { name: 'ISO Certification and Upkeep', category: 'Organisation', cost: '₹35L', body: 'Funds ISO certification and its ongoing maintenance, strengthening Vyoma’s institutional governance standards.', active: true },
 ];
 
+// `applyUrl` (Batch 3): optional per-role external application link. `null`
+// means no approved destination yet — the public Careers page falls back to
+// the existing contact-enquiry flow in that case (see CareersBoard.jsx), so
+// this never needs to be backfilled before being safe to ship. No real
+// application URLs are known yet (legacy WPForms/Formaloo/Google Form field
+// lists and current-authoritative status are still open manual checks), so
+// every existing role gets `null`, not a guessed value.
 export const CAREER_ROLES = [
-  { title: 'Executive Assistant to the CEO', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: 'Support the CEO with scheduling, correspondence, travel, and day-to-day operations, acting as a key point of coordination across the organization.', active: true },
-  { title: 'AV Engineer', dept: 'Technology', type: 'Full-time', loc: 'Bengaluru', desc: 'Set up, operate, and maintain audio-visual equipment for recordings, live classes, and events, ensuring consistent production quality.', active: true },
-  { title: 'Motion Graphics & Video Creator', dept: 'Content', type: 'Full-time', loc: 'Bengaluru', desc: 'Design and produce motion graphics and edited video content for courses, campaigns, and social media.', active: true },
-  { title: 'PMO Lead', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'UI/UX Designer', dept: 'Technology', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'BCP Network Engineer', dept: 'Technology', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'Manager, Academic Affairs & Curriculum', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'Linguist', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'Senior Linguist', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'E-Learning Administrator', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'Learning Path Counsellor', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'GM Operations', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
-  { title: 'Director Strategy', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: null, active: true },
+  { title: 'Executive Assistant to the CEO', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: 'Support the CEO with scheduling, correspondence, travel, and day-to-day operations, acting as a key point of coordination across the organization.', applyUrl: null, active: true },
+  { title: 'AV Engineer', dept: 'Technology', type: 'Full-time', loc: 'Bengaluru', desc: 'Set up, operate, and maintain audio-visual equipment for recordings, live classes, and events, ensuring consistent production quality.', applyUrl: null, active: true },
+  { title: 'Motion Graphics & Video Creator', dept: 'Content', type: 'Full-time', loc: 'Bengaluru', desc: 'Design and produce motion graphics and edited video content for courses, campaigns, and social media.', applyUrl: null, active: true },
+  { title: 'PMO Lead', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'UI/UX Designer', dept: 'Technology', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'BCP Network Engineer', dept: 'Technology', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'Manager, Academic Affairs & Curriculum', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'Linguist', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'Senior Linguist', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'E-Learning Administrator', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'Learning Path Counsellor', dept: 'Academics', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'GM Operations', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
+  { title: 'Director Strategy', dept: 'Operations', type: 'Full-time', loc: 'Bengaluru', desc: null, applyUrl: null, active: true },
 ];
 
 export const CAREER_STEPS = [

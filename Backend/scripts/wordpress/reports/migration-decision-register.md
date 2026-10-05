@@ -98,7 +98,7 @@ Items that can proceed without further business clarification.
 
 | # | Check | Why | Section |
 |---|---|---|---|
-| M1 | WPCode snippet list — name, active state, type, insertion location, purpose, for every snippet | No snippet content is in the WXR at all; only orphaned taxonomy terms exist | H |
+| M1 | WPCode snippet list — name, active state, type, insertion location, purpose, for every snippet. **RESOLVED — see §11**: 3 snippets found via manual wp-admin review, all inactive. | No snippet content is in the WXR at all; only orphaned taxonomy terms exist | H |
 | M2 | WPForms `id=8780` field list | Not exportable via WXR | A5, J |
 | M3 | WPForms `id=13561` field list | Not exportable via WXR | A5, J |
 | M4 | Formaloo form `HqwvzJFZ` field list | Hosted entirely on formaloo.net | G, J |
@@ -243,7 +243,7 @@ Items that can proceed without further business clarification.
 - All of §3's manual checks (M1–M16) — none of them prevent a first dry-run of the content that's already unambiguous (Blog, Team, Leadership, Timeline, the confirmed-scheme donation pages, About/Contact/Media/Join-Us pages).
 - Redirect creation (§6) — deliberately last in the original phase plan, after all duplicate-cluster and destination decisions are final.
 - Media/S3 migration — entirely blocked on AWS access, independent of everything else here.
-- WPCode replication (M1) — needed before WordPress retirement, not before a content dry-run.
+- WPCode replication (M1) — **RESOLVED, see §11**: manual review found all 3 snippets inactive; nothing requires replication before WordPress retirement.
 
 ---
 
@@ -259,7 +259,7 @@ Exact safe sequence from here:
 6. **Manual checks (§3) in parallel** — none of these block the above, so they can run alongside steps 2–5 whenever convenient; feed their answers into the next batch's mapping.
 7. **Redirect creation** — only once the specific content it targets has actually landed in MERN (not before), using the confirmed/high-confidence list in §6 first, then the pending-decision list as those decisions close.
 8. **Media/S3 migration** — remains blocked until AWS access lands, independent of the above; the media inventory from Sections F/G is already prepared for that day.
-9. **WPCode replication and legal-route creation (Privacy/Terms + footer link flip)** — schedule these before WordPress is actually decommissioned, not necessarily before the content migration finishes, since they're about *retiring WordPress safely*, not about the MERN migration itself.
+9. **WPCode replication (RESOLVED, see §11 — nothing to replicate) and legal-route creation (Privacy/Terms + footer link flip, already completed in Batch 2)** — these were about *retiring WordPress safely*, not about the MERN migration itself; both are now closed.
 
 ---
 
@@ -293,3 +293,19 @@ Manually verified in wp-admin and live browser sessions (fields/status only — 
 **Current `applyUrl` behavior (commit `23363ea`, reviewed, not modified)** remains the safest available mechanism: a role with a non-blank `applyUrl` opens that URL directly (new tab); a role with a blank `applyUrl` falls back to the existing generic Careers contact modal. No code change was needed to adopt the verified Google Form URL.
 
 **Update — published.** The shared, verified Google Careers Form URL has now been published as `applyUrl` for exactly 11 MERN career roles with confirmed-active WordPress Apply paths: Executive Assistant to the CEO, AV Engineer, Motion Graphics & Video Creator, BCP Network Engineer, Manager Academic Affairs & Curriculum, Linguist, Senior Linguist, E-Learning Administrator, Learning Path Counsellor, GM Operations, and Director Strategy — all 11 using the identical URL. PMO Lead and UI/UX Designer remain blank: PMO Lead because its WordPress Apply path was explicitly disabled (Divi `disabled="on"`/`disabled_on="on|on|on"`, pointing at a dead `#career-form` anchor, not the live form); UI/UX Designer because its active wiring on the authoritative page could not be confirmed. The update was performed through the normal `pages/join-us` CMS Save Draft + Publish workflow (the existing admin content API, not a direct database write) — no application-code change was needed, and `seedData/joinUs.js` was **not** modified with the production Google Form URL; the value lives only in the published MongoDB Content document. Native `careers-application` remains READY DESIGN / **BLOCKED IMPLEMENTATION**, still blocked on the resume/file-storage dependency (§D28a).
+
+---
+
+## 11. WPCode / sitewide custom-script manual review — verified findings
+
+Manually verified in wp-admin (WPCode → All Snippets) — resolves M1. No snippet was activated, deactivated, edited, or saved during this review; this is a read-only account of what exists. No credential/key/token values are recorded here, per standing instruction.
+
+**Result: WPCode → All Snippets contains exactly 3 snippets. All 3 are INACTIVE.**
+
+| ID | Name | Type | Location | Status | Purpose | Classification |
+|---|---|---|---|---|---|---|
+| 12784 | Untitled Snippet | JavaScript | Site Wide Header | Inactive | Custom DigitalSanskrit MeiliSearch integration and search analytics — connects to `search-staging.digitalsanskrit.com`, searches DigitalSanskrit indexes, renders live search results with genre filtering, sends analytics to `analytics.digitalsanskrit.com`. Targets DigitalSanskrit infrastructure, not Vyoma.org. | **OBSOLETE / WORDPRESS-ONLY** for this migration — do not migrate to MERN. **Contains API-key/credential-style values; must not be reused anywhere without a security review first.** (No credential value is recorded here or anywhere in this register.) |
+| 12783 | Completely Disable Comments | PHP | Run Everywhere | Inactive | Disables/hides the WordPress comments/trackbacks subsystem and its wp-admin UI. | **OBSOLETE / WORDPRESS-ONLY** — no MERN equivalent needed; MERN has no WordPress-style comments system. |
+| 12782 | Display a message after the 1st paragraph of posts | Text | Insert After Paragraph | Inactive | A simple promotional "subscribe" message inserted after each post's first paragraph. | **OBSOLETE / WORDPRESS-ONLY** — do not migrate. |
+
+**Overall conclusion**: 3/3 snippets are inactive. No active WPCode snippet supplies GA4, Google Tag Manager, Meta/Facebook Pixel, Microsoft Clarity, cookie/consent scripts, verification tags, schema injection, or any other active site-wide header/footer functionality. Cross-referenced against a read-only MERN codebase inventory (same conclusion independently): none of these capabilities exist in MERN either — but since no *active* WordPress dependency was found for any of them, their absence is not evidence of a migration gap. **WPCode is not a cutover blocker.** Any future analytics/tracking/consent requirement should be treated as a new, explicit product requirement to scope and build, not as a hidden WordPress dependency that must be "ported."

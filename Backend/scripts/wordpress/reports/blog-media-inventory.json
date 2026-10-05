@@ -1,0 +1,669 @@
+{
+  "generatedAt": "2026-10-05T07:34:22.176Z",
+  "totalUniqueUrls": 42,
+  "byStatus": {
+    "READY": 35,
+    "MISSING SOURCE": 7
+  },
+  "duplicateFilenameCandidates": [
+    {
+      "filename": "image-1.png",
+      "count": 4,
+      "urls": [
+        "/wp-content/uploads/2025/10/image-1.png",
+        "/wp-content/uploads/2026/01/image-1.png",
+        "/wp-content/uploads/2026/02/image-1.png",
+        "/wp-content/uploads/2026/07/image-1.png"
+      ]
+    }
+  ],
+  "sizeVariantCandidates": [
+    {
+      "stem": "venkat-sir.png",
+      "files": [
+        "venkat-sir.png",
+        "venkat-sir-150x150.png"
+      ]
+    },
+    {
+      "stem": "skr.png",
+      "files": [
+        "skr.png",
+        "skr-150x150.png"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2024/06/01_Yoga_Bundle.jpg",
+      "referencedBySlugs": [
+        "yoga-day"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "9699",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2024/06/01_Yoga_Bundle.jpg",
+      "filename": "01_yoga_bundle.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/01-yoga-bundle-fa4eb900.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2024/06/02_Learn_to_Chant_Yogasutras_of_Patanjali__Batch_-_4_image.png",
+      "referencedBySlugs": [
+        "yoga-day"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "9701",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2024/06/02_Learn_to_Chant_Yogasutras_of_Patanjali__Batch_-_4_image.png",
+      "filename": "02_learn_to_chant_yogasutras_of_patanjali__batch_-_4_image.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/02-learn-to-chant-yogasutras-of-patanjali-batch-4-image-13d8b9db.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2024/06/03_Yogasutra_Audio.jpg",
+      "referencedBySlugs": [
+        "yoga-day"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "9702",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2024/06/03_Yogasutra_Audio.jpg",
+      "filename": "03_yogasutra_audio.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/03-yogasutra-audio-c8b33ec9.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2024/06/04_Yogasutra_Parichaya.jpg",
+      "referencedBySlugs": [
+        "yoga-day"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "9703",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2024/06/04_Yogasutra_Parichaya.jpg",
+      "filename": "04_yogasutra_parichaya.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/04-yogasutra-parichaya-2b026bbf.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2024/06/05_Yaga_Darshana.jpg",
+      "referencedBySlugs": [
+        "yoga-day"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "9704",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2024/06/05_Yaga_Darshana.jpg",
+      "filename": "05_yaga_darshana.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/05-yaga-darshana-a577ee45.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2024/06/06_Hathayoga.jpg",
+      "referencedBySlugs": [
+        "yoga-day"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "9705",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2024/06/06_Hathayoga.jpg",
+      "filename": "06_hathayoga.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/06-hathayoga-2af025bf.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/1-1.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7851",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/1-1.jpg",
+      "filename": "1-1.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/1-1-09e51b92.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/10.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7860",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/10.jpg",
+      "filename": "10.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/10-cf4e186c.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/11.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7861",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/11.jpg",
+      "filename": "11.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/11-89f3edbb.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/12.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7862",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/12.jpg",
+      "filename": "12.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/12-f0aa56a5.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/13.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7863",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/13.jpg",
+      "filename": "13.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/13-f2f8c8b2.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/14.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7864",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/14.jpg",
+      "filename": "14.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/14-6390eb3d.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/15.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7865",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/15.jpg",
+      "filename": "15.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/15-32ac1db1.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/16.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7844",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/16.jpg",
+      "filename": "16.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/16-1ec7e8df.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/17.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7845",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/17.jpg",
+      "filename": "17.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/17-0594e885.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/18.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7846",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/18.jpg",
+      "filename": "18.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/18-b506e859.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/19.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7847",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/19.jpg",
+      "filename": "19.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/19-85d8101b.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/2.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7852",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/2.jpg",
+      "filename": "2.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/2-93122f54.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/20.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7848",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/20.jpg",
+      "filename": "20.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/20-ad222cf8.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/21.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7849",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/21.jpg",
+      "filename": "21.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/21-0e251ccb.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/3.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7853",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/3.jpg",
+      "filename": "3.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/3-05e5c279.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/4.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7854",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/4.jpg",
+      "filename": "4.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/4-83434341.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/5.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7855",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/5.jpg",
+      "filename": "5.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/5-e8cd9ed8.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/6.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7856",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/6.jpg",
+      "filename": "6.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/6-df024ecb.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/7.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7857",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/7.jpg",
+      "filename": "7.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/7-0d2b9a91.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/8.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7858",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/8.jpg",
+      "filename": "8.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/8-0f22a111.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/9.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7859",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/9.jpg",
+      "filename": "9.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/9-841dd5ae.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/author.jpg",
+      "referencedBySlugs": [
+        "medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "7850",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2023/09/author.jpg",
+      "filename": "author.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/author-e26867b7.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2023/09/Ganesha-new-1-1024x576.png",
+      "referencedBySlugs": [
+        "unveiling-the-mysteries-of-ganapati"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "ganesha-new-1-1024x576.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/ganesha-new-1-1024x576-d66aeb4c.png",
+      "migrationStatus": "MISSING SOURCE"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/01/image-1.jpg",
+      "referencedBySlugs": [
+        "dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "11814",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2026/01/image-1.jpg",
+      "filename": "image-1.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-1-f1c8198a.jpg",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2025/10/image-1.png",
+      "referencedBySlugs": [
+        "the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "11566",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2025/10/image-1.png",
+      "filename": "image-1.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-1-67b945da.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/01/image-1.png",
+      "referencedBySlugs": [
+        "dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "11851",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2026/01/image-1.png",
+      "filename": "image-1.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-1-49db266f.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/02/image-1.png",
+      "referencedBySlugs": [
+        "a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "12479",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2026/02/image-1.png",
+      "filename": "image-1.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-1-61b78fce.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/07/image-1.png",
+      "referencedBySlugs": [
+        "gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "13644",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2026/07/image-1.png",
+      "filename": "image-1.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-1-c3e8a24f.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/07/image-2-819x1024.png",
+      "referencedBySlugs": [
+        "gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "image-2-819x1024.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-2-819x1024-ede9e1bb.png",
+      "migrationStatus": "MISSING SOURCE"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/07/image-3-683x1024.png",
+      "referencedBySlugs": [
+        "gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "image-3-683x1024.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-3-683x1024-e9feefaa.png",
+      "migrationStatus": "MISSING SOURCE"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/02/image-683x1024.jpg",
+      "referencedBySlugs": [
+        "a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "image-683x1024.jpg",
+      "extension": "jpg",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/image-683x1024-e6321a6a.jpg",
+      "migrationStatus": "MISSING SOURCE"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/08/SKR-150x150.png",
+      "referencedBySlugs": [
+        "why-sanskrit-is-not-finished-it-is-alive"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "skr-150x150.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/skr-150x150-0e734e20.png",
+      "migrationStatus": "MISSING SOURCE"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/08/SKR.png",
+      "referencedBySlugs": [
+        "raksha-bandhan-gift-a-year-of-sanskrit"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "13836",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2026/08/SKR.png",
+      "filename": "skr.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/skr-caeb109c.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/08/Venkat-sir-150x150.png",
+      "referencedBySlugs": [
+        "why-sanskrit-is-not-finished-it-is-alive"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "venkat-sir-150x150.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/venkat-sir-150x150-e52bd006.png",
+      "migrationStatus": "MISSING SOURCE"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2026/08/Venkat-sir.png",
+      "referencedBySlugs": [
+        "why-the-amarakosha-was-written-to-be-sung"
+      ],
+      "referenceCount": 1,
+      "wxrAttachmentMatch": true,
+      "wxrAttachmentId": "13804",
+      "wxrAttachmentUrl": "http://vyoma.org/wp-content/uploads/2026/08/Venkat-sir.png",
+      "filename": "venkat-sir.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/venkat-sir-d9c43722.png",
+      "migrationStatus": "READY"
+    },
+    {
+      "sourceUrl": "https://vyoma.org/wp-content/uploads/2022/07/Vishwanathan-150x150.png",
+      "referencedBySlugs": [
+        "how-panchatantra-teaches-without-teaching",
+        "why-sanskrit-is-not-finished-it-is-alive"
+      ],
+      "referenceCount": 2,
+      "wxrAttachmentMatch": false,
+      "wxrAttachmentId": [],
+      "wxrAttachmentUrl": [],
+      "filename": "vishwanathan-150x150.png",
+      "extension": "png",
+      "expectedMediaKind": "image",
+      "proposedStorageKey": "media/blog/vishwanathan-150x150-704af3ae.png",
+      "migrationStatus": "MISSING SOURCE"
+    }
+  ]
+}

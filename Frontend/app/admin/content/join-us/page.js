@@ -133,7 +133,28 @@ function validateJoinUs(data) {
       return `Apply URL for "${r.title || 'a role'}" must start with http:// or https:// (or be left blank).`;
     }
   }
+  const volunteerUrl = (data?.VOLUNTEER_APPLY_URL || '').trim();
+  if (volunteerUrl && !APPLY_URL_RE.test(volunteerUrl)) {
+    return 'Volunteer Apply URL must start with http:// or https:// (or be left blank).';
+  }
   return null;
+}
+
+// Singleton field, not a repeatable list — see VOLUNTEER_APPLY_URL's own
+// comment in seedData/joinUs.js for why this isn't per-category.
+function VolunteerApplyUrlForm({ value, onChange }) {
+  return (
+    <div>
+      <label className="mb-1 block font-sans text-xs font-bold text-charcoal/60">Volunteer Apply URL (optional)</label>
+      <input
+        type="text"
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="https:// — leave blank to use the contact fallback"
+        className={inputClass}
+      />
+    </div>
+  );
 }
 
 function CareerStepsForm({ value, onChange }) {
@@ -156,6 +177,7 @@ const SECTIONS = [
   { key: 'TRACKS', label: 'Tracks', description: 'The 5 cards on the Join Us landing page.', publicPath: '/join-us', Form: TracksForm },
   { key: 'VOLUNTEER_CATEGORIES', label: 'Volunteer: Categories', description: '"Where you can help" categories.', publicPath: '/join-us/volunteer', Form: VolunteerCategoriesForm },
   { key: 'VOLUNTEER_FEATURED', label: 'Volunteer: Featured', description: 'Featured volunteer profiles.', publicPath: '/join-us/volunteer', Form: VolunteerFeaturedForm },
+  { key: 'VOLUNTEER_APPLY_URL', label: 'Volunteer: Apply URL', description: 'External application form link for the "Become a Volunteer" button. Leave blank to use the contact form fallback.', publicPath: '/join-us/volunteer', Form: VolunteerApplyUrlForm },
   { key: 'INTERNSHIP_REASONS', label: 'Internship: Reasons', description: '"Why intern at Vyoma?" list.', publicPath: '/join-us/internship', Form: InternshipReasonsForm },
   { key: 'INTERNSHIP_OPENINGS', label: 'Internship: Openings', description: 'Current internship openings (empty by default).', publicPath: '/join-us/internship', Form: InternshipOpeningsForm },
   { key: 'CSR_PROJECTS', label: 'CSR: Projects', description: 'The CSR project cards.', publicPath: '/join-us/csr-projects', Form: CsrProjectsForm },

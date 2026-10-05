@@ -27,6 +27,15 @@ export const VOLUNTEER_FEATURED = [
   { name: 'Smt. Bhuvaneshwari Subramanian', note: 'A dedicated contributor supporting Vyoma’s content and outreach efforts.', image: null, active: true },
 ];
 
+// Singleton, not per-category (unlike CAREER_ROLES.applyUrl): the legacy
+// WordPress site uses one identical external Volunteer form from every CTA
+// occurrence (Home + both Volunteers-page placements), not a distinct form
+// per category. `null` means no approved destination yet — the public page
+// falls back to the existing contact-enquiry flow in that case. No real URL
+// is set here; the production Google Form URL is only ever set through the
+// CMS, never hardcoded in seed data.
+export const VOLUNTEER_APPLY_URL = null;
+
 export const INTERNSHIP_REASONS = [
   'Work on meaningful projects that combine Sanskrit, IKS, education, and the latest technology for real-world impact.',
   'Get hands-on with modern tools, AI systems, digital platforms, and collaborative delivery.',

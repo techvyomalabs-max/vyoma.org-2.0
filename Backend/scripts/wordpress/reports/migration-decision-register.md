@@ -23,10 +23,10 @@ Items that can proceed without further business clarification.
 | `/csr-projects/` | `/join-us/csr-projects` | migrate | `csr-enquiry` formKey already wired and functional — only field-mapping work needed (§3). |
 | `/corpus/` | `/join-us/corpus-fund` | migrate | `samrakshananidhi` ("Corpus Nidhi") page's content should be reviewed for merging in here rather than treated as separate (deferred, §2). |
 | `/internships/` | `/join-us/internship` | migrate | — |
-| `/compliances_registrations/` | `/credibility/compliances-registrations` | migrate | Already partially wired (8 docs); 7 additional registration PDFs need reconciliation (§3). |
-| `/collaterals/` | `/credibility/collaterals` | migrate | 8 candidate PDFs identified, ready to wire (F1 §5). |
-| `/annual_reports/` | `/credibility/annual-reports` | migrate | 8 candidate PDFs (4 years × 2 versions each) — version choice deferred (§2, §3). |
-| `/social-impact-report/` | `/credibility/social-impact-report` | migrate | 4 candidate PDFs, 1 duplicate pair to resolve (§3). |
+| `/compliances_registrations/` | `/credibility/compliances-registrations` | migrate | Already partially wired (8 docs). PDF comparison (see D21 note) confirmed the existing MERN 80G and Certificate of Incorporation files are already correct/current — no replacement needed from that comparison. 7 additional registration PDFs still need reconciliation (D21, §3). |
+| `/collaterals/` | `/credibility/collaterals` | migrate | **3 of 9 tiles migrated** (Slip Sheet, Seva Offering Catalogue, Publications & Products Catalogue — verified unambiguous external URLs, wired). 6 tiles remain unresolved (Company Presentation, Vyoma Brochure, DSLL Brochure, DSLL Ayurveda Brochure, Digital Sanskrit OTT, Kids Persona Brochure) — each has competing/ambiguous link targets requiring further comparison or a content-owner decision. (Note: the live page has 9 real tiles, not the "8 candidate PDFs" originally estimated — corrected during the PDF/flipbook comparison.) |
+| `/annual_reports/` | `/credibility/annual-reports` | **migrated** | All 4 years (FY22–FY25) migrated using the verified 2026 source files — see D22 (closed). |
+| `/social-impact-report/` | `/credibility/social-impact-report` | migrate | **FY24 migrated** (the two FY24 candidates were confirmed byte-identical). **FY25 not migrated** — see D23 (narrowed, still open). |
 | `/awards-recognition/` (via `awards`) | `/credibility/awards-recognition` | migrate | — |
 | `/media/` | `/media` | migrate | — |
 | `vidya_danam_dm` | `/donate/vidya-danam` | migrate | Confirmed via `/donors/` hub's own "Contribution for courses" link (A2). |
@@ -76,9 +76,9 @@ Items that can proceed without further business clarification.
 | D18 | 2017-18 audit report link bug | `/audit-reports/` | Live page links "Audit Report 2017-18" to the 2018-19 PDF by mistake; the real 2017-18 file exists separately (Section C) | Confirm correcting this when migrated | Only this one document's link |
 | D19 | No audit reports after FY2021-22 | `/audit-reports/` | Page hasn't been updated in ~3 years relative to export date | Confirm whether newer audit reports exist elsewhere (wp-admin, accountant) | Only completeness of this section |
 | D20 | Unexplained external links on audit page | `/audit-reports/` | Two blank-labeled links to `amarseva.org` attached to the 2012-13 entry, purpose unknown (Section C) | Confirm what these are / whether safe to drop | Only this one page's content |
-| D21 | 7 unmatched registration/compliance PDFs | Compliances & Registrations | 3 upload waves (Nov 2023/Dec 2024/Feb 2026) suggest a genuine renewal history, not simple duplicates; 12A vs 12AA may be different legal provisions entirely (F1, F2) | Confirm which certificate is current per type; confirm 12A/12AA relationship | Blocks only the *completeness* of this already-partially-migrated section |
-| D22 | Annual Report FY22/23/24/25 version pairs | 8 PDFs (4 years × 2 uploads each) | 2025-02 "-Final" vs. 2026-06 batch-uploaded — pattern suggests the June batch may be a deliberate re-upload for this migration, but not confirmed (F2) | Confirm which version is authoritative per year | Blocks Annual Reports content only |
-| D23 | Social Impact FY24 duplicate | `Social-Impact-Report-FY24.pdf` vs. `-FY24-1.pdf` | Both 2026-02, 36 attachment-IDs apart — can't confirm identical vs. revised without opening files (F2) | Confirm which is authoritative | Blocks Social Impact Report content only |
+| D21 | 7 unmatched registration/compliance PDFs | Compliances & Registrations | 3 upload waves (Nov 2023/Dec 2024/Feb 2026) suggest a genuine renewal history, not simple duplicates; 12A vs 12AA may be different legal provisions entirely (F1, F2) | Confirm which certificate is current per type; confirm 12A/12AA relationship | Blocks only the *completeness* of this already-partially-migrated section — **still open**; a separate, narrower PDF comparison verified only the existing MERN 80G and Certificate of Incorporation files (confirmed current/correct, no replacement needed), not these 7 genuinely unmatched candidates |
+| D22 | ~~Annual Report FY22/23/24/25 version pairs~~ — **RESOLVED** | 8 PDFs (4 years × 2 uploads each) | PDF comparison opened all 8 files: FY22/FY24/FY25 pairs are equivalent duplicates (same financials, audit date, UDIN in each pair); FY23's 2026 file corrects the older "-Final" file's internally inconsistent "34 New Courses" figure (the same file's own Chairman's letter said 52) to the consistent 52 | **Closed** — all 4 years migrated using the verified 2026 source files (FY23 specifically using the corrected version) | Resolved — no longer blocks Annual Reports |
+| D23 | Social Impact — **narrowed to FY25 only** | FY24: `Social-Impact-Report-FY24.pdf` vs. `-FY24-1.pdf` (**resolved** — confirmed byte-identical, migrated). FY25: `Social-Impact-Report-FY25-v2.pdf` vs. `-FY25-FINAL-1.pdf` (newly found during the same comparison; **still open**) | FY24 pair confirmed byte-identical (true duplicate, safe). FY25 pair is NOT a duplicate — the two files report materially conflicting figures for the same metric/date (e.g. differing total-registrants counts) and differ in which detail sections are present; filename's "FINAL" does not reliably indicate the authoritative one | Confirm which FY25 figures/sections are correct — genuinely requires content-owner input, not resolvable from the files alone | FY24: resolved, migrated. **FY25: still blocks this one entry only** |
 | D24 | `vidyasthanas_the-vedas.pdf` purpose | Unlinked PDF | Filename suggests Vedic-curriculum topic; no link context, no confirmed content (F2) | Confirm purpose and whether it belongs under Media/Resources | Blocks only this one file |
 | D25 | Job-description PDFs (9 files) | Various | Confirmed correctly excluded from public migration (internal HR use), but disposition not formally closed | Confirm they should stay internal-only / be discarded from any public archive | None — recommendation already made |
 | D26 | Newsletter/activity-report archive (48 PDFs) | Various | No CMS structure exists for this volume of content (F1) | Decide whether a public archive is worth building at all | Only if pursued — otherwise no blocker |
@@ -104,9 +104,9 @@ Items that can proceed without further business clarification.
 | M4 | Formaloo form `HqwvzJFZ` field list | Hosted entirely on formaloo.net | G, J |
 | M5 | Status of the 3 Google Forms (Careers, Volunteer, Donor) — still monitored/active? | Response data lives on Google's servers, invisible to this export | J |
 | M6 | Mailchimp list `SlavaET|efef5f8505` — still active? | Subscriber data lives on Mailchimp's servers | J |
-| M7 | Content comparison of the 7 unmatched registration/compliance PDFs against the 8 already-wired files | Requires opening actual PDF files | F1, F2 |
-| M8 | Annual Report FY22/23/24/25 version-pair comparison (identical vs. revised) | Requires opening actual PDF files | F2 |
-| M9 | Social Impact FY24 duplicate-pair comparison | Requires opening actual PDF files | F2 |
+| M7 | Content comparison of the 7 unmatched registration/compliance PDFs against the 8 already-wired files | Requires opening actual PDF files — **still open**; not performed (a separate, narrower comparison checked only the already-matched 80G and Certificate of Incorporation files, see D21) | F1, F2 |
+| M8 | Annual Report FY22/23/24/25 version-pair comparison (identical vs. revised) | **RESOLVED — see D22.** All 8 files opened and compared; FY22/24/25 equivalent duplicates, FY23's 2026 file corrects a real data error | F2 |
+| M9 | Social Impact FY24 duplicate-pair comparison | **RESOLVED for FY24 — see D23** (confirmed byte-identical). A second, previously-undocumented pair was found for FY25 during the same comparison — materially conflicting, still open, see D23 | F2 |
 | M10 | Confirm no audit reports exist for FY2022-23 onward | Page hasn't been updated in ~3 years relative to export | C |
 | M11 | Investigate the 2 unexplained `amarseva.org` links on `/audit-reports/` | Purpose entirely unknown from page content | C |
 | M12 | Verify the Teachers & Scholars (136→127) and Video Recording hours (52,351→15,860) anomalies against real source records | Cannot tell data-entry error vs. real change from export alone | B2 |
@@ -125,7 +125,7 @@ Items that can proceed without further business clarification.
 
 **Testimonials** — 7 Home-slider + 6 Old (Section E), replacing all current MERN placeholder testimonials, pending the layout decision (D32).
 
-**Credibility documents** — Compliances & Registrations (partial, 8 of 16 wired), Annual Reports (8 candidates), Social Impact Reports (4 candidates), Collaterals (8 candidates), Audit Reports (10 files, pending §2 D17 CMS-placement decision).
+**Credibility documents** — Compliances & Registrations (partial, 8 of 16 wired; D21 still open for the remaining 7), Annual Reports (**migrated, all 4 years** — D22 resolved), Social Impact Reports (FY24 migrated; FY25 still open — D23 narrowed), Collaterals (3 of 9 tiles migrated; 6 remain unresolved), Audit Reports (10 files, pending §2 D17 CMS-placement decision — still open).
 
 **Donation content** — 9 scheme pages' descriptive content (some as merges, see §1/§2), the 3 Razorpay Payment Links found on `/donors/` (informational — confirms real historical payment activity, not something to migrate as code).
 
@@ -231,9 +231,9 @@ Items that can proceed without further business clarification.
 3. **Migration mapping freeze** — enough of §1/§2's decisions need to be settled that the import script has a stable target structure to write into (doesn't require *every* §2 item resolved, just enough that a dry-run has somewhere concrete to write each piece of content).
 
 ### B. Blockers only for specific content/features
-- Audit Reports import — blocked on D17 (CMS placement decision).
-- Compliances & Registrations completion — blocked on D21 (7 unmatched PDF reconciliation), M7.
-- Annual Reports / Social Impact Reports completion — blocked on D22/D23, M8/M9.
+- Audit Reports import — blocked on D17 (CMS placement decision — still open).
+- Compliances & Registrations completion — blocked on D21 (7 unmatched PDF reconciliation), M7 — still open.
+- Annual Reports — **resolved** (D22 closed, M8 resolved, all 4 years migrated). Social Impact Reports — FY24 resolved/migrated; **FY25 still blocked** on D23 (narrowed, content-owner decision needed).
 - Careers content/forms — blocked on D4/D28, M2/M4/M5.
 - Donation scheme pages needing merge — blocked on the education/vidya_danam_dm, publication/grantha-danam-2, sabha-fund/samskritsabhaujjeevanam merges (§1/§2).
 - Home testimonials layout — blocked on D32.

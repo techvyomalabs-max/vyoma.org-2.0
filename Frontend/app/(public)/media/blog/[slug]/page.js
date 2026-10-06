@@ -10,9 +10,19 @@ import { articleJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo';
 // donation scheme detail page: the active/published-only list is the only
 // one this build step can safely call without auth, and Next's default
 // dynamicParams renders anything else on demand at request time.
+//
+// Same build-time resilience fix as the donate scheme page: never let a
+// backend hiccup here take down the entire site build. Falls back to zero
+// statically-generated posts; every post still renders correctly on-demand
+// at request time.
 export async function generateStaticParams() {
-  const { items } = await getBlogPosts({ limit: 50 });
-  return items.map((p) => ({ slug: p.slug }));
+  try {
+    const { items } = await getBlogPosts({ limit: 50 });
+    return items.map((p) => ({ slug: p.slug }));
+  } catch (err) {
+    console.error('[media/blog/[slug]] generateStaticParams failed, falling back to on-demand rendering for all posts:', err.message);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }) {

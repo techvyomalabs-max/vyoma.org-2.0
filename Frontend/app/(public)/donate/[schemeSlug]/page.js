@@ -9,9 +9,22 @@ import { QuickDonate } from '@/components/sections/donate/QuickDonate';
 // request time (Next's default dynamicParams behavior) rather than at
 // build time, since the active-only list is the only one this build step
 // can safely call without auth.
+//
+// Never let a build-time backend hiccup (unreachable API, a transient 5xx,
+// a route briefly missing during a rolling deploy) take down the ENTIRE
+// site build — every other page would fail to deploy too, not just this
+// one. On any failure here, fall back to generating zero scheme pages at
+// build time; every scheme still renders correctly on-demand at request
+// time via Next's default dynamicParams, exactly like an inactive scheme
+// already does today.
 export async function generateStaticParams() {
-  const schemes = await getDonationSchemes();
-  return schemes.map((s) => ({ schemeSlug: s.slug }));
+  try {
+    const schemes = await getDonationSchemes();
+    return schemes.map((s) => ({ schemeSlug: s.slug }));
+  } catch (err) {
+    console.error('[donate/[schemeSlug]] generateStaticParams failed, falling back to on-demand rendering for all schemes:', err.message);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }) {

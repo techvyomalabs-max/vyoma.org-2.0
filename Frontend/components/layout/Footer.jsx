@@ -46,9 +46,17 @@ function FooterLink({ label, href, external }) {
 
 // Server Component — reads socialLinks from Settings (same source of truth
 // the Contact page already uses) rather than any hardcoded/duplicated URL.
+// Rendered on every public page, so a fetch failure here must not take down
+// the whole page/build — falls back to showing no social icons rather than
+// erroring, same as root layout's identical Settings fetch.
 export async function Footer() {
-  const settings = await getPublicSettings();
-  const socialLinks = settings.socialLinks || {};
+  let socialLinks = {};
+  try {
+    const settings = await getPublicSettings();
+    socialLinks = settings.socialLinks || {};
+  } catch (err) {
+    console.error('[Footer] getPublicSettings failed, rendering without social links:', err.message);
+  }
 
   return (
     <footer className="flex flex-col items-end gap-5 bg-sky-mist px-8 py-7">

@@ -1,0 +1,206 @@
+{
+  "/about/": {
+    "toPath": "/about",
+    "statusCode": 301
+  },
+  "/annual_reports/": {
+    "toPath": "/credibility/annual-reports",
+    "statusCode": 301
+  },
+  "/awards/": {
+    "toPath": "/credibility/awards-recognition",
+    "statusCode": 301
+  },
+  "/blog-2/": {
+    "toPath": "/media/blog",
+    "statusCode": 301
+  },
+  "/blog-post/": {
+    "toPath": "/media/blog",
+    "statusCode": 301
+  },
+  "/blog-post/a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam/": {
+    "toPath": "/media/blog/a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam",
+    "statusCode": 301
+  },
+  "/blog-post/bhishma-ashtami/": {
+    "toPath": "/media/blog/bhishma-ashtami",
+    "statusCode": 301
+  },
+  "/blog-post/dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems/": {
+    "toPath": "/media/blog/dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems",
+    "statusCode": 301
+  },
+  "/blog-post/edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga%e1%b9%87esa-puja/": {
+    "toPath": "/media/blog/medicinal-value-of-21-kinds-of-leaves-offered-in-ganesa-puja",
+    "statusCode": 301
+  },
+  "/blog-post/gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems/": {
+    "toPath": "/media/blog/gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems",
+    "statusCode": 301
+  },
+  "/blog-post/guru-purnima/": {
+    "toPath": "/media/blog/guru-purnima",
+    "statusCode": 301
+  },
+  "/blog-post/how-panchatantra-teaches-without-teaching/": {
+    "toPath": "/media/blog/how-panchatantra-teaches-without-teaching",
+    "statusCode": 301
+  },
+  "/blog-post/how-sa%e1%b9%83sk%e1%b9%9btam/": {
+    "toPath": "/media/blog/how-samskrtam",
+    "statusCode": 301
+  },
+  "/blog-post/mahasivaratri/": {
+    "toPath": "/media/blog/mahasivaratri",
+    "statusCode": 301
+  },
+  "/blog-post/raksha-bandhan-gift-a-year-of-sanskrit/": {
+    "toPath": "/media/blog/raksha-bandhan-gift-a-year-of-sanskrit",
+    "statusCode": 301
+  },
+  "/blog-post/ramanavami/": {
+    "toPath": "/media/blog/ramanavami",
+    "statusCode": 301
+  },
+  "/blog-post/rathasaptami/": {
+    "toPath": "/media/blog/rathasaptami",
+    "statusCode": 301
+  },
+  "/blog-post/the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives/": {
+    "toPath": "/media/blog/the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives",
+    "statusCode": 301
+  },
+  "/blog-post/unveiling-the-mysteries-of-ga%e1%b9%87apati/": {
+    "toPath": "/media/blog/unveiling-the-mysteries-of-ganapati",
+    "statusCode": 301
+  },
+  "/blog-post/what-is-sa%e1%b9%83sk%e1%b9%9btam/": {
+    "toPath": "/media/blog/what-is-samskrtam",
+    "statusCode": 301
+  },
+  "/blog-post/why-sa%e1%b9%83sk%e1%b9%9btam/": {
+    "toPath": "/media/blog/why-samskrtam",
+    "statusCode": 301
+  },
+  "/blog-post/why-sanskrit-is-not-finished-it-is-alive/": {
+    "toPath": "/media/blog/why-sanskrit-is-not-finished-it-is-alive",
+    "statusCode": 301
+  },
+  "/blog-post/why-the-amarakosha-was-written-to-be-sung/": {
+    "toPath": "/media/blog/why-the-amarakosha-was-written-to-be-sung",
+    "statusCode": 301
+  },
+  "/blog-post/yoga_day/": {
+    "toPath": "/media/blog/yoga-day",
+    "statusCode": 301
+  },
+  "/blog/": {
+    "toPath": "/media/blog",
+    "statusCode": 301
+  },
+  "/blogs/": {
+    "toPath": "/media/blog",
+    "statusCode": 301
+  },
+  "/collaterals/": {
+    "toPath": "/credibility/collaterals",
+    "statusCode": 301
+  },
+  "/compliances_registrations/": {
+    "toPath": "/credibility/compliances-registrations",
+    "statusCode": 301
+  },
+  "/contact/": {
+    "toPath": "/contact",
+    "statusCode": 301
+  },
+  "/corpus/": {
+    "toPath": "/join-us/corpus-fund",
+    "statusCode": 301
+  },
+  "/csr-projects/": {
+    "toPath": "/join-us/csr-projects",
+    "statusCode": 301
+  },
+  "/events/": {
+    "toPath": "/media/events",
+    "statusCode": 301
+  },
+  "/eventscontribution/": {
+    "toPath": "/donate/events-and-projects",
+    "statusCode": 301
+  },
+  "/generaldonation/": {
+    "toPath": "/donate/general-donation",
+    "statusCode": 301
+  },
+  "/grantha-danam-2/": {
+    "toPath": "/donate/grantha-danam",
+    "statusCode": 301
+  },
+  "/internships/": {
+    "toPath": "/join-us/internship",
+    "statusCode": 301
+  },
+  "/leadership/": {
+    "toPath": "/about/leadership",
+    "statusCode": 301
+  },
+  "/media/": {
+    "toPath": "/media",
+    "statusCode": 301
+  },
+  "/newsletter/": {
+    "toPath": "/media/newsletter",
+    "statusCode": 301
+  },
+  "/nourishment/": {
+    "toPath": "/donate/anna-danam",
+    "statusCode": 301
+  },
+  "/privacy/": {
+    "toPath": "/privacy",
+    "statusCode": 301
+  },
+  "/samskritsabhaujjeevanam/": {
+    "toPath": "/donate/sabha-ujjivanam",
+    "statusCode": 301
+  },
+  "/scholarship-rewards/": {
+    "toPath": "/donate/vidyarthi-nidhi",
+    "statusCode": 301
+  },
+  "/social-impact-report/": {
+    "toPath": "/credibility/social-impact-report",
+    "statusCode": 301
+  },
+  "/teachers/": {
+    "toPath": "/donate/guru-dakshina",
+    "statusCode": 301
+  },
+  "/team/": {
+    "toPath": "/about/core-team",
+    "statusCode": 301
+  },
+  "/terms/": {
+    "toPath": "/terms",
+    "statusCode": 301
+  },
+  "/testimonials/": {
+    "toPath": "/media/testimonials",
+    "statusCode": 301
+  },
+  "/vidya_danam_dm/": {
+    "toPath": "/donate/vidya-danam",
+    "statusCode": 301
+  },
+  "/volunteers/": {
+    "toPath": "/join-us/volunteer",
+    "statusCode": 301
+  },
+  "/vsp/": {
+    "toPath": "/donate/bala-gurukulam",
+    "statusCode": 301
+  }
+}

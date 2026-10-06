@@ -3,10 +3,12 @@
 import { RepeatableList } from '@/components/admin/ui/RepeatableList';
 
 const inputClass = 'w-full rounded-md border border-[var(--border-subtle)] px-2.5 py-1.5 font-sans text-sm text-charcoal';
-// Matches NEWSLETTER_ARCHIVE exactly — {year, issues: [{label, title}]}, a
-// nested list (each year groups several issues).
+// Matches NEWSLETTER_ARCHIVE — {year, issues: [{label, title, url?}]}, a
+// nested list (each year groups several issues). `url` is optional — a
+// blank value is safe and simply hides that issue's Download action on the
+// public page rather than rendering a dead link.
 const NEW_YEAR = { year: '', issues: [] };
-const NEW_ISSUE = { label: '', title: '' };
+const NEW_ISSUE = { label: '', title: '', url: '' };
 
 export function NewsletterArchiveForm({ value, onChange }) {
   return (
@@ -26,9 +28,18 @@ export function NewsletterArchiveForm({ value, onChange }) {
               newItemTemplate={NEW_ISSUE}
               itemLabel={(issue) => issue.title || 'New issue'}
               renderItem={(issue, onIssueChange) => (
-                <div className="grid grid-cols-2 gap-2">
-                  <input type="text" value={issue.label} onChange={(e) => onIssueChange({ ...issue, label: e.target.value })} placeholder="Label (e.g. Dec 2025 · Vol. 8, Issue 2)" className={inputClass} />
-                  <input type="text" value={issue.title} onChange={(e) => onIssueChange({ ...issue, title: e.target.value })} placeholder="Title" className={inputClass} />
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" value={issue.label} onChange={(e) => onIssueChange({ ...issue, label: e.target.value })} placeholder="Label (e.g. Dec 2025 · Vol. 8, Issue 2)" className={inputClass} />
+                    <input type="text" value={issue.title} onChange={(e) => onIssueChange({ ...issue, title: e.target.value })} placeholder="Title" className={inputClass} />
+                  </div>
+                  <input
+                    type="text"
+                    value={issue.url || ''}
+                    onChange={(e) => onIssueChange({ ...issue, url: e.target.value })}
+                    placeholder="Destination URL (PDF or flipbook — optional)"
+                    className={inputClass}
+                  />
                 </div>
               )}
             />

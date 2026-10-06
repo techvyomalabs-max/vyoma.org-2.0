@@ -2,9 +2,20 @@
 // 11: "Generate per-page title, description, canonical URL... from CMS
 // data"). Next.js does not auto-derive canonical from metadataBase + route —
 // it must be supplied per page, so this centralizes the shape.
+//
+// `title` is omitted entirely when falsy, rather than included as an
+// explicit `title: undefined` — Next.js treats an explicit `undefined`
+// value as "no title for this route," which drops the rendered <title> tag
+// instead of inheriting the root layout's title template/default (verified:
+// pages passing a literal string always rendered correctly; the 4 pages
+// that passed `SEO?.title || undefined` did not). Confirmed safe for every
+// other current caller — each already always passes a truthy title (either
+// a literal string, or its own `SEO?.title || <realFallback>`), so this
+// only changes behavior for a route that would otherwise end up with no
+// title key, which was always the bug, never the intent.
 export function pageMetadata({ path, title, description }) {
   return {
-    title,
+    ...(title ? { title } : {}),
     description,
     alternates: { canonical: path },
   };

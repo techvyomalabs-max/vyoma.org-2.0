@@ -9,7 +9,9 @@ export async function generateMetadata() {
   const { SEO } = await getFaqContent();
   const meta = pageMetadata({
     path: '/faq',
-    title: SEO?.title || undefined,
+    // Matches this page's own real, already-rendered PageHero heading below
+    // — not invented copy.
+    title: SEO?.title || 'Frequently Asked Questions',
     description: SEO?.description || 'Answers to common questions about donating to Vyoma, tax benefits, partnerships, and learning Sanskrit.',
   });
   if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };

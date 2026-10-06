@@ -10,7 +10,9 @@ import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata() {
   const { SEO } = await getDonateContent();
-  const meta = pageMetadata({ path: '/donate', title: SEO?.title || undefined, description: SEO?.description || 'Your gift keeps Sanskrit education free and open to all across India.' });
+  // 'Donate' matches the real, already-used route label (navConfig.js's
+  // DONATE_LINK) — not invented copy.
+  const meta = pageMetadata({ path: '/donate', title: SEO?.title || 'Donate', description: SEO?.description || 'Your gift keeps Sanskrit education free and open to all across India.' });
   if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
   return meta;
 }

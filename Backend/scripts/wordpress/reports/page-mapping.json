@@ -1,0 +1,732 @@
+[
+  {
+    "title": "Magazine 2",
+    "oldSlug": "(empty — never assigned a slug)",
+    "oldUrl": "https://vyoma.org/?page_id=7630",
+    "status": "draft",
+    "classification": "D",
+    "likelyDestination": null,
+    "migrationAction": "Draft — needs human review before any migration decision",
+    "notes": "Divi content length: 17082 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "csr-cell",
+    "oldSlug": "csr-main",
+    "oldUrl": "https://vyoma.org/?page_id=8357",
+    "status": "draft",
+    "classification": "D",
+    "likelyDestination": null,
+    "migrationAction": "Draft — needs human review before any migration decision",
+    "notes": "Divi content length: 62847 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_header, et_pb_row, et_pb_column, et_pb_text, et_pb_button…"
+  },
+  {
+    "title": "Donors backup",
+    "oldSlug": "donors-2-2",
+    "oldUrl": "https://vyoma.org/?page_id=8662",
+    "status": "draft",
+    "classification": "D",
+    "likelyDestination": null,
+    "migrationAction": "Draft — needs human review before any migration decision",
+    "notes": "Divi content length: 35798 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_image, et_pb_row, et_pb_column, et_pb_text, et_pb_image…"
+  },
+  {
+    "title": "Core Team - back up",
+    "oldSlug": "team-1",
+    "oldUrl": "https://vyoma.org/?page_id=8825",
+    "status": "draft",
+    "classification": "D",
+    "likelyDestination": null,
+    "migrationAction": "Draft — needs human review before any migration decision",
+    "notes": "Divi content length: 110074 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_team_member, et_pb_button"
+  },
+  {
+    "title": "CareersBackup",
+    "oldSlug": "careers-backup",
+    "oldUrl": "https://vyoma.org/?page_id=10187",
+    "status": "draft",
+    "classification": "D",
+    "likelyDestination": null,
+    "migrationAction": "Draft — needs human review before any migration decision",
+    "notes": "Divi content length: 7090 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_slider, et_pb_slide, et_pb_row, et_pb_column, et_pb_text…"
+  },
+  {
+    "title": "testpage",
+    "oldSlug": "testpage",
+    "oldUrl": "https://vyoma.org/?page_id=10538",
+    "status": "draft",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Discard candidate (empty/near-empty draft, never published)",
+    "notes": "Divi content length: 17 chars. No Divi shortcodes detected (near-empty)."
+  },
+  {
+    "title": "Where Sanskrit-IKS",
+    "oldSlug": "where-sanskrit-3",
+    "oldUrl": "https://vyoma.org/?page_id=11766",
+    "status": "draft",
+    "classification": "D",
+    "likelyDestination": null,
+    "migrationAction": "Draft — needs human review before any migration decision",
+    "notes": "Divi content length: 32683 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image, et_pb_button"
+  },
+  {
+    "title": "Home",
+    "oldSlug": "page1-2",
+    "oldUrl": "https://vyoma.org/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"homepage\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 50321 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_slider, et_pb_slide, et_pb_row, et_pb_column, et_pb_text…"
+  },
+  {
+    "title": "Privacy Policy",
+    "oldSlug": "privacy",
+    "oldUrl": "https://vyoma.org/privacy/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 18756 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "About Us",
+    "oldSlug": "about",
+    "oldUrl": "https://vyoma.org/about/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/about",
+    "migrationAction": "Maps to /about. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "About page already exists. Divi content length: 9728 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image, et_pb_blurb…"
+  },
+  {
+    "title": "Our Projects",
+    "oldSlug": "projects",
+    "oldUrl": "https://vyoma.org/projects/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 18690 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_button, et_pb_image"
+  },
+  {
+    "title": "Volunteers",
+    "oldSlug": "volunteers",
+    "oldUrl": "https://vyoma.org/volunteers/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/join-us/volunteer",
+    "migrationAction": "Maps to /join-us/volunteer. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Join Us > Volunteer already exists. Divi content length: 47695 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_blurb, et_pb_button…"
+  },
+  {
+    "title": "Contact Us",
+    "oldSlug": "contact",
+    "oldUrl": "https://vyoma.org/contact/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/contact",
+    "migrationAction": "Maps to /contact. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Contact page already exists. Divi content length: 13038 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_blurb, et_pb_social_media_follow…"
+  },
+  {
+    "title": "Careersbackup120126",
+    "oldSlug": "careers120126",
+    "oldUrl": "https://vyoma.org/careers120126/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"careers\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 52150 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_slider, et_pb_slide, et_pb_row, et_pb_column, et_pb_text…"
+  },
+  {
+    "title": "Core Team",
+    "oldSlug": "team",
+    "oldUrl": "https://vyoma.org/team/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"team\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 160713 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_team_member, et_pb_button"
+  },
+  {
+    "title": "Events",
+    "oldSlug": "events",
+    "oldUrl": "https://vyoma.org/events/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/media/events",
+    "migrationAction": "Maps to /media/events. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Media > Events already exists. Divi content length: 1094 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Gallery",
+    "oldSlug": "gallery",
+    "oldUrl": "https://vyoma.org/gallery/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"gallery\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 24581 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_gallery"
+  },
+  {
+    "title": "Testimonials",
+    "oldSlug": "testimonials",
+    "oldUrl": "https://vyoma.org/testimonials/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 2324 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_button, et_pb_gallery"
+  },
+  {
+    "title": "Roadmap",
+    "oldSlug": "roadmap",
+    "oldUrl": "https://vyoma.org/roadmap/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 3711 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Timeline",
+    "oldSlug": "timeline",
+    "oldUrl": "https://vyoma.org/timeline/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 6460 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Blog",
+    "oldSlug": "blog",
+    "oldUrl": "https://vyoma.org/blog/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"blog\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 709 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_code"
+  },
+  {
+    "title": "Where Sanskrit",
+    "oldSlug": "where-sanskrit",
+    "oldUrl": "https://vyoma.org/where-sanskrit/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"sanskrit-topic\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 25331 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image, et_pb_button"
+  },
+  {
+    "title": "Donors",
+    "oldSlug": "patrons",
+    "oldUrl": "https://vyoma.org/patrons/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 14938 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_image, et_pb_row, et_pb_column, et_pb_text, et_pb_image…"
+  },
+  {
+    "title": "Catalog",
+    "oldSlug": "catalog",
+    "oldUrl": "https://vyoma.org/catalog/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 1052 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Vyoma Samskrta Bhavanam",
+    "oldSlug": "vsb",
+    "oldUrl": "https://vyoma.org/vsb/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 3918 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image, et_pb_button"
+  },
+  {
+    "title": "Terms",
+    "oldSlug": "terms",
+    "oldUrl": "https://vyoma.org/terms/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 25550 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Jobs",
+    "oldSlug": "job-openings",
+    "oldUrl": "https://vyoma.org/job-openings/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 710 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Metrics",
+    "oldSlug": "metrics",
+    "oldUrl": "https://vyoma.org/metrics/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 27514 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_number_counter"
+  },
+  {
+    "title": "What Sanskrit",
+    "oldSlug": "what-sanskrit",
+    "oldUrl": "https://vyoma.org/what-sanskrit/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"sanskrit-topic\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 27387 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image, et_pb_button"
+  },
+  {
+    "title": "New Landing",
+    "oldSlug": "new-landing",
+    "oldUrl": "https://vyoma.org/new-landing/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"homepage\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 1231 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_slider, et_pb_slide"
+  },
+  {
+    "title": "Newsletter",
+    "oldSlug": "newsletter",
+    "oldUrl": "https://vyoma.org/newsletter/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/media/newsletter",
+    "migrationAction": "Maps to /media/newsletter. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Media > Newsletter already exists. Divi content length: 14754 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_code, et_pb_line_break_holder, et_pb_text…"
+  },
+  {
+    "title": "Testimonials - Teacher",
+    "oldSlug": "testimonials-teacher",
+    "oldUrl": "https://vyoma.org/testimonials-teacher/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 1726 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Payment Confirmation",
+    "oldSlug": "payment-confirmation",
+    "oldUrl": "https://vyoma.org/payment-confirmation/",
+    "status": "publish",
+    "classification": "E",
+    "likelyDestination": null,
+    "migrationAction": "No new page needed — superseded by the new Razorpay checkout flow’s own success/fail handling",
+    "notes": "Divi content length: 19 chars. No Divi shortcodes detected (near-empty)."
+  },
+  {
+    "title": "Payment Failed",
+    "oldSlug": "payment-failed",
+    "oldUrl": "https://vyoma.org/payment-failed/",
+    "status": "publish",
+    "classification": "E",
+    "likelyDestination": null,
+    "migrationAction": "No new page needed — superseded by the new Razorpay checkout flow’s own success/fail handling",
+    "notes": "Divi content length: 94 chars. No Divi shortcodes detected (near-empty)."
+  },
+  {
+    "title": "Donate SSS",
+    "oldSlug": "donors",
+    "oldUrl": "https://vyoma.org/donors/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"donors\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 42044 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_button, et_pb_blurb…"
+  },
+  {
+    "title": "Grama-Seva",
+    "oldSlug": "grama-seva",
+    "oldUrl": "https://vyoma.org/grama-seva/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 5931 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_image, et_pb_text, et_pb_counters…"
+  },
+  {
+    "title": "Veda-Seva",
+    "oldSlug": "veda-seva",
+    "oldUrl": "https://vyoma.org/veda-seva/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 5119 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_image, et_pb_text, et_pb_counters…"
+  },
+  {
+    "title": "Visheshachatra-Seva",
+    "oldSlug": "visheshachatra-seva",
+    "oldUrl": "https://vyoma.org/visheshachatra-seva/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 5907 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_image, et_pb_text, et_pb_counters…"
+  },
+  {
+    "title": "Samskrita Bhavanam",
+    "oldSlug": "samskritabhavanam",
+    "oldUrl": "https://vyoma.org/samskritabhavanam/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 5427 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_image, et_pb_text, et_pb_counters…"
+  },
+  {
+    "title": "Samskrita Samrakshana Nidhi",
+    "oldSlug": "samrakshananidhi",
+    "oldUrl": "https://vyoma.org/samrakshananidhi/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 4060 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image"
+  },
+  {
+    "title": "SamskritSabhaUjjeevanam",
+    "oldSlug": "samskritsabhaujjeevanam",
+    "oldUrl": "https://vyoma.org/samskritsabhaujjeevanam/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/donate/sabha-ujjivanam",
+    "migrationAction": "Maps to /donate/sabha-ujjivanam. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Transliteration match to live donation scheme slug \"sabha-ujjivanam\". Divi content length: 5588 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_image, et_pb_text, et_pb_counters…"
+  },
+  {
+    "title": "Sanathana Vidya Patashala",
+    "oldSlug": "svp",
+    "oldUrl": "https://vyoma.org/svp/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 5650 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_image, et_pb_text, et_pb_counters…"
+  },
+  {
+    "title": "blog-1",
+    "oldSlug": "blog-2",
+    "oldUrl": "https://vyoma.org/blog-2/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"blog\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 620 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_code"
+  },
+  {
+    "title": "vidya_danam_dm",
+    "oldSlug": "vidya_danam_dm",
+    "oldUrl": "https://vyoma.org/vidya_danam_dm/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/donate/vidya-danam",
+    "migrationAction": "Maps to /donate/vidya-danam. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Matches live donation scheme slug \"vidya-danam\". Divi content length: 4355 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_counters, et_pb_counter…"
+  },
+  {
+    "title": "Grantha-danam_dm",
+    "oldSlug": "grantha-danam-2",
+    "oldUrl": "https://vyoma.org/grantha-danam-2/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/donate/grantha-danam",
+    "migrationAction": "Maps to /donate/grantha-danam. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Matches live donation scheme slug \"grantha-danam\". No plain \"grantha-danam\" page exists in the export — only this \"-2\" variant. Divi content length: 3621 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_counters, et_pb_counter…"
+  },
+  {
+    "title": "Gallery",
+    "oldSlug": "gallery-2-2",
+    "oldUrl": "https://vyoma.org/gallery-2-2/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"gallery\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 24491 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_gallery"
+  },
+  {
+    "title": "Gallery",
+    "oldSlug": "gallery-2",
+    "oldUrl": "https://vyoma.org/gallery-2/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"gallery\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 14471 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_video, et_pb_gallery"
+  },
+  {
+    "title": "education-vidyadanam",
+    "oldSlug": "education",
+    "oldUrl": "https://vyoma.org/education/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 4823 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "teachers-GuruDakshina",
+    "oldSlug": "teachers",
+    "oldUrl": "https://vyoma.org/teachers/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 4073 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "CSR-Projects",
+    "oldSlug": "csr-projects",
+    "oldUrl": "https://vyoma.org/csr-projects/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/join-us/csr-projects",
+    "migrationAction": "Maps to /join-us/csr-projects. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Join Us > CSR Projects already exists. Divi content length: 4393 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "publication-granthadanam",
+    "oldSlug": "publication",
+    "oldUrl": "https://vyoma.org/publication/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 3414 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "scholarship-vidyarthinidhi",
+    "oldSlug": "scholarship-rewards",
+    "oldUrl": "https://vyoma.org/scholarship-rewards/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 3752 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "Sabha Ujjeevanam",
+    "oldSlug": "sabha-fund",
+    "oldUrl": "https://vyoma.org/sabha-fund/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 6577 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_image, et_pb_code"
+  },
+  {
+    "title": "Culture for kids-sanatana patashala",
+    "oldSlug": "vsp",
+    "oldUrl": "https://vyoma.org/vsp/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 4371 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "Nourishment-annadanam",
+    "oldSlug": "nourishment",
+    "oldUrl": "https://vyoma.org/nourishment/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 3748 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "Corpus-Fund",
+    "oldSlug": "corpus",
+    "oldUrl": "https://vyoma.org/corpus/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/join-us/corpus-fund",
+    "migrationAction": "Maps to /join-us/corpus-fund. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Join Us > Corpus Fund already exists. Divi content length: 2530 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_fullwidth_code"
+  },
+  {
+    "title": "Donate-SSS",
+    "oldSlug": "donors-3",
+    "oldUrl": "https://vyoma.org/donors-3/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"donors\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 27171 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_blurb, et_pb_button…"
+  },
+  {
+    "title": "Leadership",
+    "oldSlug": "leadership",
+    "oldUrl": "https://vyoma.org/leadership/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"team\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 39361 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_team_member, et_pb_icon"
+  },
+  {
+    "title": "Compliances-registrations",
+    "oldSlug": "compliances_registrations",
+    "oldUrl": "https://vyoma.org/compliances_registrations/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/credibility/compliances-registrations",
+    "migrationAction": "Maps to /credibility/compliances-registrations. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Already wired with 8 real registration PDFs. Divi content length: 11533 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Audit reports",
+    "oldSlug": "audit-reports",
+    "oldUrl": "https://vyoma.org/audit-reports/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 3808 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_accordion, et_pb_accordion_item"
+  },
+  {
+    "title": "EventsContribution",
+    "oldSlug": "eventscontribution",
+    "oldUrl": "https://vyoma.org/eventscontribution/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/donate/events-and-projects",
+    "migrationAction": "Maps to /donate/events-and-projects. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Matches live donation scheme slug \"events-and-projects\". Divi content length: 3681 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "Generaldonation",
+    "oldSlug": "generaldonation",
+    "oldUrl": "https://vyoma.org/generaldonation/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/donate/general-donation",
+    "migrationAction": "Maps to /donate/general-donation. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Matches live donation scheme slug \"general-donation\". Divi content length: 4333 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "ProductsContribution",
+    "oldSlug": "productscontribution",
+    "oldUrl": "https://vyoma.org/productscontribution/",
+    "status": "publish",
+    "classification": "F",
+    "likelyDestination": null,
+    "migrationAction": "No confident destination identified — needs your decision before any migration work",
+    "notes": "Divi content length: 2978 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code"
+  },
+  {
+    "title": "blogs-new",
+    "oldSlug": "blogs",
+    "oldUrl": "https://vyoma.org/blogs/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"blog\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 1173 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_search, et_pb_text, et_pb_blog"
+  },
+  {
+    "title": "Awards",
+    "oldSlug": "awards",
+    "oldUrl": "https://vyoma.org/awards/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/credibility/awards-recognition",
+    "migrationAction": "Maps to /credibility/awards-recognition. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Already built. Divi content length: 21720 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_slider, et_pb_slide…"
+  },
+  {
+    "title": "Media",
+    "oldSlug": "media",
+    "oldUrl": "https://vyoma.org/media/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/media",
+    "migrationAction": "Maps to /media. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Media hub already exists. Divi content length: 4609 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_heading, et_pb_text, et_pb_gallery"
+  },
+  {
+    "title": "Social Impact Report",
+    "oldSlug": "social-impact-report",
+    "oldUrl": "https://vyoma.org/social-impact-report/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/credibility/social-impact-report",
+    "migrationAction": "Maps to /credibility/social-impact-report. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Already built. Divi content length: 4469 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Annual Reports",
+    "oldSlug": "annual_reports",
+    "oldUrl": "https://vyoma.org/annual_reports/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/credibility/annual-reports",
+    "migrationAction": "Maps to /credibility/annual-reports. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Already built (currently \"Not uploaded yet\" for all items). Divi content length: 9218 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Collaterals",
+    "oldSlug": "collaterals",
+    "oldUrl": "https://vyoma.org/collaterals/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/credibility/collaterals",
+    "migrationAction": "Maps to /credibility/collaterals. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Already built (currently \"Not uploaded yet\" for all items). Divi content length: 13796 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text"
+  },
+  {
+    "title": "Careers",
+    "oldSlug": "careers",
+    "oldUrl": "https://vyoma.org/careers/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"careers\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 147492 chars. Uses Divi modules: et_pb_section, et_pb_fullwidth_slider, et_pb_slide, et_pb_row, et_pb_column, et_pb_heading…"
+  },
+  {
+    "title": "Where IKS",
+    "oldSlug": "where-iks",
+    "oldUrl": "https://vyoma.org/where-iks/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"where-iks\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 65880 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code, et_pb_line_break_holder…"
+  },
+  {
+    "title": "Where IKS - Shashank",
+    "oldSlug": "where-iks-2",
+    "oldUrl": "https://vyoma.org/where-iks-2/",
+    "status": "publish",
+    "classification": "C",
+    "likelyDestination": null,
+    "migrationAction": "Part of duplicate-slug cluster \"where-iks\" — see duplicate-review.json. No page-level decision until that cluster is resolved.",
+    "notes": "Divi content length: 70007 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_code, et_pb_line_break_holder…"
+  },
+  {
+    "title": "Intern",
+    "oldSlug": "internships",
+    "oldUrl": "https://vyoma.org/internships/",
+    "status": "publish",
+    "classification": "A",
+    "likelyDestination": "/join-us/internship",
+    "migrationAction": "Maps to /join-us/internship. Content still needs to be manually re-authored from the Divi source (see diviTags) — this is a destination match, not a content-ready import.",
+    "notes": "Join Us > Internship already exists. Divi content length: 8975 chars. Uses Divi modules: et_pb_section, et_pb_row, et_pb_column, et_pb_text, et_pb_blurb, et_pb_divider…"
+  }
+]

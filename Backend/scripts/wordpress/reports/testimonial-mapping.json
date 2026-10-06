@@ -1,0 +1,158 @@
+[
+  {
+    "titleOrName": "Sivam",
+    "category": [
+      "Old"
+    ],
+    "content": "\"My heartiest congratulations and sincere salutations to the Team on doing such an important and great job. Happy 5th Anniversary and I feel blessed to be part of your circle too. Your teachers are so dedicated and your products are so useful too. I recently checked out an American website that was offering a Sanskrit home learning CD course for US$450. The standard is not even 10% of what Vyoma offers. Congratulations. A very happy and satisfied student n client. Jai Siya Ram.\"",
+    "imageAvailable": false,
+    "taggedHomeSlider": false,
+    "proposedDestination": "No current destination — the new site does not yet have a general/\"Old\" testimonials archive page",
+    "action": "manual review",
+    "note": "These 6 \"Old\"-category testimonials have no image and no clear destination in the current CMS structure — decide whether they belong on /media/testimonials (which exists as a page slug in WordPress but has no equivalent content model yet in the new CMS) or should be archived."
+  },
+  {
+    "titleOrName": "Vasudevan Sripati",
+    "category": [
+      "Old"
+    ],
+    "content": "\"I have purchased few products of Vyoma Labs of which Ashtadhyayi and Shabdaroopasangraha are excellent. I am yet to use Sandhi and Samasa. I have wholeheartedly recommended these to concerned people. It would be very helpful if you make teacher-student and chanting mode CD on Amarakosha which I feel would be of great help for self-learning students. It would be of great use if you are able to put a stall at Samskrita Bharathi in Girinagar where it can reach a lot of people interested in Samskri",
+    "imageAvailable": false,
+    "taggedHomeSlider": false,
+    "proposedDestination": "No current destination — the new site does not yet have a general/\"Old\" testimonials archive page",
+    "action": "manual review",
+    "note": "These 6 \"Old\"-category testimonials have no image and no clear destination in the current CMS structure — decide whether they belong on /media/testimonials (which exists as a page slug in WordPress but has no equivalent content model yet in the new CMS) or should be archived."
+  },
+  {
+    "titleOrName": "Sanath Kumar",
+    "category": [
+      "Old"
+    ],
+    "content": "\"Firstly I would like to thank and congratulate Vyoma Labs for the wonderful work that you’re doing in preaching Sanskrit. I regularly watch vyoma’s Youtube videos and have also purchased vyoma’s sandhi and samasa cds. So many thanks for your work. In reference to wonderful work on surasaraswathi sabha front (Sringeri Sanskrit exams), specifically to truteeya, I have been benefited immensely through vyoma’s online e portal., I study the material online as I am unable to attend classes. Once agai",
+    "imageAvailable": false,
+    "taggedHomeSlider": false,
+    "proposedDestination": "No current destination — the new site does not yet have a general/\"Old\" testimonials archive page",
+    "action": "manual review",
+    "note": "These 6 \"Old\"-category testimonials have no image and no clear destination in the current CMS structure — decide whether they belong on /media/testimonials (which exists as a page slug in WordPress but has no equivalent content model yet in the new CMS) or should be archived."
+  },
+  {
+    "titleOrName": "Raj Acharya",
+    "category": [
+      "Old"
+    ],
+    "content": "\"I have studied tingantaprakaranam before. But now listening to ms. Somaya is such a pleasure to see how she explains the complex subject topic so clearly. I hope that she teaches kradant also. Thanks for this wonderful work.\"",
+    "imageAvailable": false,
+    "taggedHomeSlider": false,
+    "proposedDestination": "No current destination — the new site does not yet have a general/\"Old\" testimonials archive page",
+    "action": "manual review",
+    "note": "These 6 \"Old\"-category testimonials have no image and no clear destination in the current CMS structure — decide whether they belong on /media/testimonials (which exists as a page slug in WordPress but has no equivalent content model yet in the new CMS) or should be archived."
+  },
+  {
+    "titleOrName": "Iragavarapu Narasimhacharya",
+    "category": [
+      "Old"
+    ],
+    "content": "\"Dear Friend, praNamyA. Your programme is excellent.The teaching is clear.As I am 80 years old and as I have a little hearing impaired through-out I could not follow.Maheswara SutraaNi were clearly explained and I was able to listen to them well.My computer also is a little defective as it is an old one.I also lack in the skill to operate well. Any how,on the whole to judge,your performance is excellent\"",
+    "imageAvailable": false,
+    "taggedHomeSlider": false,
+    "proposedDestination": "No current destination — the new site does not yet have a general/\"Old\" testimonials archive page",
+    "action": "manual review",
+    "note": "These 6 \"Old\"-category testimonials have no image and no clear destination in the current CMS structure — decide whether they belong on /media/testimonials (which exists as a page slug in WordPress but has no equivalent content model yet in the new CMS) or should be archived."
+  },
+  {
+    "titleOrName": "Sudha Raghuraman",
+    "category": [
+      "Old"
+    ],
+    "content": "\"Tuesdays &amp; thursdays without Gita classes are unimaginable.we miss the divine atmosphere. I specially thank you for all your efforts.and your presentation with all the detailed notes.Iam taking down all the notes and as you say, daily i read the shlokas and stay in touch with the momentam. I consider myself blessed to have association with VSP. Thanking you and with kind regards\"",
+    "imageAvailable": false,
+    "taggedHomeSlider": false,
+    "proposedDestination": "No current destination — the new site does not yet have a general/\"Old\" testimonials archive page",
+    "action": "manual review",
+    "note": "These 6 \"Old\"-category testimonials have no image and no clear destination in the current CMS structure — decide whether they belong on /media/testimonials (which exists as a page slug in WordPress but has no equivalent content model yet in the new CMS) or should be archived."
+  },
+  {
+    "titleOrName": "Late. Prof. M A Lakshmithathachar",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "\"हार्दानि अभिनन्दनानि चिरमभिवर्धनां संस्कृत श्रीः।\" Vyoma Should stive to become a Virtual Sanskrit University as early as possible.",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  },
+  {
+    "titleOrName": "Prof. Shrinivasa Varakhedi Ph.D",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "The products developed by the Vyoma team has come out well. Concept videos, audios and animations are very informative. The products are highly recommended for students and teachers.",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  },
+  {
+    "titleOrName": "Dr. M Jayaraman",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "The field of Samskritam needs such pioneering ventures to reach out to the people of the world in this contemporary era, who are in search of knowledge. This is a commendable effort. Way to go!",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  },
+  {
+    "titleOrName": "Braḥmaśrī  Kalaimamani  Dr. Udaiyalur Kalyanaraman",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "Thanks to Vyoma’s Sanskrit e-learning tools, am enjoying the bhāva in each kṛti more than ever and this instills strong-bhakti in lakhs of listeners too… My heartfelt blessings to them",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  },
+  {
+    "titleOrName": "Kum. Neha Anisetty",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "The webinar sessions on the Bhagavad Gītā are helping me a lot in learning the Gītā. It has improved my pronunciation, concentration, memory, patience and discipline. It has helped my learning of Sanskrit language and Carnatic Vocal music.",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  },
+  {
+    "titleOrName": "Lessons on Vedanta: Positive impact on my day to day interactions",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "Thanks to Vyoma Labs, distance and language are no longer barriers to a spiritual seeker living outside India. I am grateful to all of you for your help with my spiritual journey, which has had a profound impact on my day to day interactions and activities as well.",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  },
+  {
+    "titleOrName": "Experiencing prāṇāyāma benefits while Sanskrit chanting shlokas",
+    "category": [
+      "Home-slider"
+    ],
+    "content": "The link between chanting Sanskrit Shlokas and prāṇāyāma was mind-blowing. We experienced the power of chanting Sanskrit shlokas, we realize the benefits and we would spread this during our Yoga sessions",
+    "imageAvailable": true,
+    "taggedHomeSlider": true,
+    "proposedDestination": "Home page HOME_TESTIMONIALS",
+    "action": "migrate",
+    "note": "The new site’s current HOME_TESTIMONIALS (3 entries: Dr Jaya Tyagi, Dr Ramakrishnarao Rebbapragada, Sri Siddhartha Jayanti) are placeholder/demo content, not sourced from WordPress — these 7 real \"Home-slider\" testimonials are candidates to replace them, pending your approval."
+  }
+]

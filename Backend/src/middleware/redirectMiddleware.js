@@ -11,10 +11,20 @@ import { RedirectModel } from '../modules/redirects/redirect.model.js';
 // them, so a real browser request for a legacy top-level page (e.g.
 // "/old-donate-page") never reaches this Express app at all — only requests
 // that already fall through this API's own routing do. This middleware is
-// correct and ready for the eventual production topology (a reverse proxy in
-// front of both, per the original AWS deployment plan) where it becomes the
-// actual gate for legacy URLs; it does not yet intercept Frontend page
-// requests in local dev.
+// correct and useful for any environment where a request for a legacy page
+// does reach this Backend directly (e.g. a reverse-proxy topology, or direct
+// API/script access) — it does not intercept Frontend page requests in
+// local dev, and in the planned production topology (S3 + CloudFront static
+// hosting for the Frontend) it won't intercept them there either, since
+// static assets are served straight from S3/CloudFront without ever
+// reaching this Express app. For that topology, the equivalent legacy-page
+// redirect gate is a generated CloudFront Function
+// (infra/cloudfront/redirect-function.generated.js, produced by
+// Backend/scripts/deploy/generate-redirect-manifest.mjs) running at the
+// CloudFront edge instead of here. Either way, the Redirect collection
+// below remains the single authoring source of truth — this middleware and
+// the generated CloudFront Function are just two different runtimes
+// consuming the same data.
 export async function redirectMiddleware(req, res, next) {
   try {
     const match = await RedirectModel.findOne({ fromPath: req.path }).lean();

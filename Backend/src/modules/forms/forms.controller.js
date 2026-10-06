@@ -1,9 +1,22 @@
 import { FormSubmissionModel } from './formSubmission.model.js';
+import { SiteSettingsModel } from '../settings/setting.model.js';
 import { sendMail } from '../../services/mailer.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_FIELD_LENGTH = 5000;
+
+// Confirmed business detail: support@vyomalabs.in is the correct fallback
+// contact inbox — used only when Settings.contactInboxEmail is blank/unset,
+// never hardcoded as the primary recipient (Settings stays the
+// configurable source of truth, per the admin-editable field it already
+// has for exactly this).
+const FALLBACK_CONTACT_INBOX = 'support@vyomalabs.in';
+
+async function resolveNotificationRecipient() {
+  const settings = await SiteSettingsModel.findOne({}).select('contactInboxEmail').lean();
+  return settings?.contactInboxEmail?.trim() || FALLBACK_CONTACT_INBOX;
+}
 
 // LLD Section 8.1/14: required fields, email format, length limits, basic
 // sanitization. Not tied to one exact per-formKey shape — both the site-wide
@@ -54,7 +67,7 @@ export async function submitFormHandler(req, res, next) {
     // itself (LLD 8.1 step 7: "Return accessible success/error response").
     try {
       const result = await sendMail({
-        to: 'shared-inbox@vyomalabs.in',
+        to: await resolveNotificationRecipient(),
         subject: `New ${formKey} submission`,
         html: `<pre>${JSON.stringify(values, null, 2)}</pre>`,
       });

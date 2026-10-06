@@ -67,13 +67,12 @@ export const CONTACT_LINK = { label: 'Contact Us', href: '/contact' };
 export const DONATE_LINK = { label: 'Donate', href: '/donate' };
 export const FAQ_LINK = { label: 'FAQ', href: '/faq' };
 
-// Privacy/Terms point at the current live vyoma.org pages — the new
-// Next.js site has no equivalent internal page yet, so these stay external
-// until one is explicitly built (per instruction). Every other entry here
-// is a real internal route.
+// Privacy/Terms now point at the migrated internal routes (Batch 2) — the
+// legacy vyoma.org URLs are covered by the /privacy/ and /terms/ redirects
+// instead. Every entry here is a real internal route.
 export const FOOTER_LINKS = [
-  { label: 'Privacy', href: 'https://vyoma.org/privacy/', external: true },
-  { label: 'Terms', href: 'https://vyoma.org/terms/', external: true },
+  { label: 'Privacy', href: '/privacy' },
+  { label: 'Terms', href: '/terms' },
   { label: 'Annual Report', href: '/credibility/annual-reports' },
   { label: 'Contact', href: '/contact' },
   { label: 'FAQ', href: '/faq' },

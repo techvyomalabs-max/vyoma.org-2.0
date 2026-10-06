@@ -34,7 +34,7 @@ export function NewsletterArchiveClient({ archive, special }) {
             <h3 className="mb-3 font-sans text-lg font-bold text-vyoma-blue">{g.year}</h3>
             <div className="flex flex-col gap-3">
               {g.issues.map((issue) => (
-                <IssueRow key={issue.label} label={issue.label} title={issue.title} />
+                <IssueRow key={issue.label} label={issue.label} title={issue.title} url={issue.url} />
               ))}
             </div>
           </div>
@@ -45,7 +45,7 @@ export function NewsletterArchiveClient({ archive, special }) {
             <h3 className="mb-3 font-sans text-lg font-bold text-vyoma-blue">Special Issues</h3>
             <div className="flex flex-col gap-3">
               {special.map((issue) => (
-                <IssueRow key={issue.label} label={issue.label} title={issue.title} />
+                <IssueRow key={issue.label} label={issue.label} title={issue.title} url={issue.url} />
               ))}
             </div>
           </div>

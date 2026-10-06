@@ -21,7 +21,9 @@ export async function generateMetadata() {
   const { SEO } = await getContactContent();
   const meta = pageMetadata({
     path: '/contact',
-    title: SEO?.title || undefined,
+    // 'Contact' matches the real, already-used route label (navConfig.js's
+    // FOOTER_LINKS) — not invented copy.
+    title: SEO?.title || 'Contact',
     description:
       SEO?.description ||
       "We'd love to hear from you — whether you're considering a donation, exploring a CSR partnership, or simply have a question about our work.",

@@ -37,10 +37,16 @@ export default async function NewsletterPage() {
               <div className="font-sans text-sm font-bold uppercase text-charcoal">{latest.label}</div>
               <h3 className="mt-2 font-sans text-[30px] font-bold text-vyoma-blue">{latest.title}</h3>
               <p className="mt-3 font-sans text-[15px] text-charcoal">{latest.summary}</p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button variant="solid">Read online</Button>
-                <Button variant="outline">Download PDF</Button>
-              </div>
+              {latest.url && (
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button variant="solid" href={latest.url} target="_blank" rel="noopener noreferrer">
+                    Read online
+                  </Button>
+                  <Button variant="outline" href={latest.url} target="_blank" rel="noopener noreferrer">
+                    Download PDF
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

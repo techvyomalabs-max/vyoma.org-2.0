@@ -1,0 +1,834 @@
+[
+  {
+    "attachmentId": "5581",
+    "filename": "Language-Lab-Brochure_Vyoma.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2022/10/Language-Lab-Brochure_Vyoma.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "6443",
+    "filename": "Vyomavaartaa-2022.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2022/12/Vyomavaartaa-2022.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6445",
+    "filename": "Vyoma-E-Book-Newsletter-10-years-journey-.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2022/12/Vyoma-E-Book-Newsletter-10-years-journey-.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6490",
+    "filename": "Vyoma-E-Book-Newsletter-10-years-journey-301222.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2022/12/Vyoma-E-Book-Newsletter-10-years-journey-301222.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6492",
+    "filename": "Vyoma-Sanskrit-Movement-2023_Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/01/Vyoma-Sanskrit-Movement-2023_Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6536",
+    "filename": "VyomavaartaaFinal.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/03/VyomavaartaaFinal.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6537",
+    "filename": "Vyoma-E-Book-Newsletter-7-years-journey-2020.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/03/Vyoma-E-Book-Newsletter-7-years-journey-2020.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6539",
+    "filename": "12880697.Newsletter_June2018.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/03/12880697.Newsletter_June2018.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6541",
+    "filename": "Vol04_June2018.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/03/Vol04_June2018.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown",
+    "status": "review"
+  },
+  {
+    "attachmentId": "6543",
+    "filename": "Vol02_Oct2015_final.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/03/Vol02_Oct2015_final.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown",
+    "status": "review"
+  },
+  {
+    "attachmentId": "7165",
+    "filename": "Vyoma-Sanskrit-Movement-July2023-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/08/Vyoma-Sanskrit-Movement-July2023-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "7866",
+    "filename": "Vyoma-Sanskrit-Movement-Aug2023-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/09/Vyoma-Sanskrit-Movement-Aug2023-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "8234",
+    "filename": "Vyoma-Sanskrit-Movement-Sep2023-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/10/Vyoma-Sanskrit-Movement-Sep2023-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "8925",
+    "filename": "Vyoma-Sanskrit-Movement-Oct2023-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Sanskrit-Movement-Oct2023-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9029",
+    "filename": "customer-seva-job_rev.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/customer-seva-job_rev.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9030",
+    "filename": "Sales-job-description_rev.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Sales-job-description_rev.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9031",
+    "filename": "ELA-Position-Job-description_rev1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/ELA-Position-Job-description_rev1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9037",
+    "filename": "ELA-Position-Job-description.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/ELA-Position-Job-description.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9055",
+    "filename": "Vyoma-Sanskrit-Movement-November2023-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/12/Vyoma-Sanskrit-Movement-November2023-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9115",
+    "filename": "Vyoma-Sanskrit-Movement-Dec2023-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/01/Vyoma-Sanskrit-Movement-Dec2023-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9210",
+    "filename": "JD_SE_Trainee.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/02/JD_SE_Trainee.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9222",
+    "filename": "Vyoma-Sanskrit-Movement-Jan2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/02/Vyoma-Sanskrit-Movement-Jan2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9376",
+    "filename": "Senior_Linguist_Position_Description.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/02/Senior_Linguist_Position_Description.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9377",
+    "filename": "Linguist_Position_Description.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/02/Linguist_Position_Description.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9378",
+    "filename": "Job-Description-for-Software-Engineer-Trainee.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/02/Job-Description-for-Software-Engineer-Trainee.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9444",
+    "filename": "Vyoma-Sanskrit-Movement-Feb2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/03/Vyoma-Sanskrit-Movement-Feb2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9598",
+    "filename": "Vyoma-Sanskrit-Movement-Mar2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/04/Vyoma-Sanskrit-Movement-Mar2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9635",
+    "filename": "Vyoma-Sanskrit-Movement-Apr2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/05/Vyoma-Sanskrit-Movement-Apr2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9675",
+    "filename": "Vyoma-Sanskrit-Movement-May2024-Activity-Report-1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/06/Vyoma-Sanskrit-Movement-May2024-Activity-Report-1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9676",
+    "filename": "Vyoma-Sanskrit-Movement-May2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/06/Vyoma-Sanskrit-Movement-May2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9768",
+    "filename": "Vyoma-Sanskrit-Movement-June2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/07/Vyoma-Sanskrit-Movement-June2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "9879",
+    "filename": "Vyoma-Sanskrit-Movement-July2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/08/Vyoma-Sanskrit-Movement-July2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10056",
+    "filename": "Vyoma-Sanskrit-Movement-Aug2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/09/Vyoma-Sanskrit-Movement-Aug2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10145",
+    "filename": "Vyoma-Sanskrit-Movement-Sep2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/10/Vyoma-Sanskrit-Movement-Sep2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10208",
+    "filename": "Vyoma-Sanskrit-Movement-Oct2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/11/Vyoma-Sanskrit-Movement-Oct2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10230",
+    "filename": "vidyasthanas_the-vedas.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/11/vidyasthanas_the-vedas.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10324",
+    "filename": "Vyoma-Sanskrit-Movement-Nov2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/Vyoma-Sanskrit-Movement-Nov2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10351",
+    "filename": "30-dec-NL-1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/30-dec-NL-1.pdf",
+    "linkedFromPage": "Why Saṃskṛtam? (why-sa%e1%b9%83sk%e1%b9%9btam, blog_post)",
+    "proposedDestination": "Other/Unknown",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10356",
+    "filename": "31-NL-pdf-1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/31-NL-pdf-1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10367",
+    "filename": "Vyoma-Sanskrit-Movement-Dec2024-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/01/Vyoma-Sanskrit-Movement-Dec2024-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10421",
+    "filename": "Vyoma-Sanskrit-Movement-Jan2025-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/02/Vyoma-Sanskrit-Movement-Jan2025-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10428",
+    "filename": "Vyoma-Sanskrit-Movement-January-2025-Activity-Report.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/02/Vyoma-Sanskrit-Movement-January-2025-Activity-Report.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10471",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Jan2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/02/Vyoma-Digital-Sanskrit-movement-Jan2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10483",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Feb2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/03/Vyoma-Digital-Sanskrit-movement-Feb2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10609",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Mar2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/04/Vyoma-Digital-Sanskrit-movement-Mar2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10680",
+    "filename": "SEVA-OFFERINGS-Catalogue.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/04/SEVA-OFFERINGS-Catalogue.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "11130",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Apr2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/05/Vyoma-Digital-Sanskrit-movement-Apr2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11247",
+    "filename": "Vyoma-Digital-Sanskrit-movement-May2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/06/Vyoma-Digital-Sanskrit-movement-May2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11335",
+    "filename": "Bi_Annual_Newsletter_June_2025_Vol_8_Issue_1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/07/Bi_Annual_Newsletter_June_2025_Vol_8_Issue_1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11381",
+    "filename": "Vyoma-Digital-Sanskrit-movement-July2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/08/Vyoma-Digital-Sanskrit-movement-July2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11453",
+    "filename": "OTT-Flyer-Fina_-1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/08/OTT-Flyer-Fina_-1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "11501",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Sep2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/10/Vyoma-Digital-Sanskrit-movement-Sep2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11603",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Oct2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/11/Vyoma-Digital-Sanskrit-movement-Oct2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11637",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Nov2025.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/12/Vyoma-Digital-Sanskrit-movement-Nov2025.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "11789",
+    "filename": "Annual-Report-FY25-FINAL.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/01/Annual-Report-FY25-FINAL.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "12242",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Jan2026.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/02/Vyoma-Digital-Sanskrit-movement-Jan2026.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "12257",
+    "filename": "80G-Renewal.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/02/80G-Renewal.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "ALREADY WIRED — matches a filename already used in /credibility/compliances-registrations"
+  },
+  {
+    "attachmentId": "12259",
+    "filename": "Dec-2025-3.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/02/Dec-2025-3.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown",
+    "status": "review"
+  },
+  {
+    "attachmentId": "12271",
+    "filename": "Social-Impact-Report-FY24.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/02/Social-Impact-Report-FY24.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Social Impact Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "12286",
+    "filename": "12A_Renewal_Document.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/02/12A_Renewal_Document.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "ALREADY WIRED — matches a filename already used in /credibility/compliances-registrations"
+  },
+  {
+    "attachmentId": "12612",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Mar2026.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/04/Vyoma-Digital-Sanskrit-movement-Mar2026.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "12900",
+    "filename": "Vyoma-Digital-Sanskrit-movement-Apr-2026.pptx-Google-Slides.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/05/Vyoma-Digital-Sanskrit-movement-Apr-2026.pptx-Google-Slides.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "13267",
+    "filename": "Vyoma-Digital-Sanskrit-movement-May-2026.pptx.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/06/Vyoma-Digital-Sanskrit-movement-May-2026.pptx.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "8881",
+    "filename": "FCRA-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/FCRA-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "ALREADY WIRED — matches a filename already used in /credibility/compliances-registrations"
+  },
+  {
+    "attachmentId": "8885",
+    "filename": "80G-IT-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/80G-IT-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8886",
+    "filename": "80G-Renewal.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/80G-Renewal.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "ALREADY WIRED — matches a filename already used in /credibility/compliances-registrations"
+  },
+  {
+    "attachmentId": "8887",
+    "filename": "CSR-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/CSR-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "ALREADY WIRED — matches a filename already used in /credibility/compliances-registrations"
+  },
+  {
+    "attachmentId": "8888",
+    "filename": "12A-IT-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/12A-IT-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8889",
+    "filename": "Certificate-Of-Incorporation-Vyoma.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Certificate-Of-Incorporation-Vyoma.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8890",
+    "filename": "12AA-IT-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/12AA-IT-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8895",
+    "filename": "FCRA-Renewal_2022.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/FCRA-Renewal_2022.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "ALREADY WIRED — matches a filename already used in /credibility/compliances-registrations"
+  },
+  {
+    "attachmentId": "8898",
+    "filename": "12AA-IT-Renewal.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/12AA-IT-Renewal.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8900",
+    "filename": "IT-80G-Renewal.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/IT-80G-Renewal.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8909",
+    "filename": "Vyoma-Financials-2012-2013.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2012-2013.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8910",
+    "filename": "Vyoma-Financials-2013-2014.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2013-2014.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8911",
+    "filename": "Vyoma-Financials-2014-2015.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2014-2015.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8912",
+    "filename": "Vyoma-Financials-2015-2016.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2015-2016.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8913",
+    "filename": "Vyoma-Financials-2016-2017.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2016-2017.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8914",
+    "filename": "Vyoma-Financials-2017-2018.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2017-2018.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8915",
+    "filename": "Vyoma-Financials-2018-2019.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2018-2019.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8916",
+    "filename": "Vyoma-Financials-2019-2020.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2019-2020.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8917",
+    "filename": "Vyoma-Financials-2020-2021.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2020-2021.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "8918",
+    "filename": "Vyoma-Financials-2021-2022.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2023/11/Vyoma-Financials-2021-2022.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Audit Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "9881",
+    "filename": "ELA-Position-JD-sheet-for-website_30072024.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/08/ELA-Position-JD-sheet-for-website_30072024.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (job descriptions — not content for any current public page)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "10029",
+    "filename": "About-Vyoma-pointwise.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/09/About-Vyoma-pointwise.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10256",
+    "filename": "MSME-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/MSME-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10257",
+    "filename": "NGO-Darpan_Latest.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/NGO-Darpan_Latest.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10258",
+    "filename": "12A-Renewal-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/12A-Renewal-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10259",
+    "filename": "80G-Renewal-Registration.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/80G-Renewal-Registration.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Compliances & Registrations",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10308",
+    "filename": "About-Vyoma-pointwise_Sanskrit.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/About-Vyoma-pointwise_Sanskrit.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10309",
+    "filename": "About-Vyoma-pointwise-English_rev.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2024/12/About-Vyoma-pointwise-English_rev.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10437",
+    "filename": "Annual-Report-FY22-Final.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/02/Annual-Report-FY22-Final.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10438",
+    "filename": "Annual-Report-FY23-Final.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/02/Annual-Report-FY23-Final.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "10439",
+    "filename": "Annual-Report-FY24-Final.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2025/02/Annual-Report-FY24-Final.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "12307",
+    "filename": "Social-Impact-Report-FY24-1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/02/Social-Impact-Report-FY24-1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Social Impact Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13329",
+    "filename": "Social-Impact-Report-FY25-v2.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/06/Social-Impact-Report-FY25-v2.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Social Impact Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13931",
+    "filename": "Social-Impact-Report-FY25-FINAL-1.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/09/Social-Impact-Report-FY25-FINAL-1.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Social Impact Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13342",
+    "filename": "Annual-Report-FY25.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/06/Annual-Report-FY25.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13343",
+    "filename": "Annual-Report-FY24.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/06/Annual-Report-FY24.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13344",
+    "filename": "Annual-Report-FY23.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/06/Annual-Report-FY23.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13345",
+    "filename": "Annual-Report-FY22.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/06/Annual-Report-FY22.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Annual Reports",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13577",
+    "filename": "Vyoma-Digital-Sanskrit-movement-2026.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/07/Vyoma-Digital-Sanskrit-movement-2026.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Other/Unknown (recurring newsletters/activity reports — no current CMS section)",
+    "status": "review"
+  },
+  {
+    "attachmentId": "13784",
+    "filename": "Vyoma_presentation_July_2026.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/08/Vyoma_presentation_July_2026.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  },
+  {
+    "attachmentId": "13867",
+    "filename": "Vyoma_presentation_Aug_2026.pdf",
+    "sourceUrl": "http://vyoma.org/wp-content/uploads/2026/09/Vyoma_presentation_Aug_2026.pdf",
+    "linkedFromPage": "Not discoverable via post_parent (uploaded to media library directly, not attached to a post) — a content-text search would be needed to find where it’s actually referenced",
+    "proposedDestination": "Collaterals / Brochures",
+    "status": "review (candidate)"
+  }
+]

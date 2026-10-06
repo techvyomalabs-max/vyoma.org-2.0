@@ -2,6 +2,7 @@ import { getJoinUsContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
+import { Button } from '@/components/common/Button';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { pageMetadata } from '@/lib/seo';
 
@@ -12,7 +13,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function VolunteerPage() {
-  const { VOLUNTEER_CATEGORIES: CATEGORIES_ALL, VOLUNTEER_FEATURED: FEATURED_ALL } = await getJoinUsContent();
+  const { VOLUNTEER_CATEGORIES: CATEGORIES_ALL, VOLUNTEER_FEATURED: FEATURED_ALL, VOLUNTEER_APPLY_URL } = await getJoinUsContent();
   const VOLUNTEER_CATEGORIES = CATEGORIES_ALL.filter((c) => c.active !== false);
   const VOLUNTEER_FEATURED = FEATURED_ALL.filter((v) => v.active !== false);
 
@@ -77,10 +78,19 @@ export default async function VolunteerPage() {
       </section>
 
       <CtaStrip badge="Volunteer" heading="Ready to begin?">
-        {/* Source rendered this as a non-functional button (fake-submit placeholder
-            with no handler). Wired to the real contact modal instead, since this
-            migration's goal is a working enquiry funnel. */}
-        <ContactCta subject="Volunteering">Become a Volunteer</ContactCta>
+        {/* No native Volunteer application form exists yet (the real form
+            requires a resume + photograph upload, blocked on S3 — same gate
+            as Careers). VOLUNTEER_APPLY_URL, when set via the CMS, opens the
+            real external application form directly; left blank, this falls
+            back to the same contact-modal flow Careers uses in the
+            equivalent case, not a new form. */}
+        {VOLUNTEER_APPLY_URL ? (
+          <Button variant="outline-inverse" size="lg" href={VOLUNTEER_APPLY_URL} target="_blank" rel="noopener noreferrer">
+            Become a Volunteer
+          </Button>
+        ) : (
+          <ContactCta subject="Volunteering">Become a Volunteer</ContactCta>
+        )}
       </CtaStrip>
     </div>
   );

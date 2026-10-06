@@ -274,13 +274,25 @@ export async function forgotPassword(req, res, next) {
       user.passwordResetExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
       await user.save();
 
-      await sendMail({
+      const mailResult = await sendMail({
         to: user.email,
         subject: 'Reset your Vyoma.org admin password',
         html: `<p>A password reset was requested for this account.</p>
                <p>Reset token (valid for 1 hour): <code>${token}</code></p>
                <p>If you did not request this, you can ignore this email.</p>`,
       });
+      // sendMail() never throws — it returns {sent, reason} even when SMTP
+      // is unconfigured or the send itself fails (see mailer.js). The
+      // public response below must stay generic either way (no
+      // email/account enumeration), so this is server-side-only visibility
+      // into a real delivery problem. Never log the token, the user's
+      // password, or any SMTP credential — only the recipient and the
+      // mailer's own non-sensitive reason code ('smtp_not_configured' |
+      // 'send_failed'), so an operator can notice a genuine outage without
+      // this ever becoming a security-sensitive log line.
+      if (!mailResult.sent) {
+        console.error(`[auth] password-reset email not sent for ${user.email} — reason: ${mailResult.reason}`);
+      }
       await recordAudit({ actor: user, action: 'auth.password_reset_requested', req });
     }
 

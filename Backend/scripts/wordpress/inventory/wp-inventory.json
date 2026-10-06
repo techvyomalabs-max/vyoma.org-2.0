@@ -1,0 +1,1977 @@
+{
+  "totals": {
+    "totalItems": 1654,
+    "pages": 73,
+    "posts": 1,
+    "attachments": 1412,
+    "navMenuItems": 43,
+    "customPostTypeItems": 121
+  },
+  "byPostType": {
+    "attachment": {
+      "count": 1412,
+      "statuses": {
+        "inherit": 1412
+      }
+    },
+    "blog_post": {
+      "count": 19,
+      "statuses": {
+        "publish": 19
+      }
+    },
+    "custom_css": {
+      "count": 1,
+      "statuses": {
+        "publish": 1
+      }
+    },
+    "dipl-testimonial": {
+      "count": 13,
+      "statuses": {
+        "publish": 13
+      }
+    },
+    "et_pb_layout": {
+      "count": 34,
+      "statuses": {
+        "publish": 34
+      }
+    },
+    "et_body_layout": {
+      "count": 2,
+      "statuses": {
+        "publish": 2
+      }
+    },
+    "et_header_layout": {
+      "count": 1,
+      "statuses": {
+        "publish": 1
+      }
+    },
+    "et_footer_layout": {
+      "count": 2,
+      "statuses": {
+        "publish": 2
+      }
+    },
+    "nav_menu_item": {
+      "count": 43,
+      "statuses": {
+        "publish": 43
+      }
+    },
+    "et_template": {
+      "count": 6,
+      "statuses": {
+        "publish": 6
+      }
+    },
+    "page": {
+      "count": 73,
+      "statuses": {
+        "draft": 7,
+        "publish": 66
+      }
+    },
+    "tablepress_table": {
+      "count": 39,
+      "statuses": {
+        "publish": 39
+      }
+    },
+    "progressbar_wp_r": {
+      "count": 2,
+      "statuses": {
+        "publish": 2
+      }
+    },
+    "post": {
+      "count": 1,
+      "statuses": {
+        "publish": 1
+      }
+    },
+    "popupbuilder": {
+      "count": 3,
+      "statuses": {
+        "publish": 3
+      }
+    },
+    "wp_global_styles": {
+      "count": 1,
+      "statuses": {
+        "publish": 1
+      }
+    },
+    "wp_template": {
+      "count": 1,
+      "statuses": {
+        "publish": 1
+      }
+    },
+    "wp_navigation": {
+      "count": 1,
+      "statuses": {
+        "publish": 1
+      }
+    }
+  },
+  "customPostTypes": [
+    "blog_post",
+    "dipl-testimonial",
+    "et_pb_layout",
+    "et_body_layout",
+    "et_header_layout",
+    "et_footer_layout",
+    "et_template",
+    "tablepress_table",
+    "progressbar_wp_r",
+    "popupbuilder"
+  ],
+  "channelCategories": [
+    {
+      "term_id": "81",
+      "nicename": "ganapati",
+      "name": "Ganapati",
+      "parent": ""
+    },
+    {
+      "term_id": "108",
+      "nicename": "rathasaptami",
+      "name": "Rathasaptami",
+      "parent": ""
+    },
+    {
+      "term_id": "1",
+      "nicename": "uncategorized",
+      "name": "Uncategorized",
+      "parent": ""
+    }
+  ],
+  "channelTags": [
+    {
+      "term_id": "84",
+      "slug": "ganapati",
+      "name": "#Ganapati"
+    },
+    {
+      "term_id": "85",
+      "slug": "ganesha",
+      "name": "#ganesha"
+    },
+    {
+      "term_id": "136",
+      "slug": "amarakosha",
+      "name": "amarakosha"
+    },
+    {
+      "term_id": "130",
+      "slug": "arts",
+      "name": "Arts"
+    },
+    {
+      "term_id": "127",
+      "slug": "ayurveda",
+      "name": "Ayurveda"
+    },
+    {
+      "term_id": "131",
+      "slug": "blogs",
+      "name": "Blogs"
+    },
+    {
+      "term_id": "95",
+      "slug": "brahmanaspati",
+      "name": "brahmanaspati"
+    },
+    {
+      "term_id": "135",
+      "slug": "digitalsanskrit-com",
+      "name": "digitalsanskrit.com"
+    },
+    {
+      "term_id": "86",
+      "slug": "ganapati-2",
+      "name": "ganapati"
+    },
+    {
+      "term_id": "87",
+      "slug": "ganesha-2",
+      "name": "ganesha"
+    },
+    {
+      "term_id": "88",
+      "slug": "ganeshachaturthi",
+      "name": "Ganeshachaturthi"
+    },
+    {
+      "term_id": "94",
+      "slug": "heramba",
+      "name": "heramba"
+    },
+    {
+      "term_id": "138",
+      "slug": "iks",
+      "name": "IKS"
+    },
+    {
+      "term_id": "129",
+      "slug": "music",
+      "name": "Music"
+    },
+    {
+      "term_id": "133",
+      "slug": "panchatantra",
+      "name": "Panchatantra"
+    },
+    {
+      "term_id": "142",
+      "slug": "rakshabandhan",
+      "name": "rakshabandhan"
+    },
+    {
+      "term_id": "93",
+      "slug": "rigveda",
+      "name": "rigveda"
+    },
+    {
+      "term_id": "128",
+      "slug": "samskrita",
+      "name": "Samskrita"
+    },
+    {
+      "term_id": "134",
+      "slug": "sanskrit-stories-for-kids",
+      "name": "Sanskrit stories for kids"
+    },
+    {
+      "term_id": "96",
+      "slug": "siddhivinayaka",
+      "name": "siddhivinayaka"
+    },
+    {
+      "term_id": "89",
+      "slug": "symbolism",
+      "name": "symbolism"
+    },
+    {
+      "term_id": "97",
+      "slug": "vinayaka",
+      "name": "vinayaka"
+    },
+    {
+      "term_id": "90",
+      "slug": "vyoma",
+      "name": "vyoma"
+    },
+    {
+      "term_id": "91",
+      "slug": "vyomablogs",
+      "name": "vyomablogs"
+    },
+    {
+      "term_id": "92",
+      "slug": "vyomaonlinelearning",
+      "name": "vyomaonlinelearning"
+    }
+  ],
+  "channelTerms": [
+    {
+      "term_id": "118",
+      "taxonomy": "wpcode_location",
+      "slug": "after_paragraph",
+      "name": "after_paragraph",
+      "parent": ""
+    },
+    {
+      "term_id": "110",
+      "taxonomy": "blog-category",
+      "slug": "bhi%e1%b9%a3ma-a%e1%b9%a3%e1%b9%adami-and-its-significance",
+      "name": "Bhīṣma-aṣṭamī and Its Significance",
+      "parent": ""
+    },
+    {
+      "term_id": "124",
+      "taxonomy": "wpcode_tags",
+      "slug": "comments",
+      "name": "comments",
+      "parent": ""
+    },
+    {
+      "term_id": "115",
+      "taxonomy": "blog-category",
+      "slug": "dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems",
+      "name": "Dhanurveda: The Science of Warfare and Wisdom in Indian Knowledge Systems",
+      "parent": ""
+    },
+    {
+      "term_id": "132",
+      "taxonomy": "blog-category",
+      "slug": "digital-sanskrit",
+      "name": "Digital-Sanskrit",
+      "parent": ""
+    },
+    {
+      "term_id": "123",
+      "taxonomy": "wpcode_tags",
+      "slug": "disable",
+      "name": "disable",
+      "parent": ""
+    },
+    {
+      "term_id": "122",
+      "taxonomy": "wpcode_location",
+      "slug": "everywhere",
+      "name": "everywhere",
+      "parent": ""
+    },
+    {
+      "term_id": "141",
+      "taxonomy": "blog-category",
+      "slug": "festivals",
+      "name": "Festivals",
+      "parent": ""
+    },
+    {
+      "term_id": "65",
+      "taxonomy": "module_width",
+      "slug": "fullwidth",
+      "name": "fullwidth",
+      "parent": ""
+    },
+    {
+      "term_id": "83",
+      "taxonomy": "blog-category",
+      "slug": "ganapathi",
+      "name": "Ganapathi",
+      "parent": ""
+    },
+    {
+      "term_id": "116",
+      "taxonomy": "scope",
+      "slug": "global",
+      "name": "global",
+      "parent": ""
+    },
+    {
+      "term_id": "114",
+      "taxonomy": "blog-category",
+      "slug": "guru-purnima",
+      "name": "Guru- purnima",
+      "parent": ""
+    },
+    {
+      "term_id": "51",
+      "taxonomy": "dipl-testimonial-category",
+      "slug": "home-slider",
+      "name": "Home-slider",
+      "parent": ""
+    },
+    {
+      "term_id": "137",
+      "taxonomy": "blog-category",
+      "slug": "iks",
+      "name": "IKS",
+      "parent": ""
+    },
+    {
+      "term_id": "125",
+      "taxonomy": "wpcode_type",
+      "slug": "js",
+      "name": "js",
+      "parent": ""
+    },
+    {
+      "term_id": "10",
+      "taxonomy": "layout_type",
+      "slug": "layout",
+      "name": "layout",
+      "parent": ""
+    },
+    {
+      "term_id": "111",
+      "taxonomy": "blog-category",
+      "slug": "mahashivaratri",
+      "name": "Mahashivaratri",
+      "parent": ""
+    },
+    {
+      "term_id": "120",
+      "taxonomy": "wpcode_tags",
+      "slug": "message",
+      "name": "message",
+      "parent": ""
+    },
+    {
+      "term_id": "11",
+      "taxonomy": "layout_type",
+      "slug": "module",
+      "name": "module",
+      "parent": ""
+    },
+    {
+      "term_id": "5",
+      "taxonomy": "scope",
+      "slug": "not_global",
+      "name": "not_global",
+      "parent": ""
+    },
+    {
+      "term_id": "64",
+      "taxonomy": "dipl-testimonial-category",
+      "slug": "old",
+      "name": "Old",
+      "parent": ""
+    },
+    {
+      "term_id": "121",
+      "taxonomy": "wpcode_type",
+      "slug": "php",
+      "name": "php",
+      "parent": ""
+    },
+    {
+      "term_id": "109",
+      "taxonomy": "blog-category",
+      "slug": "rathasaptami",
+      "name": "Rathasaptamī",
+      "parent": ""
+    },
+    {
+      "term_id": "7",
+      "taxonomy": "module_width",
+      "slug": "regular",
+      "name": "regular",
+      "parent": ""
+    },
+    {
+      "term_id": "45",
+      "taxonomy": "layout_type",
+      "slug": "row",
+      "name": "row",
+      "parent": ""
+    },
+    {
+      "term_id": "119",
+      "taxonomy": "wpcode_tags",
+      "slug": "sample",
+      "name": "sample",
+      "parent": ""
+    },
+    {
+      "term_id": "139",
+      "taxonomy": "blog-category",
+      "slug": "sanskrit-for-children",
+      "name": "Sanskrit For Children",
+      "parent": ""
+    },
+    {
+      "term_id": "6",
+      "taxonomy": "layout_type",
+      "slug": "section",
+      "name": "section",
+      "parent": ""
+    },
+    {
+      "term_id": "126",
+      "taxonomy": "wpcode_location",
+      "slug": "site_wide_header",
+      "name": "site_wide_header",
+      "parent": ""
+    },
+    {
+      "term_id": "79",
+      "taxonomy": "layout_category",
+      "slug": "socialmedia",
+      "name": "socialmedia",
+      "parent": ""
+    },
+    {
+      "term_id": "80",
+      "taxonomy": "layout_tag",
+      "slug": "socialmedia",
+      "name": "socialmedia",
+      "parent": ""
+    },
+    {
+      "term_id": "112",
+      "taxonomy": "blog-category",
+      "slug": "srirama",
+      "name": "Srirama",
+      "parent": ""
+    },
+    {
+      "term_id": "140",
+      "taxonomy": "blog-category",
+      "slug": "symbolism",
+      "name": "Symbolism",
+      "parent": ""
+    },
+    {
+      "term_id": "117",
+      "taxonomy": "wpcode_type",
+      "slug": "text",
+      "name": "text",
+      "parent": ""
+    },
+    {
+      "term_id": "113",
+      "taxonomy": "blog-category",
+      "slug": "yoga",
+      "name": "Yoga",
+      "parent": ""
+    },
+    {
+      "term_id": "46",
+      "taxonomy": "nav_menu",
+      "slug": "foot-menu",
+      "name": "Foot Menu",
+      "parent": null
+    },
+    {
+      "term_id": "2",
+      "taxonomy": "nav_menu",
+      "slug": "primary_main",
+      "name": "Primary_Main",
+      "parent": null
+    },
+    {
+      "term_id": "4",
+      "taxonomy": "nav_menu",
+      "slug": "second-menu",
+      "name": "Second Menu",
+      "parent": null
+    }
+  ],
+  "usedCategoryNames": [
+    "Ganapati"
+  ],
+  "usedTagNames": [
+    "brahmanaspati",
+    "ganapati",
+    "ganesha",
+    "Ganeshachaturthi",
+    "heramba",
+    "rigveda",
+    "siddhivinayaka",
+    "symbolism",
+    "vinayaka",
+    "vyoma",
+    "vyomablogs",
+    "vyomaonlinelearning",
+    "IKS",
+    "digitalsanskrit.com",
+    "Panchatantra",
+    "Sanskrit stories for kids",
+    "amarakosha",
+    "rakshabandhan"
+  ],
+  "statusesSeen": [
+    "inherit",
+    "publish",
+    "draft"
+  ],
+  "distinctPostmetaKeys": [
+    "_edit_last",
+    "_et_autogenerated_title",
+    "_et_body_layout_enabled",
+    "_et_body_layout_id",
+    "_et_builder_dynamic_assets_loading_attr_threshold",
+    "_et_builder_module_features_cache",
+    "_et_builder_version",
+    "_et_default",
+    "_et_dynamic_cached_attributes",
+    "_et_dynamic_cached_shortcodes",
+    "_et_enabled",
+    "_et_footer_layout_enabled",
+    "_et_footer_layout_id",
+    "_et_gb_content_width",
+    "_et_header_layout_enabled",
+    "_et_header_layout_id",
+    "_et_pb_ab_current_shortcode",
+    "_et_pb_ab_subjects",
+    "_et_pb_built_for_post_type",
+    "_et_pb_custom_css",
+    "_et_pb_enable_shortcode_tracking",
+    "_et_pb_first_image",
+    "_et_pb_gutter_width",
+    "_et_pb_module_type",
+    "_et_pb_old_content",
+    "_et_pb_page_layout",
+    "_et_pb_post_hide_nav",
+    "_et_pb_row_layout",
+    "_et_pb_show_page_creation",
+    "_et_pb_show_title",
+    "_et_pb_side_nav",
+    "_et_pb_truncate_post",
+    "_et_pb_truncate_post_date",
+    "_et_pb_use_builder",
+    "_et_post_bg_color",
+    "_et_post_bg_layout",
+    "_et_theme_builder_marked_as_unused",
+    "_et_use_on",
+    "_global_colors_info",
+    "_menu_item_classes",
+    "_menu_item_menu_item_parent",
+    "_menu_item_object",
+    "_menu_item_object_id",
+    "_menu_item_target",
+    "_menu_item_type",
+    "_menu_item_url",
+    "_menu_item_xfn",
+    "_menu_sgpb_popup_id",
+    "_oembed_03cb3e875452d797a66479e1dcebf78d",
+    "_oembed_067353a79fe02ab35ecc94566a6e614b",
+    "_oembed_075fac16a674a14b4ae88c698e5d86c7",
+    "_oembed_0b49004a03266eadf6f14291c6a6fbe4",
+    "_oembed_0b5ea65c1effac5dd2cc83b7d7be36e5",
+    "_oembed_0c69390c5d8d57b01bb1d5694df2bcc7",
+    "_oembed_0ce1b5ca84a228a53144e6632ef5acdf",
+    "_oembed_12522161aa2f08b55ca9f153c650a068",
+    "_oembed_13c199341fe9f8feb42878f2f0ec5e59",
+    "_oembed_14f43c865de78f1916447ad056a6bd36",
+    "_oembed_1c89308eabca99eca91b10d336d040a1",
+    "_oembed_1db0309fc29d876c9fa2f7f3f75f39bc",
+    "_oembed_2277772b64424b0a26decaa36980e7c9",
+    "_oembed_236ec7b061dfc02b945f9824b0ed0d9c",
+    "_oembed_251dc895985e3462adcb1603cd5ac914",
+    "_oembed_26c72227cc1af91a0516889682faacf6",
+    "_oembed_2d2dbbb9b0c35e7e17d9b28667d133e4",
+    "_oembed_2d42947868d6b4cd731a5bdf34cc3061",
+    "_oembed_2fe957b2be7901c5e215f87e0d34d6a7",
+    "_oembed_3113b959d4408c128cb9fcc7b9681fa1",
+    "_oembed_316da83cbdff4bf90e18b889ddfe080d",
+    "_oembed_3491c3d54108a43bec0041c25cb6aaf1",
+    "_oembed_37074e4c4b1deace32b45cb3301afd84",
+    "_oembed_3884a339b4e7a754ae8d213dc788f456",
+    "_oembed_391012e986c36955f0c12f00a94e90c9",
+    "_oembed_41e5e0cc3f6fd256dc17e291f2d211dc",
+    "_oembed_42e3a1eb40901de62770f0d0111f03a0",
+    "_oembed_46b1a8d704b9773a804d680f678b2f0f",
+    "_oembed_4725623461cf2d4a218d67365b0398b4",
+    "_oembed_4b261fca06ce7e967a71a839f72b9112",
+    "_oembed_4b47a56a23a43d37c57fe3cc54235bac",
+    "_oembed_4d7a3e7a912a80255e177d3e1d74087d",
+    "_oembed_50d6fcf76e08ad715e413cfe8070e040",
+    "_oembed_515040b9669e2d139ff1b4309f5b8cd0",
+    "_oembed_51c2243dd1da96d5da89ace8a748a591",
+    "_oembed_52c8259168917ce591272d3c38a8d50e",
+    "_oembed_533d7f0c6b969e784c4edc877e9d1b09",
+    "_oembed_5385b1184b9f2d03fed97545afcb58ef",
+    "_oembed_540c7d5fc9d8eaa29806a230db4eecd9",
+    "_oembed_55f16d2fbcc3fe5e1ec0568fea5bfcfa",
+    "_oembed_56370113f6523d78eb75d24825cc43e9",
+    "_oembed_586d4f2a4d124d61e354ed91fc57eb1c",
+    "_oembed_589c4cca7a68188680c06ad42b24d73f",
+    "_oembed_5c818372c270b1829dc05631511e5a29",
+    "_oembed_5da2dc6b2ab380aa9d8d3b33930000f0",
+    "_oembed_63f71cfb714bfadbe48dcbfcf2ff821b",
+    "_oembed_65224256facd8ca5f86cb0682e0eda96",
+    "_oembed_6fa28660f5ef4d9e6140458d665fbfa4",
+    "_oembed_71422aead12969d8cebdacf646cddc8f",
+    "_oembed_7e3e008a57e1775402f7959681a73f05",
+    "_oembed_80680857fa9d0f93c3320f1ac0978f89",
+    "_oembed_80fd39450b3dbbdf5d813e6a710f589e",
+    "_oembed_81f69b8e2cdfbdd1641f33ff75676231",
+    "_oembed_838850f1a7e507abd359b001e96c43a3",
+    "_oembed_8a65d03a39807245da8c9988cef52ba0",
+    "_oembed_90a777cb04caec03e645e3379299d024",
+    "_oembed_952748e5e22d3814473a5dc566377336",
+    "_oembed_96e99710992c368ffe978024ec222454",
+    "_oembed_9ac0b02f3f6df7de4e1f3f4cab337ea7",
+    "_oembed_9b0e52e5474e678b4d562c5dda84eb4e",
+    "_oembed_9ccb63bb47b8333d3a0dcf55610f8aa1",
+    "_oembed_a7f0ce515ee00384455efdde6b0fc594",
+    "_oembed_a94b98a2838ba9f3ea4eb8ce66c09167",
+    "_oembed_a9e4dbe99a02b8c6f44b060242a3382a",
+    "_oembed_abf6f9d62158d97499350419107c341d",
+    "_oembed_b05fd2697c863843c74fa4e22be65a84",
+    "_oembed_b18bba27ae79f83f06fa8fbc247bc678",
+    "_oembed_b2554c97617152db0f7770d034f3b138",
+    "_oembed_b4a1981571a57e252d585ae95f07c12f",
+    "_oembed_b4fb029cb4251815f8e77ff90ae8da0d",
+    "_oembed_b5958d76c3759eb34739e62c943038c3",
+    "_oembed_b92ff90b639a1cbffa8aba225fe83926",
+    "_oembed_bd8762bd15d8a38cf99063b295f939fe",
+    "_oembed_be8e21956df299602c1933f151b3834c",
+    "_oembed_bf2f6027285a8e1c47884f6802393fec",
+    "_oembed_c2948cdfe9a5ba8cdd0e2c0ce0f5f87d",
+    "_oembed_c711b3bc7df52b2f714f4c591ac4e11a",
+    "_oembed_c82fe0e254321c891baed6e67e31c655",
+    "_oembed_c8d50c54b0827b0031dc00d06cc2598e",
+    "_oembed_c9585b9c36cde2fa82078254963e9d8e",
+    "_oembed_c996821936352828b051bab2332199d4",
+    "_oembed_cc1e762ef2a82cf716e08de50fbaa844",
+    "_oembed_cdd058a5d8ac50edd84bfbe16e788ea5",
+    "_oembed_d0cf0d8d8dfbf2fd5d7aafcb3fbb9b04",
+    "_oembed_d2e3a9e7dc9bef319fc418ae5df158b3",
+    "_oembed_d3910b45bc8148558458b6b8026a7881",
+    "_oembed_d4df1f44d7cd38fe2af605e6325d37e6",
+    "_oembed_d53c35eabe9cd88606aaa1b2eb33622f",
+    "_oembed_d68857b406e7a7b12b19998b6c2cdb9d",
+    "_oembed_d91d31c475b4db85c8af28be3a723b30",
+    "_oembed_dc642722a598acbd4cc090c2ce0e2702",
+    "_oembed_de12a5cd795bccbddb04c4659dd74a1d",
+    "_oembed_de6790552429f801c47435a92bf7b37a",
+    "_oembed_e5200c327ca8b6dc0f369ebeb5b8aeda",
+    "_oembed_e608267f4166e3a6cf39ee7dda2c45d0",
+    "_oembed_eaca2f3cf309d8d6abd11d7ed8a093bb",
+    "_oembed_eb89ee7ac1d513a82ba944c9f3539eca",
+    "_oembed_ee4ec7d7825ca3c41fd7dc70485cbf1d",
+    "_oembed_f2ce73d2b044037bc92056d2240e147d",
+    "_oembed_f999be734e9cd5b8d689cc6236cb3e56",
+    "_oembed_f9d54f79814cb6a2b44837d35ca8b287",
+    "_oembed_fc05ac4bd2c860bca432a43b660eda56",
+    "_oembed_fcd56b9b8b2c5cd876f5f6c173601b07",
+    "_oembed_fd39f8c523c1610d89cecad5843ef7b1",
+    "_oembed_fde690c214fb61ca8418c15a9f853885",
+    "_oembed_time_0c69390c5d8d57b01bb1d5694df2bcc7",
+    "_oembed_time_1db0309fc29d876c9fa2f7f3f75f39bc",
+    "_oembed_time_42e3a1eb40901de62770f0d0111f03a0",
+    "_oembed_time_540c7d5fc9d8eaa29806a230db4eecd9",
+    "_oembed_time_7e3e008a57e1775402f7959681a73f05",
+    "_oembed_time_81f69b8e2cdfbdd1641f33ff75676231",
+    "_tablepress_export_table_id",
+    "_tablepress_table_options",
+    "_tablepress_table_visibility",
+    "_thumbnail_id",
+    "_wp_attached_file",
+    "_wp_attachment_backup_sizes",
+    "_wp_attachment_context",
+    "_wp_attachment_image_alt",
+    "_wp_attachment_metadata",
+    "_wp_old_date",
+    "_wp_old_slug",
+    "_wp_page_template",
+    "dipl_testimonial_author_company",
+    "dipl_testimonial_author_company_url",
+    "dipl_testimonial_author_designation",
+    "dipl_testimonial_author_email",
+    "dipl_testimonial_author_name",
+    "dipl_testimonial_author_rating",
+    "entry_views",
+    "et_enqueued_post_fonts",
+    "footnotes",
+    "progressbar_wp_Shortcode_Settings",
+    "progressbar_wp_count",
+    "progressbar_wp_data",
+    "rank_math_analytic_object_id",
+    "rank_math_description",
+    "rank_math_exclude_sitemap",
+    "rank_math_facebook_enable_image_overlay",
+    "rank_math_focus_keyword",
+    "rank_math_internal_links_processed",
+    "rank_math_og_content_image",
+    "rank_math_pillar_content",
+    "rank_math_primary_category",
+    "rank_math_rich_snippet",
+    "rank_math_schema_BlogPosting",
+    "rank_math_seo_score",
+    "rank_math_shortcode_schema_s-0982fa69-e603-472f-8fde-58e0daad8666",
+    "rank_math_shortcode_schema_s-14ae3ce0-efa7-418b-89f6-6607d280592f",
+    "rank_math_shortcode_schema_s-1fe9e9b4-d33c-4ba6-a2eb-89ed46f1ff56",
+    "rank_math_shortcode_schema_s-b1b4ecb6-214c-44b0-92b8-8250a0be108b",
+    "rank_math_shortcode_schema_s-b7213204-6aa4-461b-b7f4-d9078038c3d5",
+    "rank_math_shortcode_schema_s-c40952b5-43ad-437f-941a-87edba915c20",
+    "rank_math_shortcode_schema_s-c738a9e9-6608-47ad-a211-fe8e0959aa49",
+    "rank_math_shortcode_schema_s-f173fbb7-b530-467d-b464-57057157e734",
+    "rank_math_shortcode_schema_s-f2e6a2b5-cfc2-41a6-9876-580915e62496",
+    "rank_math_title",
+    "rank_math_twitter_card_type",
+    "sg_popup_events",
+    "sg_popup_events_preview",
+    "sg_popup_options",
+    "sg_popup_options_preview",
+    "sg_popup_scripts",
+    "sg_popup_target",
+    "sg_popup_target_preview",
+    "two_optimized_date",
+    "two_page_speed"
+  ],
+  "pages": [
+    {
+      "title": "Magazine 2",
+      "slug": "",
+      "link": "https://vyoma.org/?page_id=7630",
+      "status": "draft",
+      "parent": "0",
+      "id": "7630"
+    },
+    {
+      "title": "csr-cell",
+      "slug": "csr-main",
+      "link": "https://vyoma.org/?page_id=8357",
+      "status": "draft",
+      "parent": "0",
+      "id": "8357"
+    },
+    {
+      "title": "Donors backup",
+      "slug": "donors-2-2",
+      "link": "https://vyoma.org/?page_id=8662",
+      "status": "draft",
+      "parent": "0",
+      "id": "8662"
+    },
+    {
+      "title": "Core Team - back up",
+      "slug": "team-1",
+      "link": "https://vyoma.org/?page_id=8825",
+      "status": "draft",
+      "parent": "0",
+      "id": "8825"
+    },
+    {
+      "title": "CareersBackup",
+      "slug": "careers-backup",
+      "link": "https://vyoma.org/?page_id=10187",
+      "status": "draft",
+      "parent": "0",
+      "id": "10187"
+    },
+    {
+      "title": "testpage",
+      "slug": "testpage",
+      "link": "https://vyoma.org/?page_id=10538",
+      "status": "draft",
+      "parent": "0",
+      "id": "10538"
+    },
+    {
+      "title": "Where Sanskrit-IKS",
+      "slug": "where-sanskrit-3",
+      "link": "https://vyoma.org/?page_id=11766",
+      "status": "draft",
+      "parent": "0",
+      "id": "11766"
+    },
+    {
+      "title": "Home",
+      "slug": "page1-2",
+      "link": "https://vyoma.org/",
+      "status": "publish",
+      "parent": "0",
+      "id": "2"
+    },
+    {
+      "title": "Privacy Policy",
+      "slug": "privacy",
+      "link": "https://vyoma.org/privacy/",
+      "status": "publish",
+      "parent": "0",
+      "id": "3"
+    },
+    {
+      "title": "About Us",
+      "slug": "about",
+      "link": "https://vyoma.org/about/",
+      "status": "publish",
+      "parent": "0",
+      "id": "29"
+    },
+    {
+      "title": "Our Projects",
+      "slug": "projects",
+      "link": "https://vyoma.org/projects/",
+      "status": "publish",
+      "parent": "0",
+      "id": "31"
+    },
+    {
+      "title": "Volunteers",
+      "slug": "volunteers",
+      "link": "https://vyoma.org/volunteers/",
+      "status": "publish",
+      "parent": "0",
+      "id": "33"
+    },
+    {
+      "title": "Contact Us",
+      "slug": "contact",
+      "link": "https://vyoma.org/contact/",
+      "status": "publish",
+      "parent": "0",
+      "id": "35"
+    },
+    {
+      "title": "Careersbackup120126",
+      "slug": "careers120126",
+      "link": "https://vyoma.org/careers120126/",
+      "status": "publish",
+      "parent": "0",
+      "id": "37"
+    },
+    {
+      "title": "Core Team",
+      "slug": "team",
+      "link": "https://vyoma.org/team/",
+      "status": "publish",
+      "parent": "0",
+      "id": "74"
+    },
+    {
+      "title": "Events",
+      "slug": "events",
+      "link": "https://vyoma.org/events/",
+      "status": "publish",
+      "parent": "0",
+      "id": "87"
+    },
+    {
+      "title": "Gallery",
+      "slug": "gallery",
+      "link": "https://vyoma.org/gallery/",
+      "status": "publish",
+      "parent": "0",
+      "id": "89"
+    },
+    {
+      "title": "Testimonials",
+      "slug": "testimonials",
+      "link": "https://vyoma.org/testimonials/",
+      "status": "publish",
+      "parent": "0",
+      "id": "92"
+    },
+    {
+      "title": "Roadmap",
+      "slug": "roadmap",
+      "link": "https://vyoma.org/roadmap/",
+      "status": "publish",
+      "parent": "0",
+      "id": "93"
+    },
+    {
+      "title": "Timeline",
+      "slug": "timeline",
+      "link": "https://vyoma.org/timeline/",
+      "status": "publish",
+      "parent": "0",
+      "id": "169"
+    },
+    {
+      "title": "Blog",
+      "slug": "blog",
+      "link": "https://vyoma.org/blog/",
+      "status": "publish",
+      "parent": "0",
+      "id": "199"
+    },
+    {
+      "title": "Where Sanskrit",
+      "slug": "where-sanskrit",
+      "link": "https://vyoma.org/where-sanskrit/",
+      "status": "publish",
+      "parent": "0",
+      "id": "202"
+    },
+    {
+      "title": "Donors",
+      "slug": "patrons",
+      "link": "https://vyoma.org/patrons/",
+      "status": "publish",
+      "parent": "0",
+      "id": "209"
+    },
+    {
+      "title": "Catalog",
+      "slug": "catalog",
+      "link": "https://vyoma.org/catalog/",
+      "status": "publish",
+      "parent": "0",
+      "id": "349"
+    },
+    {
+      "title": "Vyoma Samskrta Bhavanam",
+      "slug": "vsb",
+      "link": "https://vyoma.org/vsb/",
+      "status": "publish",
+      "parent": "0",
+      "id": "5011"
+    },
+    {
+      "title": "Terms",
+      "slug": "terms",
+      "link": "https://vyoma.org/terms/",
+      "status": "publish",
+      "parent": "0",
+      "id": "5203"
+    },
+    {
+      "title": "Jobs",
+      "slug": "job-openings",
+      "link": "https://vyoma.org/job-openings/",
+      "status": "publish",
+      "parent": "0",
+      "id": "5230"
+    },
+    {
+      "title": "Metrics",
+      "slug": "metrics",
+      "link": "https://vyoma.org/metrics/",
+      "status": "publish",
+      "parent": "0",
+      "id": "5255"
+    },
+    {
+      "title": "What Sanskrit",
+      "slug": "what-sanskrit",
+      "link": "https://vyoma.org/what-sanskrit/",
+      "status": "publish",
+      "parent": "0",
+      "id": "5698"
+    },
+    {
+      "title": "New Landing",
+      "slug": "new-landing",
+      "link": "https://vyoma.org/new-landing/",
+      "status": "publish",
+      "parent": "0",
+      "id": "6247"
+    },
+    {
+      "title": "Newsletter",
+      "slug": "newsletter",
+      "link": "https://vyoma.org/newsletter/",
+      "status": "publish",
+      "parent": "0",
+      "id": "6409"
+    },
+    {
+      "title": "Testimonials - Teacher",
+      "slug": "testimonials-teacher",
+      "link": "https://vyoma.org/testimonials-teacher/",
+      "status": "publish",
+      "parent": "0",
+      "id": "6548"
+    },
+    {
+      "title": "Payment Confirmation",
+      "slug": "payment-confirmation",
+      "link": "https://vyoma.org/payment-confirmation/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7175"
+    },
+    {
+      "title": "Payment Failed",
+      "slug": "payment-failed",
+      "link": "https://vyoma.org/payment-failed/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7176"
+    },
+    {
+      "title": "Donate SSS",
+      "slug": "donors",
+      "link": "https://vyoma.org/donors/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7548"
+    },
+    {
+      "title": "Grama-Seva",
+      "slug": "grama-seva",
+      "link": "https://vyoma.org/grama-seva/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7582"
+    },
+    {
+      "title": "Veda-Seva",
+      "slug": "veda-seva",
+      "link": "https://vyoma.org/veda-seva/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7593"
+    },
+    {
+      "title": "Visheshachatra-Seva",
+      "slug": "visheshachatra-seva",
+      "link": "https://vyoma.org/visheshachatra-seva/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7598"
+    },
+    {
+      "title": "Samskrita Bhavanam",
+      "slug": "samskritabhavanam",
+      "link": "https://vyoma.org/samskritabhavanam/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7601"
+    },
+    {
+      "title": "Samskrita Samrakshana Nidhi",
+      "slug": "samrakshananidhi",
+      "link": "https://vyoma.org/samrakshananidhi/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7604"
+    },
+    {
+      "title": "SamskritSabhaUjjeevanam",
+      "slug": "samskritsabhaujjeevanam",
+      "link": "https://vyoma.org/samskritsabhaujjeevanam/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7607"
+    },
+    {
+      "title": "Sanathana Vidya Patashala",
+      "slug": "svp",
+      "link": "https://vyoma.org/svp/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7611"
+    },
+    {
+      "title": "blog-1",
+      "slug": "blog-2",
+      "link": "https://vyoma.org/blog-2/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7753"
+    },
+    {
+      "title": "vidya_danam_dm",
+      "slug": "vidya_danam_dm",
+      "link": "https://vyoma.org/vidya_danam_dm/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8123"
+    },
+    {
+      "title": "Grantha-danam_dm",
+      "slug": "grantha-danam-2",
+      "link": "https://vyoma.org/grantha-danam-2/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8163"
+    },
+    {
+      "title": "Gallery",
+      "slug": "gallery-2-2",
+      "link": "https://vyoma.org/gallery-2-2/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8850"
+    },
+    {
+      "title": "Gallery",
+      "slug": "gallery-2",
+      "link": "https://vyoma.org/gallery-2/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8928"
+    },
+    {
+      "title": "education-vidyadanam",
+      "slug": "education",
+      "link": "https://vyoma.org/education/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7085"
+    },
+    {
+      "title": "teachers-GuruDakshina",
+      "slug": "teachers",
+      "link": "https://vyoma.org/teachers/",
+      "status": "publish",
+      "parent": "0",
+      "id": "7566"
+    },
+    {
+      "title": "CSR-Projects",
+      "slug": "csr-projects",
+      "link": "https://vyoma.org/csr-projects/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8337"
+    },
+    {
+      "title": "publication-granthadanam",
+      "slug": "publication",
+      "link": "https://vyoma.org/publication/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8465"
+    },
+    {
+      "title": "scholarship-vidyarthinidhi",
+      "slug": "scholarship-rewards",
+      "link": "https://vyoma.org/scholarship-rewards/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8469"
+    },
+    {
+      "title": "Sabha Ujjeevanam",
+      "slug": "sabha-fund",
+      "link": "https://vyoma.org/sabha-fund/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8481"
+    },
+    {
+      "title": "Culture for kids-sanatana patashala",
+      "slug": "vsp",
+      "link": "https://vyoma.org/vsp/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8487"
+    },
+    {
+      "title": "Nourishment-annadanam",
+      "slug": "nourishment",
+      "link": "https://vyoma.org/nourishment/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8495"
+    },
+    {
+      "title": "Corpus-Fund",
+      "slug": "corpus",
+      "link": "https://vyoma.org/corpus/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8533"
+    },
+    {
+      "title": "Donate-SSS",
+      "slug": "donors-3",
+      "link": "https://vyoma.org/donors-3/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8821"
+    },
+    {
+      "title": "Leadership",
+      "slug": "leadership",
+      "link": "https://vyoma.org/leadership/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8827"
+    },
+    {
+      "title": "Compliances-registrations",
+      "slug": "compliances_registrations",
+      "link": "https://vyoma.org/compliances_registrations/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8845"
+    },
+    {
+      "title": "Audit reports",
+      "slug": "audit-reports",
+      "link": "https://vyoma.org/audit-reports/",
+      "status": "publish",
+      "parent": "0",
+      "id": "8904"
+    },
+    {
+      "title": "EventsContribution",
+      "slug": "eventscontribution",
+      "link": "https://vyoma.org/eventscontribution/",
+      "status": "publish",
+      "parent": "0",
+      "id": "9137"
+    },
+    {
+      "title": "Generaldonation",
+      "slug": "generaldonation",
+      "link": "https://vyoma.org/generaldonation/",
+      "status": "publish",
+      "parent": "0",
+      "id": "9279"
+    },
+    {
+      "title": "ProductsContribution",
+      "slug": "productscontribution",
+      "link": "https://vyoma.org/productscontribution/",
+      "status": "publish",
+      "parent": "0",
+      "id": "9289"
+    },
+    {
+      "title": "blogs-new",
+      "slug": "blogs",
+      "link": "https://vyoma.org/blogs/",
+      "status": "publish",
+      "parent": "0",
+      "id": "9714"
+    },
+    {
+      "title": "Awards",
+      "slug": "awards",
+      "link": "https://vyoma.org/awards/",
+      "status": "publish",
+      "parent": "0",
+      "id": "9920"
+    },
+    {
+      "title": "Media",
+      "slug": "media",
+      "link": "https://vyoma.org/media/",
+      "status": "publish",
+      "parent": "0",
+      "id": "11176"
+    },
+    {
+      "title": "Social Impact Report",
+      "slug": "social-impact-report",
+      "link": "https://vyoma.org/social-impact-report/",
+      "status": "publish",
+      "parent": "0",
+      "id": "12283"
+    },
+    {
+      "title": "Annual Reports",
+      "slug": "annual_reports",
+      "link": "https://vyoma.org/annual_reports/",
+      "status": "publish",
+      "parent": "0",
+      "id": "10432"
+    },
+    {
+      "title": "Collaterals",
+      "slug": "collaterals",
+      "link": "https://vyoma.org/collaterals/",
+      "status": "publish",
+      "parent": "0",
+      "id": "10445"
+    },
+    {
+      "title": "Careers",
+      "slug": "careers",
+      "link": "https://vyoma.org/careers/",
+      "status": "publish",
+      "parent": "0",
+      "id": "11687"
+    },
+    {
+      "title": "Where IKS",
+      "slug": "where-iks",
+      "link": "https://vyoma.org/where-iks/",
+      "status": "publish",
+      "parent": "0",
+      "id": "11907"
+    },
+    {
+      "title": "Where IKS - Shashank",
+      "slug": "where-iks-2",
+      "link": "https://vyoma.org/where-iks-2/",
+      "status": "publish",
+      "parent": "0",
+      "id": "12791"
+    },
+    {
+      "title": "Intern",
+      "slug": "internships",
+      "link": "https://vyoma.org/internships/",
+      "status": "publish",
+      "parent": "0",
+      "id": "12962"
+    }
+  ],
+  "posts": [
+    {
+      "title": "Mahāgaṇapati",
+      "slug": "blog",
+      "link": "https://vyoma.org/blog/",
+      "status": "publish",
+      "date": "2023-09-18 15:08:30",
+      "categories": [
+        "Ganapati"
+      ],
+      "tags": [],
+      "id": "7652"
+    }
+  ],
+  "attachmentsSample": [
+    {
+      "title": "Online lesson _Monochromatic",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Online-lesson-_Monochromatic.png",
+      "parent": "0",
+      "id": "52"
+    },
+    {
+      "title": "Vyoma_Logo_Blue_500x243",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Vyoma_Logo_Blue_500x243.png",
+      "parent": "0",
+      "id": "73"
+    },
+    {
+      "title": "Vyoma Square_192px",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Vyoma-Square_192px.png",
+      "parent": "0",
+      "id": "76"
+    },
+    {
+      "title": "Vyoma Square_512px",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Vyoma-Square_512px.png",
+      "parent": "0",
+      "id": "77"
+    },
+    {
+      "title": "cropped-Vyoma-Square_512px.png",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/cropped-Vyoma-Square_512px.png",
+      "parent": "0",
+      "id": "78"
+    },
+    {
+      "title": "About Vyoma",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/About-Vyoma.png",
+      "parent": "0",
+      "id": "238"
+    },
+    {
+      "title": "Growth of Vyoma",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Growth-of-Vyoma.png",
+      "parent": "0",
+      "id": "265"
+    },
+    {
+      "title": "AapatSahaaya Foundation",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/AapatSahaaya-Foundation.png",
+      "parent": "0",
+      "id": "275"
+    },
+    {
+      "title": "Digital Sanskrit Guru",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Digital-Sanskrit-Guru.png",
+      "parent": "0",
+      "id": "276"
+    },
+    {
+      "title": "Sanskrit from Home",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Sanskrit-from-Home.png",
+      "parent": "0",
+      "id": "277"
+    },
+    {
+      "title": "Vyoma USA",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/Vyoma-USA.png",
+      "parent": "0",
+      "id": "278"
+    },
+    {
+      "title": "istanbul-places-turkey-cityscape-sky-city-1617534",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/istanbul-places-turkey-cityscape-sky-city-1617534.jpg",
+      "parent": "0",
+      "id": "294"
+    },
+    {
+      "title": "view-office-background-asian-panorama-sky-1617869",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/view-office-background-asian-panorama-sky-1617869.jpg",
+      "parent": "0",
+      "id": "295"
+    },
+    {
+      "title": "sea-water-horizon-dock-skyline-city-1124641",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/sea-water-horizon-dock-skyline-city-1124641.jpg",
+      "parent": "0",
+      "id": "296"
+    },
+    {
+      "title": "horizon-skyline-city-skyscraper-urban-cityscape-812297",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/horizon-skyline-city-skyscraper-urban-cityscape-812297.jpg",
+      "parent": "0",
+      "id": "297"
+    },
+    {
+      "title": "river-yarra-river-water-bridge-buildings-melbourne-1460819",
+      "url": "http://vyoma.org/wp-content/uploads/2021/11/river-yarra-river-water-bridge-buildings-melbourne-1460819.jpg",
+      "parent": "0",
+      "id": "298"
+    },
+    {
+      "title": "Lakshmithathachar",
+      "url": "http://vyoma.org/wp-content/uploads/2021/12/Lakshmithathachar.jpg",
+      "parent": "0",
+      "id": "308"
+    },
+    {
+      "title": "Progress _Monochromatic",
+      "url": "http://vyoma.org/wp-content/uploads/2022/01/Progress-_Monochromatic.png",
+      "parent": "0",
+      "id": "346"
+    },
+    {
+      "title": "Reading",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Reading.json",
+      "parent": "0",
+      "id": "4879"
+    },
+    {
+      "title": "Sanskrit E-learning For masses",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Sanskrit-E-learning-For-masses.png",
+      "parent": "0",
+      "id": "4892"
+    },
+    {
+      "title": "Free san for special",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Free-san-for-special.jpg",
+      "parent": "0",
+      "id": "4893"
+    },
+    {
+      "title": "Free sanskrit for rural,tribal,government schools",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Free-sanskrit-for-ruraltribalgovernment-schools.jpg",
+      "parent": "0",
+      "id": "4894"
+    },
+    {
+      "title": "Goal-final",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Goal-final.png",
+      "parent": "0",
+      "id": "4906"
+    },
+    {
+      "title": "Mission-Vision-Goal-latest",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Mission-Vision-Goal-latest.png",
+      "parent": "0",
+      "id": "4907"
+    },
+    {
+      "title": "Start Learning Sanskrit",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Start-Learning-Sanskrit-square.png",
+      "parent": "0",
+      "id": "4908"
+    },
+    {
+      "title": "Volunteer",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Volunteer-square-latest.jpg",
+      "parent": "0",
+      "id": "4909"
+    },
+    {
+      "title": "Donate",
+      "url": "http://vyoma.org/wp-content/uploads/2022/06/Donate-final.png",
+      "parent": "0",
+      "id": "4910"
+    },
+    {
+      "title": "Print",
+      "url": "http://vyoma.org/wp-content/uploads/2022/07/Kailasa.jpg",
+      "parent": "0",
+      "id": "4949"
+    },
+    {
+      "title": "cloud-sun",
+      "url": "http://vyoma.org/wp-content/uploads/2022/07/cloud-sun.json",
+      "parent": "0",
+      "id": "4959"
+    },
+    {
+      "title": "growing-plant",
+      "url": "http://vyoma.org/wp-content/uploads/2022/07/growing-plant.json",
+      "parent": "0",
+      "id": "4979"
+    }
+  ],
+  "customItemsSample": [
+    {
+      "title": "Unveiling the Mysteries of Ganapati: His Origins and Significance",
+      "post_type": "blog_post",
+      "slug": "unveiling-the-mysteries-of-ga%e1%b9%87apati",
+      "link": "https://vyoma.org/blog-post/unveiling-the-mysteries-of-ga%e1%b9%87apati/",
+      "status": "publish",
+      "id": "7752"
+    },
+    {
+      "title": "Medicinal Value of 21 Kinds of Leaves that are offered in Gaṇeśa-pūjā",
+      "post_type": "blog_post",
+      "slug": "edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga%e1%b9%87esa-puja",
+      "link": "https://vyoma.org/blog-post/edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga%e1%b9%87esa-puja/",
+      "status": "publish",
+      "id": "7772"
+    },
+    {
+      "title": "Rathasaptamī Revelations: Expressing Gratitude, Embracing Tradition and Celebrating Spirituality",
+      "post_type": "blog_post",
+      "slug": "rathasaptami",
+      "link": "https://vyoma.org/blog-post/rathasaptami/",
+      "status": "publish",
+      "id": "9257"
+    },
+    {
+      "title": "Venerating the Warrior of Virtue: Bhīṣma-aṣṭamī and Its Significance",
+      "post_type": "blog_post",
+      "slug": "bhishma-ashtami",
+      "link": "https://vyoma.org/blog-post/bhishma-ashtami/",
+      "status": "publish",
+      "id": "9266"
+    },
+    {
+      "title": "Don’t Miss this ‘High-Impact, less-time-effort-’ occasion: Mahāśivarātri",
+      "post_type": "blog_post",
+      "slug": "mahasivaratri",
+      "link": "https://vyoma.org/blog-post/mahasivaratri/",
+      "status": "publish",
+      "id": "9458"
+    },
+    {
+      "title": "What is the symbolism of Rāmanavamī and how is it relevant for today’s generation?",
+      "post_type": "blog_post",
+      "slug": "ramanavami",
+      "link": "https://vyoma.org/blog-post/ramanavami/",
+      "status": "publish",
+      "id": "9568"
+    },
+    {
+      "title": "Embracing Aṣṭāṅga Yoga: Ancient Wisdom for International Yoga Day",
+      "post_type": "blog_post",
+      "slug": "yoga_day",
+      "link": "https://vyoma.org/blog-post/yoga_day/",
+      "status": "publish",
+      "id": "9686"
+    },
+    {
+      "title": "Obeisance to various Guru-Pañcaka-s in the light of Guru-Pūrṇimā",
+      "post_type": "blog_post",
+      "slug": "guru-purnima",
+      "link": "https://vyoma.org/blog-post/guru-purnima/",
+      "status": "publish",
+      "id": "9775"
+    },
+    {
+      "title": "Sivam",
+      "post_type": "dipl-testimonial",
+      "slug": "sivam",
+      "link": "https://vyoma.org/dipl-testimonial/sivam/",
+      "status": "publish",
+      "id": "5272"
+    },
+    {
+      "title": "Vasudevan Sripati",
+      "post_type": "dipl-testimonial",
+      "slug": "vasudevan-sripati",
+      "link": "https://vyoma.org/dipl-testimonial/vasudevan-sripati/",
+      "status": "publish",
+      "id": "5274"
+    },
+    {
+      "title": "Sanath Kumar",
+      "post_type": "dipl-testimonial",
+      "slug": "sanath-kumar",
+      "link": "https://vyoma.org/dipl-testimonial/sanath-kumar/",
+      "status": "publish",
+      "id": "5275"
+    },
+    {
+      "title": "Raj Acharya",
+      "post_type": "dipl-testimonial",
+      "slug": "raj-acharya",
+      "link": "https://vyoma.org/dipl-testimonial/raj-acharya/",
+      "status": "publish",
+      "id": "5276"
+    },
+    {
+      "title": "Iragavarapu Narasimhacharya",
+      "post_type": "dipl-testimonial",
+      "slug": "iragavarapu-narasimhacharya",
+      "link": "https://vyoma.org/dipl-testimonial/iragavarapu-narasimhacharya/",
+      "status": "publish",
+      "id": "5277"
+    },
+    {
+      "title": "Sudha Raghuraman",
+      "post_type": "dipl-testimonial",
+      "slug": "sudha-raghuraman",
+      "link": "https://vyoma.org/dipl-testimonial/sudha-raghuraman/",
+      "status": "publish",
+      "id": "5278"
+    },
+    {
+      "title": "Late. Prof. M A Lakshmithathachar",
+      "post_type": "dipl-testimonial",
+      "slug": "late-prof-m-a-lakshmithathachar",
+      "link": "https://vyoma.org/dipl-testimonial/late-prof-m-a-lakshmithathachar/",
+      "status": "publish",
+      "id": "6066"
+    },
+    {
+      "title": "Prof. Shrinivasa Varakhedi Ph.D",
+      "post_type": "dipl-testimonial",
+      "slug": "prof-shrinivasa-varakhedi-ph-d",
+      "link": "https://vyoma.org/dipl-testimonial/prof-shrinivasa-varakhedi-ph-d/",
+      "status": "publish",
+      "id": "6068"
+    },
+    {
+      "title": "What is Saṃskṛtam?",
+      "post_type": "blog_post",
+      "slug": "what-is-sa%e1%b9%83sk%e1%b9%9btam",
+      "link": "https://vyoma.org/blog-post/what-is-sa%e1%b9%83sk%e1%b9%9btam/",
+      "status": "publish",
+      "id": "10346"
+    },
+    {
+      "title": "Why Saṃskṛtam?",
+      "post_type": "blog_post",
+      "slug": "why-sa%e1%b9%83sk%e1%b9%9btam",
+      "link": "https://vyoma.org/blog-post/why-sa%e1%b9%83sk%e1%b9%9btam/",
+      "status": "publish",
+      "id": "10348"
+    },
+    {
+      "title": "How Saṃskṛtam  ?",
+      "post_type": "blog_post",
+      "slug": "how-sa%e1%b9%83sk%e1%b9%9btam",
+      "link": "https://vyoma.org/blog-post/how-sa%e1%b9%83sk%e1%b9%9btam/",
+      "status": "publish",
+      "id": "10353"
+    },
+    {
+      "title": "The Lion as Vāhana of the Goddess: Textual, Zoological, and Symbolic Perspectives",
+      "post_type": "blog_post",
+      "slug": "the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives",
+      "link": "https://vyoma.org/blog-post/the-lion-as-vahana-of-the-goddess-textual-zoological-and-symbolic-perspectives/",
+      "status": "publish",
+      "id": "11564"
+    },
+    {
+      "title": "Dhanurveda: The Science of Warfare and Wisdom in Indian Knowledge Systems",
+      "post_type": "blog_post",
+      "slug": "dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems",
+      "link": "https://vyoma.org/blog-post/dhanurveda-the-science-of-warfare-and-wisdom-in-indian-knowledge-systems/",
+      "status": "publish",
+      "id": "11811"
+    },
+    {
+      "title": "A Blissful Awakening: Our Vision for today’s children at Vyoma Bala Gurukulam",
+      "post_type": "blog_post",
+      "slug": "a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam",
+      "link": "https://vyoma.org/blog-post/a-blissful-awakening-our-vision-for-todays-children-at-vyoma-bala-gurukulam/",
+      "status": "publish",
+      "id": "12476"
+    },
+    {
+      "title": "Gāndharvaveda: The Science of Music and Dance in Indian Knowledge Systems",
+      "post_type": "blog_post",
+      "slug": "gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems",
+      "link": "https://vyoma.org/blog-post/gandharvaveda-the-science-of-music-and-dance-in-indian-knowledge-systems/",
+      "status": "publish",
+      "id": "13642"
+    },
+    {
+      "title": "How the Panchatantra Teaches Without Teaching",
+      "post_type": "blog_post",
+      "slug": "how-panchatantra-teaches-without-teaching",
+      "link": "https://vyoma.org/blog-post/how-panchatantra-teaches-without-teaching/",
+      "status": "publish",
+      "id": "13792"
+    },
+    {
+      "title": "Why the Amarakosha Was Written to Be Sung",
+      "post_type": "blog_post",
+      "slug": "why-the-amarakosha-was-written-to-be-sung",
+      "link": "https://vyoma.org/blog-post/why-the-amarakosha-was-written-to-be-sung/",
+      "status": "publish",
+      "id": "13802"
+    },
+    {
+      "title": "Give a Year of Samskritam This Raksha Bandhan",
+      "post_type": "blog_post",
+      "slug": "raksha-bandhan-gift-a-year-of-sanskrit",
+      "link": "https://vyoma.org/blog-post/raksha-bandhan-gift-a-year-of-sanskrit/",
+      "status": "publish",
+      "id": "13835"
+    },
+    {
+      "title": "Why Sanskrit Is Not Finished",
+      "post_type": "blog_post",
+      "slug": "why-sanskrit-is-not-finished-it-is-alive",
+      "link": "https://vyoma.org/blog-post/why-sanskrit-is-not-finished-it-is-alive/",
+      "status": "publish",
+      "id": "13842"
+    },
+    {
+      "title": "Hero Section",
+      "post_type": "et_pb_layout",
+      "slug": "hero-section",
+      "link": "https://vyoma.org/et_pb_layout/hero-section/",
+      "status": "publish",
+      "id": "263"
+    },
+    {
+      "title": "Metrics",
+      "post_type": "et_pb_layout",
+      "slug": "metrics",
+      "link": "https://vyoma.org/et_pb_layout/metrics/",
+      "status": "publish",
+      "id": "380"
+    },
+    {
+      "title": "Contact Page",
+      "post_type": "et_pb_layout",
+      "slug": "contact-page",
+      "link": "https://vyoma.org/et_pb_layout/contact-page/",
+      "status": "publish",
+      "id": "4852"
+    },
+    {
+      "title": "Social Media module",
+      "post_type": "et_pb_layout",
+      "slug": "social-media-module",
+      "link": "https://vyoma.org/et_pb_layout/social-media-module/",
+      "status": "publish",
+      "id": "4862"
+    },
+    {
+      "title": "Our Values - FlipBox",
+      "post_type": "et_pb_layout",
+      "slug": "our-values-flipbox",
+      "link": "https://vyoma.org/et_pb_layout/our-values-flipbox/",
+      "status": "publish",
+      "id": "4899"
+    },
+    {
+      "title": "About-mission-values",
+      "post_type": "et_pb_layout",
+      "slug": "about-mission-values",
+      "link": "https://vyoma.org/et_pb_layout/about-mission-values/",
+      "status": "publish",
+      "id": "4973"
+    },
+    {
+      "title": "Slider - Testimonials",
+      "post_type": "et_pb_layout",
+      "slug": "slider-testimonials",
+      "link": "https://vyoma.org/et_pb_layout/slider-testimonials/",
+      "status": "publish",
+      "id": "5280"
+    },
+    {
+      "title": "Dr. M Jayaraman",
+      "post_type": "dipl-testimonial",
+      "slug": "dr-m-jayaraman",
+      "link": "https://vyoma.org/dipl-testimonial/dr-m-jayaraman/",
+      "status": "publish",
+      "id": "6069"
+    },
+    {
+      "title": "Braḥmaśrī  Kalaimamani  Dr. Udaiyalur Kalyanaraman",
+      "post_type": "dipl-testimonial",
+      "slug": "bra%e1%b8%a5masri-kalaimamani-dr-udaiyalur-kalyanaraman",
+      "link": "https://vyoma.org/dipl-testimonial/bra%e1%b8%a5masri-kalaimamani-dr-udaiyalur-kalyanaraman/",
+      "status": "publish",
+      "id": "6070"
+    },
+    {
+      "title": "Kum. Neha Anisetty",
+      "post_type": "dipl-testimonial",
+      "slug": "kum-neha-anisetty",
+      "link": "https://vyoma.org/dipl-testimonial/kum-neha-anisetty/",
+      "status": "publish",
+      "id": "6071"
+    },
+    {
+      "title": "Lessons on Vedanta: Positive impact on my day to day interactions",
+      "post_type": "dipl-testimonial",
+      "slug": "lessons-on-vedanta-positive-impact-on-my-day-to-day-interactions",
+      "link": "https://vyoma.org/dipl-testimonial/lessons-on-vedanta-positive-impact-on-my-day-to-day-interactions/",
+      "status": "publish",
+      "id": "6072"
+    },
+    {
+      "title": "Experiencing prāṇāyāma benefits while Sanskrit chanting shlokas",
+      "post_type": "dipl-testimonial",
+      "slug": "experiencing-pra%e1%b9%87ayama-benefits-while-sanskrit-chanting-shlokas",
+      "link": "https://vyoma.org/dipl-testimonial/experiencing-pra%e1%b9%87ayama-benefits-while-sanskrit-chanting-shlokas/",
+      "status": "publish",
+      "id": "6073"
+    },
+    {
+      "title": "Activities Slider - What, Where, etc",
+      "post_type": "et_pb_layout",
+      "slug": "activities-slider-what-where-etc",
+      "link": "https://vyoma.org/et_pb_layout/activities-slider-what-where-etc/",
+      "status": "publish",
+      "id": "6079"
+    },
+    {
+      "title": "Tabs",
+      "post_type": "et_pb_layout",
+      "slug": "tabs",
+      "link": "https://vyoma.org/et_pb_layout/tabs/",
+      "status": "publish",
+      "id": "6139"
+    },
+    {
+      "title": "Specific Pages: New Landing",
+      "post_type": "et_body_layout",
+      "slug": "theme-builder-layout-2",
+      "link": "https://vyoma.org/et_body_layout/theme-builder-layout-2/",
+      "status": "publish",
+      "id": "6227"
+    },
+    {
+      "title": "Specific Pages: New Landing",
+      "post_type": "et_header_layout",
+      "slug": "theme-builder-layout-2",
+      "link": "https://vyoma.org/et_header_layout/theme-builder-layout-2/",
+      "status": "publish",
+      "id": "6234"
+    },
+    {
+      "title": "Specific Pages: New Landing",
+      "post_type": "et_footer_layout",
+      "slug": "theme-builder-layout-2",
+      "link": "https://vyoma.org/et_footer_layout/theme-builder-layout-2/",
+      "status": "publish",
+      "id": "6241"
+    },
+    {
+      "title": "Home Layout",
+      "post_type": "et_pb_layout",
+      "slug": "home-layout",
+      "link": "https://vyoma.org/et_pb_layout/home-layout/",
+      "status": "publish",
+      "id": "6250"
+    },
+    {
+      "title": "Default Website Template",
+      "post_type": "et_footer_layout",
+      "slug": "theme-builder-layout-4",
+      "link": "https://vyoma.org/et_footer_layout/theme-builder-layout-4/",
+      "status": "publish",
+      "id": "6257"
+    },
+    {
+      "title": "Theme Builder Layout",
+      "post_type": "et_body_layout",
+      "slug": "theme-builder-layout",
+      "link": "https://vyoma.org/et_body_layout/theme-builder-layout/",
+      "status": "publish",
+      "id": "7614"
+    },
+    {
+      "title": "Footer",
+      "post_type": "et_pb_layout",
+      "slug": "footer",
+      "link": "https://vyoma.org/et_pb_layout/footer/",
+      "status": "publish",
+      "id": "6282"
+    },
+    {
+      "title": "Home Slider - Old",
+      "post_type": "et_pb_layout",
+      "slug": "home-slider-old",
+      "link": "https://vyoma.org/et_pb_layout/home-slider-old/",
+      "status": "publish",
+      "id": "6715"
+    },
+    {
+      "title": "Vertical image alignment",
+      "post_type": "et_pb_layout",
+      "slug": "vertical-image-alignment",
+      "link": "https://vyoma.org/et_pb_layout/vertical-image-alignment/",
+      "status": "publish",
+      "id": "6823"
+    }
+  ]
+}

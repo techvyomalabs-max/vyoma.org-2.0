@@ -4,6 +4,7 @@ import { getBlogPosts, getBlogPost } from '@/services/blogService';
 import { PageHero } from '@/components/sections/PageHero';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { MediaCta } from '@/components/sections/media/MediaCta';
+import { articleJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo';
 
 // Only published posts are statically pre-rendered — same reasoning as the
 // donation scheme detail page: the active/published-only list is the only
@@ -22,7 +23,13 @@ export async function generateMetadata({ params }) {
     description: post?.seo?.description || post?.excerpt,
     alternates: { canonical: post?.seo?.canonical || `/media/blog/${slug}` },
   };
-  if (post?.seo?.ogImage?.url) meta.openGraph = { images: [{ url: post.seo.ogImage.url }] };
+  // Legacy-exact ogImage first; otherwise the post's own featured image
+  // (currently null for every migrated post — see blogPost.model.js's
+  // comment on Batch 1 deferring Media/S3 — so this fallback is a no-op
+  // today and activates automatically once that data exists). Omitted
+  // entirely, never an empty string, when neither exists.
+  const ogImageUrl = post?.seo?.ogImage?.url || post?.featuredImage?.url;
+  if (ogImageUrl) meta.openGraph = { images: [{ url: ogImageUrl }] };
   return meta;
 }
 
@@ -31,8 +38,27 @@ export default async function BlogPostPage({ params }) {
   const post = await getBlogPost(slug);
   if (!post) notFound();
 
+  const canonicalPath = post.seo?.canonical || `/media/blog/${slug}`;
+  const imageUrl = post.seo?.ogImage?.url || post.featuredImage?.url;
+  const article = articleJsonLd({
+    title: post.seo?.title || post.title,
+    description: post.seo?.description || post.excerpt,
+    canonicalPath,
+    imageUrl,
+    author: post.author,
+    publishedAt: post.publishedAt,
+  });
+  const breadcrumb = breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Media', path: '/media' },
+    { name: 'Blog', path: '/media/blog' },
+    { name: post.title, path: canonicalPath },
+  ]);
+
   return (
     <div className="font-sans">
+      <script type="application/ld+json" {...jsonLdScriptProps(article)} />
+      <script type="application/ld+json" {...jsonLdScriptProps(breadcrumb)} />
       <PageHero eyebrow="Media" title={post.title} body={post.excerpt} />
 
       <section className="bg-white px-8 py-16">

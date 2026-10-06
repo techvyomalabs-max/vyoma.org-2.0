@@ -2,8 +2,20 @@ import { ContentModel } from './content.model.js';
 import { ContentRevisionModel } from './contentRevision.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
+import { sanitizeLegalBody } from './sanitizeLegalBody.js';
 
 const MAX_REVISIONS_PER_TYPE = 20;
+
+// Every other Content type's fields are plain text/arrays rendered as text,
+// never as raw HTML — this generic draft-save path never needed a
+// sanitization step. Batch 2 (Privacy/Terms) introduces `data.BODY` as
+// trusted-HTML rendered via dangerouslySetInnerHTML (see the Frontend's
+// blog-post-detail page for the existing precedent), so those two types
+// specifically must be sanitized at the one point where client input ever
+// reaches the database — matching how blog's own dedicated admin controller
+// already sanitizes `body` at draft-save time, never re-sanitizing on
+// publish/restore.
+const LEGAL_BODY_TYPES = new Set(['pages/privacy', 'pages/terms']);
 
 function actorOf(req) {
   return { _id: req.user.id, email: req.user.email };
@@ -68,9 +80,12 @@ export async function getAdminContent(req, res, next) {
 export async function upsertDraftContent(req, res, next) {
   try {
     const type = requireType(req);
-    const { data } = req.body || {};
+    let { data } = req.body || {};
     if (data === undefined || data === null || typeof data !== 'object') {
       throw new ApiError(422, 'VALIDATION_ERROR', 'data (an object) is required.', { data: 'Required.' });
+    }
+    if (LEGAL_BODY_TYPES.has(type) && typeof data.BODY === 'string') {
+      data = { ...data, BODY: sanitizeLegalBody(data.BODY) };
     }
 
     const doc = await ContentModel.findOneAndUpdate(

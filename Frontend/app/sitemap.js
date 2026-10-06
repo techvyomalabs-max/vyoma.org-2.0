@@ -40,6 +40,8 @@ const STATIC_ROUTES = [
   '/donate',
   '/faq',
   '/contact',
+  '/privacy',
+  '/terms',
 ];
 
 export default async function sitemap() {

@@ -1,4 +1,4 @@
-import { getGalleryAlbums } from '@/services/mediaService';
+import { getGalleryAlbums, getGalleryVideos } from '@/services/mediaService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
@@ -12,7 +12,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function GalleryPage() {
-  const albums = await getGalleryAlbums();
+  const [albums, videos] = await Promise.all([getGalleryAlbums(), getGalleryVideos()]);
 
   return (
     <div className="font-sans">
@@ -20,7 +20,7 @@ export default async function GalleryPage() {
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[1200px]">
-          <GalleryLightbox albums={albums} />
+          <GalleryLightbox albums={albums} videos={videos} />
         </div>
       </section>
 

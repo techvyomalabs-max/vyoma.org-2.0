@@ -25,6 +25,13 @@ export const getGalleryAlbums = async () => {
   const m = await loadMedia();
   return m.GALLERY_ALBUMS;
 };
+// GALLERY_VIDEOS is a new, separate key (added alongside the Gallery photo
+// migration) — defensively defaulted to [] so neither a not-yet-migrated
+// Content document nor the mock dataset (neither has this key yet) breaks.
+export const getGalleryVideos = async () => {
+  const m = await loadMedia();
+  return m.GALLERY_VIDEOS || [];
+};
 export const getResources = async () => {
   const m = await loadMedia();
   return { categories: m.RESOURCE_CATEGORIES, rows: m.RESOURCE_ROWS };

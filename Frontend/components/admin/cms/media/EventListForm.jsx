@@ -3,9 +3,12 @@
 import { RepeatableList } from '@/components/admin/ui/RepeatableList';
 
 const inputClass = 'w-full rounded-md border border-[var(--border-subtle)] px-2.5 py-1.5 font-sans text-sm text-charcoal';
-// Shared by both UPCOMING_EVENTS and PAST_EVENTS — both use the exact same
-// {type, date, title, note} shape in media.js.
-const NEW_EVENT = { type: '', date: '', title: '', note: '' };
+// Shared by both UPCOMING_EVENTS and PAST_EVENTS — both use the same
+// {type, date, title, note} shape from media.js, plus two optional fields
+// (imageUrl, link) added for the legacy-events migration. Blank is safe for
+// both — the public EventCard shows its existing placeholder/no-link
+// fallback exactly as before when either is absent.
+const NEW_EVENT = { type: '', date: '', title: '', note: '', imageUrl: '', link: '' };
 
 export function EventListForm({ value, onChange }) {
   return (
@@ -22,6 +25,20 @@ export function EventListForm({ value, onChange }) {
           </div>
           <input type="text" value={item.title} onChange={(e) => onItemChange({ ...item, title: e.target.value })} placeholder="Title" className={inputClass} />
           <textarea value={item.note} onChange={(e) => onItemChange({ ...item, note: e.target.value })} placeholder="Note" rows={2} className={inputClass} />
+          <input
+            type="text"
+            value={item.imageUrl || ''}
+            onChange={(e) => onItemChange({ ...item, imageUrl: e.target.value })}
+            placeholder="Poster image URL (optional)"
+            className={inputClass}
+          />
+          <input
+            type="text"
+            value={item.link || ''}
+            onChange={(e) => onItemChange({ ...item, link: e.target.value })}
+            placeholder="More-details URL (optional)"
+            className={inputClass}
+          />
         </div>
       )}
     />

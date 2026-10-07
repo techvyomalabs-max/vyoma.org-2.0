@@ -17,7 +17,7 @@ Items that can proceed without further business clarification.
 |---|---|---|---|
 | `/about/` | `/about` | migrate | Content rebuild needed from Divi source (all pages need this — see §4). |
 | `/contact/` | `/contact` | migrate | — |
-| `/events/` | `/media/events` | migrate | — |
+| `/events/` | `/media/events` | migrate (in progress) | Content-owner approved Option A (migrate real legacy events as PAST_EVENTS, remove the 6 fabricated placeholders). 2 of 3 real WordPress event records (post_id 9640, 12552) verified and prepared — real event dates confirmed from the poster images themselves (not post-creation dates), posters kept as external WordPress-hosted URLs, Event 1's dead external link (`tour24.vyoma.org`, DNS failure) omitted rather than replaced. **Migration script written and dry-run verified; not yet committed to MongoDB.** The 3rd record (post_id 13766, "Samskrta Divas 2026") is **deliberately excluded from this batch** — its real poster content is a dateless "Sanskrit Month" blog promotion, not a calendar event; forcing it into PAST_EVENTS would require inventing a date. **Not resolved** — still needs a content-owner decision on how (or whether) to represent it. |
 | `/newsletter/` | `/media/newsletter` | migrate | Current mock content is generic/demo; needs real issues. |
 | `/volunteers/` | `/join-us/volunteer` | migrate | Also carries a Google Form (§7) needing a real MERN form. |
 | `/csr-projects/` | `/join-us/csr-projects` | migrate | `csr-enquiry` formKey already wired and functional — only field-mapping work needed (§3). |

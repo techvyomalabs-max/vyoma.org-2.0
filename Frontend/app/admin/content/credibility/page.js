@@ -27,7 +27,12 @@ function CategoryGridForm({ value, onChange }) {
 function DocListForm({ value, onChange }) {
   return (
     <SimpleRepeatableForm
-      value={value}
+      // Defaults to [] since this form is reused for AUDIT_REPORTS_ITEMS, a
+      // brand-new key that won't exist on the live Content document until
+      // its migration script commits — without this, opening that tab
+      // first would crash on `items.map` over undefined. Harmless for
+      // every other already-existing key this form also renders.
+      value={value || []}
       onChange={onChange}
       labelKey="title"
       newItemTemplate={{ title: '', body: '', document: null, active: true }}
@@ -62,6 +67,7 @@ const SECTIONS = [
   { key: 'ANNUAL_REPORTS_ITEMS', label: 'Annual Reports', description: 'Downloadable annual reports.', publicPath: '/credibility/annual-reports', Form: DocListForm },
   { key: 'SOCIAL_IMPACT_ITEMS', label: 'Social Impact Report', description: 'Downloadable social impact reports.', publicPath: '/credibility/social-impact-report', Form: DocListForm },
   { key: 'COMPLIANCES_ITEMS', label: 'Compliances & Registrations', description: 'Downloadable statutory documents.', publicPath: '/credibility/compliances-registrations', Form: DocListForm },
+  { key: 'AUDIT_REPORTS_ITEMS', label: 'Audit Reports', description: 'Downloadable audit reports.', publicPath: '/credibility/audit-reports', Form: DocListForm },
   { key: 'AWARDS_ITEMS', label: 'Awards & Recognition', description: 'Award cards with photos.', publicPath: '/credibility/awards-recognition', Form: AwardsForm },
   { key: 'SEO', label: 'SEO', description: 'Title, meta description, canonical, social image.', publicPath: '/credibility', Form: SeoForm },
 ];

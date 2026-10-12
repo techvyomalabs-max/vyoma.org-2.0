@@ -36,3 +36,11 @@ export const getResources = async () => {
   const m = await loadMedia();
   return { categories: m.RESOURCE_CATEGORIES, rows: m.RESOURCE_ROWS };
 };
+// WHAT_SANSKRIT_CATEGORIES/WHAT_SANSKRIT_ROWS are new keys (Batch B), not
+// yet present in either the mock dataset or any Content document until
+// their migration script commits — defensively defaulted so the page
+// renders an empty (not crashed) state in the meantime.
+export const getWhatSanskrit = async () => {
+  const m = await loadMedia();
+  return { categories: m.WHAT_SANSKRIT_CATEGORIES || [], rows: m.WHAT_SANSKRIT_ROWS || {} };
+};

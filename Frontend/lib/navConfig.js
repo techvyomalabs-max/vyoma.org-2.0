@@ -48,6 +48,7 @@ export const NAV = [
       { label: 'Newsletter', href: '/media/newsletter' },
       { label: 'Gallery', href: '/media/gallery' },
       { label: 'Resources', href: '/media/resources' },
+      { label: 'What Sanskrit?', href: '/media/what-sanskrit' },
     ],
   },
   {

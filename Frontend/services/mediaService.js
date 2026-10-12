@@ -44,3 +44,12 @@ export const getWhatSanskrit = async () => {
   const m = await loadMedia();
   return { categories: m.WHAT_SANSKRIT_CATEGORIES || [], rows: m.WHAT_SANSKRIT_ROWS || {} };
 };
+// WHERE_IKS_SERIES/WHERE_IKS_CATEGORIES/WHERE_IKS_ROWS are new keys (Batch
+// C), being migrated series-by-series (A-series first) — defensively
+// defaulted so the page renders an empty/"coming soon" state rather than
+// crashing both before any series has been migrated and while only some
+// series have landed.
+export const getWhereIks = async () => {
+  const m = await loadMedia();
+  return { series: m.WHERE_IKS_SERIES || [], categories: m.WHERE_IKS_CATEGORIES || [], rows: m.WHERE_IKS_ROWS || {} };
+};

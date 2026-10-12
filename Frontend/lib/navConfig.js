@@ -49,6 +49,7 @@ export const NAV = [
       { label: 'Gallery', href: '/media/gallery' },
       { label: 'Resources', href: '/media/resources' },
       { label: 'What Sanskrit?', href: '/media/what-sanskrit' },
+      { label: 'Where IKS', href: '/media/where-iks' },
     ],
   },
   {

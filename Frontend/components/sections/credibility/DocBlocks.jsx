@@ -2,18 +2,7 @@
 // of documents (Collaterals, Annual Reports, Social Impact Report,
 // Compliances & Registrations, Audit Reports). Mirrors the DocBlocks
 // pattern in ui_kits/vyoma-org/Credibility.jsx.
-//
-// Some Collaterals entries point at an online flipbook viewer (an external
-// CDN `index.html` page), not an actual PDF file — the HTML `download`
-// attribute has no effect on a cross-origin URL regardless, so a
-// "Download" link on one of these just reopens the same viewer, silently
-// mislabeling it as a downloadable document. Detected by file extension
-// (the only reliable signal already present in the data, no new field
-// needed): a URL ending in `.pdf` gets View + Download; anything else
-// (flipbook viewers, any other non-PDF external link) gets View only.
-function isPdfUrl(url) {
-  return /\.pdf($|\?)/i.test(url || '');
-}
+import { isPdfUrl, downloadUrlFor } from '@/lib/documentLinks';
 
 export function DocBlocks({ items }) {
   const active = items.filter((item) => item.active !== false);
@@ -35,7 +24,7 @@ export function DocBlocks({ items }) {
                   View
                 </a>
                 {isPdfUrl(item.document.url) && (
-                  <a href={item.document.url} download className="font-sans text-[15px] font-bold text-vyoma-blue">
+                  <a href={downloadUrlFor(item.document.url)} className="font-sans text-[15px] font-bold text-vyoma-blue">
                     Download
                   </a>
                 )}

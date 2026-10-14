@@ -7,6 +7,10 @@ const donationSchemeSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: { type: String, required: true },
     note: { type: String, default: null },
+    // Real WordPress-sourced scheme photo (Batch 7) — null until migrated.
+    // `_id: false`: this is a plain value object, not a sub-document that
+    // needs its own identity.
+    image: { type: new mongoose.Schema({ url: String }, { _id: false }), default: null },
     amountOptions: { type: [Number], default: [1000, 2500, 5000, 10000] },
     paymentMode: { type: String, default: 'razorpay' },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },

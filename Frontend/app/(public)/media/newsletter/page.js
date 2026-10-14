@@ -4,7 +4,9 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { Button } from '@/components/common/Button';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { NewsletterArchiveClient } from '@/components/sections/media/NewsletterArchiveClient';
+import { NewsletterSubscribeForm } from '@/components/sections/media/NewsletterSubscribeForm';
 import { pageMetadata } from '@/lib/seo';
+import { isPdfUrl, downloadUrlFor } from '@/lib/documentLinks';
 
 export const metadata = pageMetadata({
   path: '/media/newsletter',
@@ -38,13 +40,25 @@ export default async function NewsletterPage() {
               <h3 className="mt-2 font-sans text-[30px] font-bold text-vyoma-blue">{latest.title}</h3>
               <p className="mt-3 font-sans text-[15px] text-charcoal">{latest.summary}</p>
               {latest.url && (
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="mt-6 flex flex-wrap items-center gap-3">
                   <Button variant="solid" href={latest.url} target="_blank" rel="noopener noreferrer">
                     Read online
                   </Button>
-                  <Button variant="outline" href={latest.url} target="_blank" rel="noopener noreferrer">
-                    Download PDF
-                  </Button>
+                  {isPdfUrl(latest.url) && (
+                    // A plain <a>, not <Button href=...> — Button's href goes
+                    // through next/link, which does client-side route
+                    // interception; that breaks a real file download (this
+                    // path isn't a page route; next/link's intercept hits a
+                    // dead end instead of letting the browser handle the
+                    // Content-Disposition response). Same reasoning already
+                    // applied in DocBlocks.jsx's Download link.
+                    <a
+                      href={downloadUrlFor(latest.url)}
+                      className="font-sans text-[15px] font-bold text-vyoma-blue underline-offset-2 hover:underline"
+                    >
+                      Download PDF
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -55,14 +69,7 @@ export default async function NewsletterPage() {
       <section className="bg-sky-mist px-8 py-14 text-center">
         <div className="mx-auto max-w-[640px]">
           <h2 className="mb-4 font-sans text-h2 font-bold text-vyoma-blue">Get the next issue in your inbox</h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            <input
-              type="email"
-              placeholder="Your email"
-              className="w-full max-w-[320px] rounded-md border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 font-sans text-sm text-charcoal"
-            />
-            <Button variant="solid">Subscribe</Button>
-          </div>
+          <NewsletterSubscribeForm />
           <p className="mt-3 font-sans text-[13px] text-charcoal/70">Occasional updates. No spam.</p>
         </div>
       </section>

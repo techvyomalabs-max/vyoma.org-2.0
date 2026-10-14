@@ -99,14 +99,24 @@ export function useContentEditor(typeOrTypes) {
     return runAction(
       'publish',
       async () => {
+        // Always persist exactly what's currently on screen *first* — the
+        // publish endpoint itself only promotes whatever draftData is
+        // already stored server-side, it is never sent the in-memory
+        // draftValue. "Save draft" and "Publish" are two independent
+        // buttons with no enforced order, so clicking Publish without an
+        // immediately-preceding successful Save (the common case: edit,
+        // then go straight to Publish) silently re-published stale,
+        // previously-saved data — discarding any newer edit (including a
+        // deletion) with no warning, while still showing a "Published" success
+        // toast. This was the root cause of a category deletion that
+        // appeared to work locally but never actually left the published
+        // data. Mirroring saveDraft's own PUT here closes that gap: publish
+        // now always reflects the current draftValue, regardless of
+        // whether "Save draft" was clicked beforehand.
+        await apiFetch('/admin/content', { method: 'PUT', body: { type, data: draftValue } });
+        await mirrorDraftToSecondaries(draftValue);
         await apiFetch('/admin/content/publish', { method: 'POST', body: { type } });
         if (secondaryTypes.length) {
-          // Mirror the primary's just-published data onto each secondary,
-          // then publish each secondary too, so every type in the group
-          // ends up published with identical `data` — not just identical
-          // draftData.
-          const primaryDoc = await apiFetch(`/admin/content?type=${encodeURIComponent(type)}`);
-          await mirrorDraftToSecondaries(primaryDoc.data);
           await Promise.all(
             secondaryTypes.map((t) => apiFetch('/admin/content/publish', { method: 'POST', body: { type: t } }))
           );

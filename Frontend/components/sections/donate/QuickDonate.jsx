@@ -35,10 +35,14 @@ export function QuickDonate({ schemeSlug = null }) {
     }
     if (path !== 'india') {
       // FCRA / foreign donations are bank-transfer only (LLD 9.4) — never a
-      // Razorpay order. The bank-transfer details live only on the generic
-      // /donate page (the per-scheme page this component also renders on
-      // has no such section) — navigate there rather than scroll in-page,
-      // which would silently no-op wherever that id doesn't exist.
+      // Razorpay order, by design, regardless of payment configuration.
+      // The button is relabeled "View Bank Transfer Details" below (not
+      // "Donate Now") specifically so this navigation is never mistaken
+      // for a payment attempt or its success/failure. The bank-transfer
+      // details live only on the generic /donate page (the per-scheme page
+      // this component also renders on has no such section) — navigate
+      // there rather than scroll in-page, which would silently no-op
+      // wherever that id doesn't exist.
       router.push('/donate#bank-transfer');
       return;
     }
@@ -202,6 +206,17 @@ export function QuickDonate({ schemeSlug = null }) {
               />
             </div>
           )}
+          {/* Foreign/NRI donations are bank-transfer only (see handleDonate) —
+              name/email aren't collected here since there's no Razorpay
+              order to prefill. Without this note the name/email fields
+              simply vanishing when switching tabs read as broken; this
+              makes the (intentional) behavior legible instead. */}
+          {schemeSlug && path === 'foreign' && (
+            <div className="mb-[18px] rounded-md bg-white px-3.5 py-3 font-sans text-[13px] text-charcoal">
+              Online payment isn&apos;t available for Foreign/NRI donations — they&apos;re processed via bank transfer instead.
+              &quot;View Bank Transfer Details&quot; below takes you to our account details; no payment is started here.
+            </div>
+          )}
 
           {error && <p className="mb-3 font-sans text-[13px] text-red-600">{error}</p>}
           {stage === 'cancelled' && <p className="mb-3 font-sans text-[13px] text-charcoal/70">Payment was not completed. You can try again.</p>}
@@ -210,7 +225,8 @@ export function QuickDonate({ schemeSlug = null }) {
             {stage === 'creating_order' && 'Starting…'}
             {stage === 'awaiting_checkout' && 'Waiting for payment…'}
             {stage === 'verifying' && 'Verifying…'}
-            {(stage === 'idle' || stage === 'error' || stage === 'cancelled') && (schemeSlug ? 'Donate Now' : 'Choose a scheme to donate')}
+            {(stage === 'idle' || stage === 'error' || stage === 'cancelled') &&
+              (!schemeSlug ? 'Choose a scheme to donate' : path === 'foreign' ? 'View Bank Transfer Details' : 'Donate Now')}
           </Button>
 
           {path === 'india' && (

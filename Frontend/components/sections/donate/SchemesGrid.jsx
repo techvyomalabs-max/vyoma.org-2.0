@@ -13,7 +13,12 @@ export function SchemesGrid({ schemes }) {
               className="flex flex-col overflow-hidden rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-white"
             >
               <div className="relative aspect-[2/1] w-full">
-                <ImagePlaceholder shape="rect" caption={`${s.name} — 2:1 image`} />
+                {s.image?.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={s.image.url} alt={s.name} className="h-full w-full object-cover" />
+                ) : (
+                  <ImagePlaceholder shape="rect" caption={`${s.name} — 2:1 image`} />
+                )}
               </div>
               <div className="flex flex-1 flex-col px-[22px] py-6">
                 <div className="mb-2 font-sans text-lg font-bold text-vyoma-blue">{s.name}</div>

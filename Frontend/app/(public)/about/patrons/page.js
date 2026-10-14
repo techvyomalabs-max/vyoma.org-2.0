@@ -3,7 +3,6 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { Badge } from '@/components/common/Badge';
-import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { PatronTierTable } from '@/components/sections/about/PatronTierTable';
 import { pageMetadata } from '@/lib/seo';
 
@@ -14,10 +13,17 @@ export const metadata = pageMetadata({
 });
 
 export default async function OurPatronsPage() {
-  const { PATRON_TIERS: TIERS_ALL, PATRON_TIER_ROWS, GOLDEN_WALL, PATRON_TESTIMONIALS: TESTIMONIALS_ALL } =
-    await getAboutContent();
-  const PATRON_TIERS = TIERS_ALL.filter((t) => t.active !== false);
-  const PATRON_TESTIMONIALS = TESTIMONIALS_ALL.filter((t) => t.active !== false);
+  const {
+    PATRON_CATEGORIES: CATEGORIES_ALL,
+    GOLDEN_WALL,
+    PATRON_TESTIMONIAL_GALLERY: GALLERY_ALL,
+    PATRON_MATCHING_PARTNERS: PARTNERS_ALL,
+  } = await getAboutContent();
+  // Categories an admin created/renamed/reordered and published show up
+  // here automatically — no hardcoded tier list.
+  const PATRON_CATEGORIES = CATEGORIES_ALL.filter((c) => c.active !== false);
+  const PATRON_TESTIMONIAL_GALLERY = GALLERY_ALL.filter((t) => t.active !== false);
+  const PATRON_MATCHING_PARTNERS = PARTNERS_ALL.filter((t) => t.active !== false);
 
   return (
     <div className="font-sans">
@@ -30,11 +36,11 @@ export default async function OurPatronsPage() {
       <section className="bg-white px-8 py-16">
         <h2 className="mb-9 text-center font-sans text-h2 font-bold text-vyoma-blue">Patron tiers</h2>
         <div className="mx-auto grid max-w-[1100px] gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))' }}>
-          {PATRON_TIERS.map((t) => (
-            <div key={t.sanskrit} className="rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-sky-mist px-[22px] py-6">
-              <div className="font-sans text-xl font-bold text-vyoma-blue">{t.sanskrit}</div>
-              <div className="my-1 font-sans text-sm font-bold uppercase tracking-[0.4px] text-charcoal">{t.meaning}</div>
-              <div className="mb-2.5 font-sans text-[15px] leading-normal text-charcoal">{t.note}</div>
+          {PATRON_CATEGORIES.map((c) => (
+            <div key={c.sanskrit} className="rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-sky-mist px-[22px] py-6">
+              <div className="font-sans text-xl font-bold text-vyoma-blue">{c.sanskrit}</div>
+              <div className="my-1 font-sans text-sm font-bold uppercase tracking-[0.4px] text-charcoal">{c.meaning}</div>
+              <div className="mb-2.5 font-sans text-[15px] leading-normal text-charcoal">{c.note}</div>
               <div className="font-sans text-[13px] italic text-charcoal/60">Giving level TBC</div>
             </div>
           ))}
@@ -42,7 +48,7 @@ export default async function OurPatronsPage() {
       </section>
 
       <section className="bg-sky-mist px-8 pb-16">
-        <PatronTierTable rows={PATRON_TIER_ROWS} />
+        <PatronTierTable categories={PATRON_CATEGORIES} />
       </section>
 
       <section className="bg-sky-mist px-8 py-16 text-center">
@@ -71,10 +77,11 @@ export default async function OurPatronsPage() {
         <p className="mx-auto mb-8 max-w-[640px] font-sans text-[17px] leading-normal text-charcoal">
           Companies whose employee matching-gift programmes multiply our supporters&apos; generosity.
         </p>
-        <div className="flex flex-wrap justify-center gap-5">
-          {['matching-1', 'matching-2', 'matching-3'].map((id) => (
-            <div key={id} className="h-[70px] w-40 rounded-lg bg-sky-mist">
-              <ImagePlaceholder shape="rect" caption="Company logo" />
+        <div className="flex flex-wrap items-center justify-center gap-5">
+          {PATRON_MATCHING_PARTNERS.map((p) => (
+            <div key={p.name} className="flex h-[70px] w-40 items-center justify-center rounded-lg bg-sky-mist p-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p.logo.url} alt={p.name} className="max-h-full max-w-full object-contain" />
             </div>
           ))}
         </div>
@@ -82,12 +89,11 @@ export default async function OurPatronsPage() {
 
       <section className="bg-sky-mist px-8 py-16">
         <h2 className="mb-9 text-center font-sans text-h2 font-bold text-vyoma-blue">What our Patrons have to say…</h2>
-        <div className="mx-auto grid max-w-[1100px] gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
-          {PATRON_TESTIMONIALS.map((t, i) => (
-            <div key={i} className="rounded-md bg-white p-6">
-              <div className="mb-4 font-sans text-base italic leading-normal text-charcoal">&ldquo;{t.quote}&rdquo;</div>
-              <div className="font-sans text-base font-bold text-vyoma-blue">{t.name}</div>
-              <div className="font-sans text-sm text-charcoal">{t.location}</div>
+        <div className="mx-auto grid max-w-[1100px] gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}>
+          {PATRON_TESTIMONIAL_GALLERY.filter((item) => item.image?.url).map((item) => (
+            <div key={item.image.url} className="aspect-[4/3] overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={item.image.url} alt="Patron testimonial" className="h-full w-full object-cover" />
             </div>
           ))}
         </div>

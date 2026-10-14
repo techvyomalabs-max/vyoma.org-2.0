@@ -30,6 +30,22 @@ export function TestimonialCard({ item, featured = false }) {
         featured ? 'p-[32px_28px]' : 'p-6'
       }`}
     >
+      {/* This branch previously never rendered a photo at all, regardless
+          of data — only entries with a real, verified source image get
+          one here (item.image?.url absent for anyone without one; no
+          placeholder/invented image is ever shown instead).
+          Plain <img>, not ImagePlaceholder's `src` path (next/image) —
+          these are vyoma.org URLs, not an allow-listed next/image host
+          (next.config.js only allow-lists the S3 bucket pattern); same
+          external-image approach already used in EventCard.jsx. */}
+      {item.image?.url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={item.image.url}
+          alt={item.image.alt || item.name}
+          className="mb-3.5 h-14 w-14 rounded-full border border-[var(--border-subtle)] object-cover"
+        />
+      )}
       <div className={`font-serif text-amber-gold ${featured ? 'text-[48px] leading-none' : 'text-[36px] leading-none'}`}>
         &ldquo;
       </div>

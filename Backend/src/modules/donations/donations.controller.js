@@ -12,7 +12,7 @@ import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 export async function listDonationSchemes(req, res, next) {
   try {
     const schemes = await DonationSchemeModel.find({ status: 'active' }).sort({ displayOrder: 1 }).lean();
-    const shaped = schemes.map((s) => ({ slug: s.slug, name: s.name, body: s.description, note: s.note || undefined }));
+    const shaped = schemes.map((s) => ({ slug: s.slug, name: s.name, body: s.description, note: s.note || undefined, image: s.image || undefined }));
     return sendSuccess(res, shaped);
   } catch (err) {
     next(err);
@@ -36,6 +36,7 @@ export async function getDonationSchemeBySlug(req, res, next) {
       body: scheme.description,
       note: scheme.note || undefined,
       status: scheme.status,
+      image: scheme.image || undefined,
     });
   } catch (err) {
     next(err);

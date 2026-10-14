@@ -12,7 +12,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function PressPage() {
-  const { publications, featured, clippings, radio } = await getPressCoverage();
+  const { publications, clippingSections, radio } = await getPressCoverage();
 
   return (
     <div className="font-sans">
@@ -37,27 +37,18 @@ export default async function PressPage() {
         </div>
       </section>
 
-      <section className="bg-white px-8 py-14">
-        <div className="mx-auto max-w-[1100px]">
-          <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">Featured Coverage</h2>
-          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>
-            {featured.map((item) => (
-              <PressCard key={`${item.pub}-${item.date}`} item={item} large />
-            ))}
+      {clippingSections.map((section, i) => (
+        <section key={section.heading} className={i % 2 === 0 ? 'bg-white px-8 py-14' : 'bg-sky-mist px-8 py-14'}>
+          <div className="mx-auto max-w-[1100px]">
+            <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{section.heading}</h2>
+            <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
+              {section.items.map((item) => (
+                <PressCard key={item.title + item.image.url} item={item} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-sky-mist px-8 py-14">
-        <div className="mx-auto max-w-[1100px]">
-          <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">In the Press</h2>
-          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
-            {clippings.map((item) => (
-              <PressCard key={`${item.pub}-${item.date}`} item={item} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      ))}
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[1100px]">

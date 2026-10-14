@@ -1,14 +1,18 @@
 'use client';
 
 import { RepeatableList } from '@/components/admin/ui/RepeatableList';
+import { ImageField } from '@/components/admin/ui/ImageField';
 
 const inputClass = 'w-full rounded-md border border-[var(--border-subtle)] px-2.5 py-1.5 font-sans text-sm text-charcoal';
-// Matches NEWSLETTER_ARCHIVE — {year, issues: [{label, title, url?}]}, a
-// nested list (each year groups several issues). `url` is optional — a
+// Matches NEWSLETTER_ARCHIVE — {year, issues: [{label, title, url?, cover?}]},
+// a nested list (each year groups several issues). `url` is optional — a
 // blank value is safe and simply hides that issue's Download action on the
-// public page rather than rendering a dead link.
+// public page rather than rendering a dead link. `cover` (Batch 7/8) is
+// also optional — only one legacy issue has a verified original cover;
+// every other issue correctly renders with none rather than a fabricated
+// placeholder.
 const NEW_YEAR = { year: '', issues: [] };
-const NEW_ISSUE = { label: '', title: '', url: '' };
+const NEW_ISSUE = { label: '', title: '', url: '', cover: null };
 
 export function NewsletterArchiveForm({ value, onChange }) {
   return (
@@ -40,6 +44,7 @@ export function NewsletterArchiveForm({ value, onChange }) {
                     placeholder="Destination URL (PDF or flipbook — optional)"
                     className={inputClass}
                   />
+                  <ImageField label="Cover (optional)" value={issue.cover} onChange={(v) => onIssueChange({ ...issue, cover: v })} />
                 </div>
               )}
             />

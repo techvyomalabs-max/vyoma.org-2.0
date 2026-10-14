@@ -7,7 +7,11 @@ const loadMedia = () => getPublicContent('media', () => import('@/lib/mockData/m
 
 export const getPressCoverage = async () => {
   const m = await loadMedia();
-  return { publications: m.PRESS_PUBLICATIONS, featured: m.PRESS_FEATURED, clippings: m.PRESS_CLIPPINGS, radio: m.PRESS_RADIO };
+  // PRESS_CLIPPING_SECTIONS replaces the old flat PRESS_FEATURED/PRESS_CLIPPINGS
+  // placeholder arrays — defensively defaulted so a not-yet-migrated Content
+  // document (or the mock dataset before this key existed) renders an empty
+  // state rather than crashing.
+  return { publications: m.PRESS_PUBLICATIONS, clippingSections: m.PRESS_CLIPPING_SECTIONS || [], radio: m.PRESS_RADIO };
 };
 export const getEvents = async () => {
   const m = await loadMedia();

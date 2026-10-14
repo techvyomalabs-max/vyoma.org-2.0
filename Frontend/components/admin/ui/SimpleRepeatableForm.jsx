@@ -11,13 +11,29 @@ const inputClass = 'w-full rounded-md border border-[var(--border-subtle)] px-2.
 // Credibility/Join Us for the many sections that are all really the same
 // shape: a list of items with some mix of text/textarea/image/document/link
 // fields. `fields`: [{ key, label, type: 'text'|'textarea'|'image'|'document'|'link', placeholder? }]
-export function SimpleRepeatableForm({ value, onChange, fields, newItemTemplate, labelKey }) {
+export function SimpleRepeatableForm({
+  value,
+  onChange,
+  fields,
+  newItemTemplate,
+  labelKey,
+  pageSize,
+  searchable,
+  searchKeys,
+  cloneLastItem,
+  addLabel,
+}) {
   return (
     <RepeatableList
       items={value}
       onChange={onChange}
       newItemTemplate={newItemTemplate}
       itemLabel={(item) => item[labelKey] || 'New item'}
+      pageSize={pageSize}
+      searchable={searchable}
+      searchKeys={searchKeys}
+      cloneLastItem={cloneLastItem}
+      addLabel={addLabel}
       renderItem={(item, onItemChange) => (
         <div className="space-y-2">
           {fields.map((f) => {

@@ -9,7 +9,15 @@ import { SchemesGrid } from '@/components/sections/donate/SchemesGrid';
 import { pageMetadata } from '@/lib/seo';
 
 export async function generateMetadata() {
-  const { SEO } = await getDonateContent();
+  // Metadata must never crash the page over a transient backend hiccup —
+  // fall back to sensible defaults, same as every other failure path on
+  // this route.
+  let SEO;
+  try {
+    ({ SEO } = await getDonateContent());
+  } catch {
+    SEO = null;
+  }
   // 'Donate' matches the real, already-used route label (navConfig.js's
   // DONATE_LINK) — not invented copy.
   const meta = pageMetadata({ path: '/donate', title: SEO?.title || 'Donate', description: SEO?.description || 'Your gift keeps Sanskrit education free and open to all across India.' });
@@ -18,11 +26,41 @@ export async function generateMetadata() {
 }
 
 export default async function DonatePage() {
-  const { HERO, OTHER_WAYS, BANK_TRANSFER, COMPLIANCE_STRIP, CLOSING_TAGLINE } = await getDonateContent();
-  // Phase D: schemes now come from DonationSchemeModel (the same source
-  // checkout validates against), not the Content model — see
-  // donations.controller.js's listDonationSchemes.
-  const [schemes, settings] = await Promise.all([getDonationSchemes(), getPublicSettings()]);
+  // A transient backend/API failure here (e.g. the brief window right
+  // after a dev-server restart) previously crashed this entire page with
+  // an unhandled "Unable to reach the server" exception — including when
+  // reached via the Foreign/NRI "View Bank Transfer Details" redirect from
+  // a scheme page. Catching it and rendering a clear, honest fallback
+  // instead (never a fake success, never silently empty content) matches
+  // the same build-time resilience pattern already used by this route's
+  // sibling, generateStaticParams in [schemeSlug]/page.js.
+  let content;
+  let fetchFailed = false;
+  try {
+    // Phase D: schemes now come from DonationSchemeModel (the same source
+    // checkout validates against), not the Content model — see
+    // donations.controller.js's listDonationSchemes.
+    const [donateContent, schemes, settings] = await Promise.all([getDonateContent(), getDonationSchemes(), getPublicSettings()]);
+    content = { donateContent, schemes, settings };
+  } catch (err) {
+    console.error('[donate] failed to load donate page data:', err.message);
+    fetchFailed = true;
+  }
+
+  if (fetchFailed) {
+    return (
+      <div className="flex flex-col items-center gap-4 bg-white px-8 py-20 text-center font-sans">
+        <h1 className="font-sans text-h2 font-bold text-vyoma-blue">Donate page temporarily unavailable</h1>
+        <p className="max-w-[480px] font-sans text-[15px] text-charcoal">
+          We couldn&apos;t reach our server just now — this is usually temporary. Please refresh this page in a
+          moment, or contact our team if you&apos;d like help completing your donation another way.
+        </p>
+      </div>
+    );
+  }
+
+  const { HERO, OTHER_WAYS, BANK_TRANSFER, COMPLIANCE_STRIP, CLOSING_TAGLINE } = content.donateContent;
+  const { schemes, settings } = content;
   const bank = settings.donationBankDetails || {};
 
   return (
@@ -49,7 +87,15 @@ export default async function DonatePage() {
             <div className="rounded-md border border-[var(--border-subtle)] px-[22px] py-6">
               <div className="mb-2 font-sans text-lg font-bold text-vyoma-blue">{OTHER_WAYS.subscriptionHeading}</div>
               <p className="mb-[18px] font-sans text-[15px] leading-normal text-charcoal">{OTHER_WAYS.subscriptionBody}</p>
-              <Button variant="outline">{OTHER_WAYS.subscriptionCtaLabel}</Button>
+              {OTHER_WAYS.subscriptionCtaHref ? (
+                <Button variant="outline" href={OTHER_WAYS.subscriptionCtaHref} target="_blank" rel="noopener noreferrer">
+                  {OTHER_WAYS.subscriptionCtaLabel}
+                </Button>
+              ) : (
+                <Button variant="outline" disabled>
+                  {OTHER_WAYS.subscriptionCtaLabel}
+                </Button>
+              )}
             </div>
             <div className="rounded-md border border-[var(--border-subtle)] px-[22px] py-6">
               <div className="mb-2 font-sans text-lg font-bold text-vyoma-blue">{OTHER_WAYS.csrHeading}</div>

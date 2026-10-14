@@ -14,6 +14,7 @@ import {
 } from './modules/donations/donations.routes.js';
 import { settingsPublicRouter } from './modules/settings/settings.routes.js';
 import { blogPublicRouter } from './modules/blog/blog.routes.js';
+import { documentsPublicRouter } from './modules/documents/documents.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
 import { redirectMiddleware } from './middleware/redirectMiddleware.js';
@@ -31,7 +32,13 @@ export function createApp() {
   app.use(morgan(env.nodeEnv === 'development' ? 'dev' : 'combined'));
   // `verify` stashes the raw bytes on req.rawBody, needed for Razorpay
   // webhook signature verification (LLD 9.3) without a second body parser.
-  app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
+  // `limit`: raised from Express's 100kb default (Batch 8) — the
+  // pages/about Content document alone now exceeds 100kb once it holds the
+  // full, real 1,375-row patron dataset (Batch 5), which made every save
+  // from /admin/content/about fail with a 500, for any section, not just
+  // Patrons. 5mb leaves comfortable headroom for this and any other
+  // Content document's future growth.
+  app.use(express.json({ limit: '5mb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
   app.use(cookieParser());
 
   app.get('/api/v1/health', (req, res) => res.json({ success: true, data: { status: 'ok' } }));
@@ -41,6 +48,7 @@ export function createApp() {
   app.use('/api/v1/public', donationSchemesPublicRouter);
   app.use('/api/v1/public', settingsPublicRouter);
   app.use('/api/v1/public', blogPublicRouter);
+  app.use('/api/v1/public', documentsPublicRouter);
   app.use('/api/v1/public', contentRouter);
   app.use('/api/v1/forms', formsRouter);
   app.use('/api/v1/donations', donationsRouter);

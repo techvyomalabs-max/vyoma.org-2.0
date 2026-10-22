@@ -18,6 +18,54 @@ function validateId(id) {
   if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(422, 'VALIDATION_ERROR', 'Invalid post id format.');
 }
 
+// Structural-content-loss guard (WordPress migration): the editor's schema
+// and the sanitizer's allowlist are both kept in sync with real content
+// today, but a schema-based rich-text editor is only ever as safe as its
+// last audit -- a future post using some new HTML pattern neither side
+// recognizes would otherwise be silently dropped the next time anyone
+// saves a draft, exactly like the bug this whole feature was built to fix.
+// This counts each structural (non-decorative) tag before and after a
+// body edit and refuses the save outright if any of them decreased,
+// instead of trusting the client to have noticed.
+const STRUCTURAL_TAGS = ['table', 'tr', 'td', 'img', 'h1', 'h2', 'h3', 'h4', 'h6', 'hr', 'sup', 'u', 'ins', 'mark', 'figure', 'div', 'blockquote', 'ul', 'ol', 'li', 'a'];
+
+function structuralTagCounts(html) {
+  const counts = {};
+  for (const raw of String(html || '').match(/<[a-zA-Z][a-zA-Z0-9]*[^>]*>/g) || []) {
+    const name = (raw.match(/^<\s*([a-zA-Z0-9]+)/) || [])[1]?.toLowerCase();
+    if (name && STRUCTURAL_TAGS.includes(name)) counts[name] = (counts[name] || 0) + 1;
+  }
+  return counts;
+}
+
+// `confirmStructuralChange: true` is the save's own explicit, same-request
+// acknowledgment that a structural decrease is intentional -- not a
+// separate permission or role. The action is still gated by the route's
+// existing `blog:write` requirement; this flag only distinguishes "the
+// admin meant to remove this" from "something silently dropped it,"
+// which is the one thing a tag-count comparison can't tell apart on its
+// own. See blog.admin.controller.structuralGuard.test.js for the exact
+// behavior this enables and blocks.
+function assertNoStructuralLoss(previousBody, nextBody, confirmed) {
+  if (confirmed === true) return;
+  const before = structuralTagCounts(previousBody);
+  const after = structuralTagCounts(nextBody);
+  const regressions = [];
+  for (const tag of Object.keys(before)) {
+    const b = before[tag];
+    const a = after[tag] || 0;
+    if (a < b) regressions.push({ tag, before: b, after: a });
+  }
+  if (regressions.length) {
+    throw new ApiError(
+      409,
+      'STRUCTURAL_CONTENT_LOSS',
+      'This save would remove existing content (tables, images, headings, or other structural elements) compared to the current draft. If this is intentional, resend the request with confirmStructuralChange: true.',
+      { regressions }
+    );
+  }
+}
+
 // Only the known content fields ever reach draftData — status/slug/
 // publishedAt each have their own dedicated operation below, so a client
 // can never smuggle a status flip or slug change through the draft-save
@@ -133,6 +181,9 @@ export async function updateDraftAdmin(req, res, next) {
 
     const patch = sanitizeDraftInput(req.body || {});
     const base = doc.draftData ?? doc.data ?? {};
+    if (patch.body !== undefined) {
+      assertNoStructuralLoss(base.body, patch.body, req.body?.confirmStructuralChange);
+    }
     doc.draftData = { ...base, ...patch };
     await doc.save();
 

@@ -114,3 +114,35 @@
     color: var(--color-charcoal);
   }
 }
+
+/*
+ * WordPress alignment classes (has-text-align-{left,center,right}) are
+ * already preserved end-to-end by the Backend sanitizer and the admin
+ * Tiptap editor (see Backend/src/modules/blog/sanitizeBody.js and
+ * Frontend/components/admin/cms/blog/richTextEditorExtensions.mjs), but
+ * without an actual rule they're inert markup -- text renders left-aligned
+ * regardless of the class. `.prose-blog` wraps blog body HTML on both
+ * surfaces that need this: the public post page's
+ * `dangerouslySetInnerHTML` div, and the admin editor's `EditorContent`
+ * (which mounts Tiptap's own `.ProseMirror` node inside it) -- one rule
+ * block keeps both surfaces visually identical, never diverging. Scoped
+ * under `.prose-blog` specifically so these otherwise-generic-looking
+ * class names can't affect any other part of the site. `@layer components`
+ * sits between Tailwind's `base` and `utilities` layers, so an inline
+ * Tailwind utility class would still win if one were ever added alongside
+ * these (see the cascade-layer note on the `@layer base` block above for
+ * why that ordering matters here).
+ */
+@layer components {
+  .prose-blog :where(p, h1, h2, h3, h4, h5, h6, td).has-text-align-left {
+    text-align: left;
+  }
+
+  .prose-blog :where(p, h1, h2, h3, h4, h5, h6, td).has-text-align-center {
+    text-align: center;
+  }
+
+  .prose-blog :where(p, h1, h2, h3, h4, h5, h6, td).has-text-align-right {
+    text-align: right;
+  }
+}

@@ -1,3 +1,4 @@
+import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -69,6 +70,20 @@ export function createApp() {
         next();
       },
       express.static(LOCAL_MEDIA_DIR)
+    );
+
+    // Same local-dev-only, dev-only CORP-relaxed pattern as above, for
+    // staged original WordPress blog images (separate directory from the
+    // Leadership/Core Team processed photos above -- .local-media/blog/,
+    // untouched by and independent of that feature).
+    const LOCAL_BLOG_MEDIA_DIR = path.resolve(process.cwd(), '.local-media', 'blog');
+    app.use(
+      '/local-media/blog',
+      (req, res, next) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        next();
+      },
+      express.static(LOCAL_BLOG_MEDIA_DIR)
     );
   }
 

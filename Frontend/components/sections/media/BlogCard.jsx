@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { SmartImage } from '@/components/common/SmartImage';
 
 function formatDate(value) {
   if (!value) return '';
@@ -21,8 +22,7 @@ export function BlogCard({ post, large = false }) {
     <div className="overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
       <div className={`border-b-[3px] border-b-amber-gold ${large ? 'h-[360px]' : 'h-[200px]'}`}>
         {post.featuredImage?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.featuredImage.url} alt={post.featuredImage.alt || post.title} className="h-full w-full object-cover" />
+          <SmartImage src={post.featuredImage.url} alt={post.featuredImage.alt || post.title} />
         ) : (
           <ImagePlaceholder shape="rect" caption="Photo" />
         )}

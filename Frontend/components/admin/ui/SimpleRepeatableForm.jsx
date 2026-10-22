@@ -68,6 +68,7 @@ export function SimpleRepeatableForm({
                   label={f.label}
                   value={item[f.key]}
                   onChange={(v) => onItemChange({ ...item, [f.key]: v })}
+                  enableBackgroundRemoval={f.enableBackgroundRemoval && !f.backgroundRemovalDisabledFor?.(item)}
                 />
               );
             }

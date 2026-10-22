@@ -11,6 +11,13 @@ export const metadata = pageMetadata({
   description: 'Behind every course, tool, and initiative is a dedicated team of teachers, technologists, and coordinators who bring Sanskrit to learners across the world.',
 });
 
+// Detects a background-removed photo purely from its URL (local-dev
+// processed-photo storage), never by name — so this automatically covers
+// every processed photo, present or future, and automatically excludes
+// anyone still on their original source URL (Sri Ranga, both logos)
+// without needing a maintained exclusion list.
+const isProcessedPhoto = (url) => typeof url === 'string' && url.includes('/local-media/processed/');
+
 export default async function CoreTeamPage() {
   const { CORE_TEAMS: CORE_TEAMS_ALL } = await getAboutContent();
   const CORE_TEAMS = CORE_TEAMS_ALL.filter((g) => g.active !== false);
@@ -24,7 +31,11 @@ export default async function CoreTeamPage() {
       />
 
       {CORE_TEAMS.map((t, gi) => (
-        <section key={t.heading} className={`px-8 py-14 ${gi % 2 === 0 ? 'bg-white' : 'bg-sky-mist'}`}>
+        // `t.heading` alone isn't guaranteed unique -- the live CMS content
+        // can (and currently does) contain more than one group sharing a
+        // heading. Pairing it with its index keeps a stable, content-based
+        // key while guaranteeing uniqueness regardless of upstream data.
+        <section key={`${t.heading}-${gi}`} className={`px-8 py-14 ${gi % 2 === 0 ? 'bg-white' : 'bg-sky-mist'}`}>
           <h2 className="mb-8 text-center font-sans text-h2 font-bold text-vyoma-blue">{t.heading}</h2>
           <div
             className="mx-auto grid max-w-[1100px] gap-5"
@@ -32,8 +43,14 @@ export default async function CoreTeamPage() {
           >
             {t.people.filter((p) => p.active !== false).map((p, i) => (
               <div key={p.name} className="text-center">
-                <div className="mx-auto mb-2.5 h-[140px] w-[140px]">
-                  <ImagePlaceholder src={p.image?.url} alt={p.image?.alt || p.name} shape="rounded" caption="Photo" />
+                <div className="mx-auto mb-2.5 h-[170px] w-[170px]">
+                  <ImagePlaceholder
+                    src={p.image?.url}
+                    alt={p.image?.alt || p.name}
+                    shape="rounded"
+                    caption="Photo"
+                    fit={isProcessedPhoto(p.image?.url) ? 'flat' : 'auto'}
+                  />
                 </div>
                 <div className="font-sans text-base font-bold text-vyoma-blue">{p.name}</div>
                 <div className="font-sans text-sm text-charcoal">{p.role}</div>

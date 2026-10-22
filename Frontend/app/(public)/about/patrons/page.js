@@ -4,6 +4,7 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { Badge } from '@/components/common/Badge';
 import { PatronTierTable } from '@/components/sections/about/PatronTierTable';
+import { SmartImage } from '@/components/common/SmartImage';
 import { pageMetadata } from '@/lib/seo';
 
 export const metadata = pageMetadata({
@@ -92,8 +93,7 @@ export default async function OurPatronsPage() {
         <div className="mx-auto grid max-w-[1100px] gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}>
           {PATRON_TESTIMONIAL_GALLERY.filter((item) => item.image?.url).map((item) => (
             <div key={item.image.url} className="aspect-[4/3] overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={item.image.url} alt="Patron testimonial" className="h-full w-full object-cover" />
+              <SmartImage src={item.image.url} alt="Patron testimonial" />
             </div>
           ))}
         </div>

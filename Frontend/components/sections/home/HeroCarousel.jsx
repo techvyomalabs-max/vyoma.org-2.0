@@ -64,7 +64,18 @@ export function HeroCarousel({ slides }) {
                   className="absolute inset-0 transition-opacity duration-[0.6s]"
                   style={{ opacity: i === idx ? 1 : 0, pointerEvents: i === idx ? 'auto' : 'none' }}
                 >
-                  <ImagePlaceholder src={s.image?.url} alt={s.image?.alt || s.heading} caption={`Hero photo ${i + 1}`} shape="rect" />
+                  {/* fit="cover": this is a full-bleed hero banner, not a
+                      content photo — an immersive edge-to-edge crop is the
+                      intended design here, so it deliberately keeps the
+                      original crop behavior rather than the new
+                      show-the-whole-photo treatment used elsewhere. */}
+                  <ImagePlaceholder
+                    src={s.image?.url}
+                    alt={s.image?.alt || s.heading}
+                    caption={`Hero photo ${i + 1}`}
+                    shape="rect"
+                    fit="cover"
+                  />
                 </div>
               ))}
               <button

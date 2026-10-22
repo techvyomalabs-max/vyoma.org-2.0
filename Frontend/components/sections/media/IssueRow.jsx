@@ -1,4 +1,5 @@
 import { isPdfUrl, downloadUrlFor } from '@/lib/documentLinks';
+import { SmartImage } from '@/components/common/SmartImage';
 
 // `url` is optional — absent/blank means this issue has no known PDF or
 // flipbook destination (e.g. the one legacy issue with only a cover image,
@@ -21,8 +22,9 @@ export function IssueRow({ label, title, url, cover }) {
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-[var(--border-subtle)] bg-white p-[18px_20px]">
       <div className="flex items-center gap-4">
         {cover?.url && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover.url} alt={title} className="h-16 w-12 flex-none rounded-sm border border-[var(--border-subtle)] object-cover" />
+          <div className="h-16 w-12 flex-none overflow-hidden rounded-sm border border-[var(--border-subtle)]">
+            <SmartImage src={cover.url} alt={title} />
+          </div>
         )}
         <div>
           <div className="font-sans text-base font-bold text-vyoma-blue">{title}</div>

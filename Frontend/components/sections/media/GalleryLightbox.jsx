@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { SmartImage } from '@/components/common/SmartImage';
 
 // The album grid on /media/gallery plus its click-to-open lightbox modal.
 // Kept as a single client component (rather than splitting the grid out as
@@ -46,8 +47,7 @@ export function GalleryLightbox({ albums, videos = [] }) {
             >
               <div className="aspect-[4/3] border-b-[3px] border-b-amber-gold">
                 {images?.length ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={images[0].url} alt={images[0].alt || album.title} className="h-full w-full object-cover" />
+                  <SmartImage src={images[0].url} alt={images[0].alt || album.title} />
                 ) : (
                   <ImagePlaceholder shape="rect" caption="Cover" />
                 )}
@@ -118,8 +118,7 @@ export function GalleryLightbox({ albums, videos = [] }) {
               openAlbum.images.map((img, i) => (
                 <div key={img.attachmentId ?? i}>
                   <div className="aspect-[4/3]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.url} alt={img.alt || openAlbum.title} className="h-full w-full object-cover" />
+                    <SmartImage src={img.url} alt={img.alt || openAlbum.title} />
                   </div>
                   {img.caption && (
                     <div className="mt-1.5 font-sans text-xs text-[var(--text-inverse-muted)]">{img.caption}</div>

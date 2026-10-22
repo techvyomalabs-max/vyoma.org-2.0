@@ -17,6 +17,7 @@ import { blogPublicRouter } from './modules/blog/blog.routes.js';
 import { documentsPublicRouter } from './modules/documents/documents.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { LOCAL_MEDIA_DIR, isLocalDevStorageAllowed } from './modules/photoProcessing/localDev.storageAdapter.js';
 import { redirectMiddleware } from './middleware/redirectMiddleware.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -42,6 +43,34 @@ export function createApp() {
   app.use(cookieParser());
 
   app.get('/api/v1/health', (req, res) => res.json({ success: true, data: { status: 'ok' } }));
+
+  // Local-development-only: serves background-removal results written by
+  // localDev.storageAdapter.js. Never mounted in production -- real
+  // deployments use S3 (see s3.adapter.js) once this feature is extended
+  // there, exactly as the comment in that adapter describes.
+  //
+  // Mounted at /local-media/processed (not just /local-media): LOCAL_MEDIA_DIR
+  // already resolves to the "processed" subdirectory, and saveProcessedImage()
+  // returns URLs shaped like /local-media/processed/<file>.png — mounting at
+  // the shallower /local-media would make Express look for a nested
+  // ".../processed/processed/<file>.png" that never exists, a 404 every time.
+  //
+  // helmet()'s default Cross-Origin-Resource-Policy: same-origin would make
+  // the browser silently refuse to render this in an <img> tag on the
+  // Frontend's own origin (localhost:3000 vs this server's localhost:4000) —
+  // a 200 response that still shows as a broken image. Relaxed to
+  // cross-origin on this one dev-only static route only; every other
+  // response on this server keeps Helmet's default.
+  if (isLocalDevStorageAllowed()) {
+    app.use(
+      '/local-media/processed',
+      (req, res, next) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        next();
+      },
+      express.static(LOCAL_MEDIA_DIR)
+    );
+  }
 
   // Order matters: every specific /public/* route must be registered
   // before the generic /public/* content wildcard.

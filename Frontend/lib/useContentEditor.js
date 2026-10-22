@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAdminAuth } from '@/lib/AdminAuthContext';
 import { useToast } from '@/components/admin/ui/Toast';
 
@@ -35,6 +35,14 @@ export function useContentEditor(typeOrTypes) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(null);
+  // The last value actually confirmed saved to the server (right after
+  // load() populates draftValue, and again after every successful
+  // save/publish/unpublish/restore, since each of those ends by calling
+  // load() again). Used only to detect "does the screen currently hold an
+  // edit that was never saved" — e.g. accepting a background-removed photo
+  // and then reloading/navigating away before clicking Save Draft, which
+  // would otherwise silently discard it with no warning at all.
+  const lastSyncedValueRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,8 +52,10 @@ export function useContentEditor(typeOrTypes) {
         apiFetch(`/admin/content?type=${encodeURIComponent(type)}`),
         apiFetch(`/admin/content/revisions?type=${encodeURIComponent(type)}`),
       ]);
+      const value = contentDoc.draftData ?? contentDoc.data ?? null;
       setDoc(contentDoc);
-      setDraftValue(contentDoc.draftData ?? contentDoc.data ?? null);
+      setDraftValue(value);
+      lastSyncedValueRef.current = value;
       setRevisions(revisionList);
     } catch (err) {
       setError(err.message);
@@ -57,6 +67,22 @@ export function useContentEditor(typeOrTypes) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Warns before a reload/close/external-navigation would silently discard
+  // an edit that hasn't been saved yet — there was previously no protection
+  // against this at all. Does not (and cannot, without deeper Next.js
+  // router integration) cover navigating to a different admin page via an
+  // in-app link; this is deliberately the smallest safe guard against the
+  // most common way to lose an accepted edit, not a complete solution.
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (JSON.stringify(draftValue) === JSON.stringify(lastSyncedValueRef.current)) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [draftValue]);
 
   const setSectionValue = (key, value) => setDraftValue((prev) => ({ ...prev, [key]: value }));
 

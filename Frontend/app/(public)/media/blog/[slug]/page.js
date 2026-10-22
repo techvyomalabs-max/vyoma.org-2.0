@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getBlogPosts, getBlogPost } from '@/services/blogService';
 import { PageHero } from '@/components/sections/PageHero';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { SmartImage } from '@/components/common/SmartImage';
 import { MediaCta } from '@/components/sections/media/MediaCta';
 import { articleJsonLd, breadcrumbJsonLd, jsonLdScriptProps } from '@/lib/seo';
 
@@ -75,8 +76,7 @@ export default async function BlogPostPage({ params }) {
         <div className="mx-auto max-w-[700px]">
           <div className="h-[360px] border-b-[3px] border-b-amber-gold">
             {post.featuredImage?.url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={post.featuredImage.url} alt={post.featuredImage.alt || post.title} className="h-full w-full object-cover" />
+              <SmartImage src={post.featuredImage.url} alt={post.featuredImage.alt || post.title} priority />
             ) : (
               <ImagePlaceholder shape="rect" caption="Photo" />
             )}

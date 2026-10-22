@@ -22,9 +22,13 @@ export const VOLUNTEER_CATEGORIES = [
   { title: 'Students', items: ['Internships and short-term projects'], active: true },
 ];
 
+// `image` URLs: real WordPress media-library attachments, verified directly
+// against the WXR export's <wp:attachment_url> entries (not guessed) — see
+// Backend/scripts/wordpress/import/volunteer-images-migration.mjs for the
+// full provenance note.
 export const VOLUNTEER_FEATURED = [
-  { name: 'Smt. Radha Raju', note: 'A long-standing volunteer whose work has shaped Vyoma’s teaching material and community over the years.', image: null, active: true },
-  { name: 'Smt. Bhuvaneshwari Subramanian', note: 'A dedicated contributor supporting Vyoma’s content and outreach efforts.', image: null, active: true },
+  { name: 'Smt. Radha Raju', note: 'A long-standing volunteer whose work has shaped Vyoma’s teaching material and community over the years.', image: { url: 'https://vyoma.org/wp-content/uploads/2026/01/Radha-Raju.jpg' }, active: true },
+  { name: 'Smt. Bhuvaneshwari Subramanian', note: 'A dedicated contributor supporting Vyoma’s content and outreach efforts.', image: { url: 'https://vyoma.org/wp-content/uploads/2026/01/Bhuvaneshwari.jpg' }, active: true },
 ];
 
 // Singleton, not per-category (unlike CAREER_ROLES.applyUrl): the legacy

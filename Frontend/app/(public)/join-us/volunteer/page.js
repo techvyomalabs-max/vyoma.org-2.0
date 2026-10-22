@@ -59,9 +59,34 @@ export default async function VolunteerPage() {
             {VOLUNTEER_FEATURED.map((v) => (
               <div key={v.name} className="flex items-stretch gap-[18px] overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
                 <div className="w-[120px] flex-shrink-0 border-r-[3px] border-r-amber-gold">
-                  <ImagePlaceholder src={v.image?.url} alt={v.image?.alt || v.name} shape="rounded" caption="Photo" />
+                  {v.name === 'Smt. Bhuvaneshwari Subramanian' && v.image?.url ? (
+                    // Scoped fix, this photo only (not a change to the shared
+                    // SmartImage/ImagePlaceholder components, and Radha Raju's
+                    // card below is unaffected). Her source photo (1227x1280,
+                    // nearly square) is narrower, relative to its own height,
+                    // than this card's image box is tall — the standard
+                    // contain+blur treatment (still used for every other
+                    // photo) left a visible blurred strip at the bottom
+                    // instead of filling it. Because this box is taller than
+                    // 120 * (1280/1227) ≈ 125px (confirmed by that very
+                    // strip having been at the BOTTOM, not split top+bottom,
+                    // under the previous top-anchored contain attempt),
+                    // object-fit: cover here fills the box by matching its
+                    // height exactly — zero vertical crop, so her head and
+                    // the full vertical framing of the photo stay completely
+                    // intact. The only trade-off is a modest amount of
+                    // background cropped off the left and right edges.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={v.image.url}
+                      alt={v.image?.alt || v.name}
+                      className="h-full w-full rounded-l-md object-cover"
+                    />
+                  ) : (
+                    <ImagePlaceholder src={v.image?.url} alt={v.image?.alt || v.name} shape="rounded-left" caption="Photo" />
+                  )}
                 </div>
-                <div className="flex flex-col justify-center py-[22px] pr-5 pl-1">
+                <div className="flex flex-col items-center justify-center px-5 py-[22px] text-center">
                   <div className="mb-2 font-sans text-lg font-bold text-vyoma-blue">{v.name}</div>
                   <p className="m-0 font-sans text-[15px] leading-normal text-charcoal">{v.note}</p>
                 </div>

@@ -1,14 +1,11 @@
-// Used for "In the Press" clipping grids on /media/press. Plain <img>, not
-// next/image — matches the established pattern (see EventCard.jsx,
-// TestimonialCard.jsx) for externally-hosted vyoma.org images.
+import { SmartImage } from '@/components/common/SmartImage';
+
+// Used for "In the Press" clipping grids on /media/press.
 export function PressCard({ item }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
       <div className="h-[180px] border-b-[3px] border-b-amber-gold">
-        {item.image?.url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.image.url} alt={item.title} className="h-full w-full object-cover" />
-        ) : null}
+        {item.image?.url ? <SmartImage src={item.image.url} alt={item.title} /> : null}
       </div>
       <div className="flex flex-1 flex-col p-5">
         <div className="font-sans text-sm font-bold text-charcoal">{item.title}</div>

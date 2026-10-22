@@ -1,4 +1,5 @@
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { SmartImage } from '@/components/common/SmartImage';
 
 // `imageUrl`/`link` are optional — absent is safe and intentional (e.g. a
 // migrated legacy event whose original link is now dead): the placeholder
@@ -9,8 +10,7 @@ export function EventCard({ event }) {
     <div className="overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
       <div className="h-[190px] border-b-[3px] border-b-amber-gold">
         {event.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt={event.title} className="h-full w-full object-cover" />
+          <SmartImage src={event.imageUrl} alt={event.title} />
         ) : (
           <ImagePlaceholder shape="rect" caption="Photo" />
         )}

@@ -51,11 +51,16 @@ function AwardsForm({ value, onChange }) {
       value={value}
       onChange={onChange}
       labelKey="title"
-      newItemTemplate={{ title: '', body: '', image: null, active: true }}
+      newItemTemplate={{ title: '', body: '', image: null, image2: null, active: true }}
       fields={[
         { key: 'title', type: 'text', label: 'Award title' },
         { key: 'body', type: 'textarea', label: 'Description' },
         { key: 'image', type: 'image', label: 'Photo' },
+        // Optional: some awards have a second original WordPress photo (the
+        // original page showed both as a rotating pair). Leave empty for an
+        // award that only ever had one photo -- the public page then shows
+        // exactly the same single-image card as before, no slider chrome.
+        { key: 'image2', type: 'image', label: 'Second photo (optional)' },
       ]}
     />
   );

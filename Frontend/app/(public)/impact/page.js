@@ -48,7 +48,7 @@ export default async function ImpactPage() {
         <DonateCta>Support this work</DonateCta>
       </section>
 
-      <KpiDashboard />
+      <KpiDashboard input={INPUT} impact={IMPACT} />
       <MetricSection eyebrow="Impact" title="Reach at scale" items={IMPACT} />
       <MetricSection eyebrow="Input" title="What we invest" items={INPUT} />
       <MetricSection eyebrow="Output achieved" title="What we've built" items={OUTPUT} />

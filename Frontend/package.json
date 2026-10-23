@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --test components/**/*.test.mjs"
+    "test": "node --test components/**/*.test.mjs app/**/*.test.mjs"
   },
   "dependencies": {
     "@tiptap/extension-highlight": "^3.31.3",

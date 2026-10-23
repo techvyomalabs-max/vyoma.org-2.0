@@ -108,6 +108,15 @@
   a {
     color: var(--color-vyoma-blue);
     text-decoration: none;
+    /* A link whose visible text is a long, unbroken URL (common in blog
+       bodies, the Privacy Policy's legal text, and media resource lists
+       like WhereIksExplorer.jsx, wherever a content author pastes the raw
+       URL as its own label) has no natural break point, so it was forcing
+       the whole page wider than the viewport on mobile instead of
+       wrapping. `anywhere` only takes effect when a line genuinely has
+       nowhere else to break -- it never changes how short link text (nav
+       items, buttons, "Visit ->") renders, since those already fit. */
+    overflow-wrap: anywhere;
   }
 
   a:hover {
@@ -134,6 +143,19 @@
  * why that ordering matters here).
  */
 @layer components {
+  /*
+   * The global `a { overflow-wrap: anywhere }` rule (see @layer base above)
+   * only reaches text inside a real <a> element. Some migrated WordPress
+   * post bodies have a URL typed as plain text, never turned into a link
+   * (e.g. the Mahāśivarātri post's "...watch the video ... -
+   * https://www.facebook.com/reel/..." line) -- that text sits directly in
+   * a <p>, not an <a>, so it needs its own rule here to wrap instead of
+   * forcing the whole page wider on mobile.
+   */
+  .prose-blog {
+    overflow-wrap: anywhere;
+  }
+
   .prose-blog :where(p, h1, h2, h3, h4, h5, h6, td).has-text-align-left {
     text-align: left;
   }
@@ -144,5 +166,24 @@
 
   .prose-blog :where(p, h1, h2, h3, h4, h5, h6, td).has-text-align-right {
     text-align: right;
+  }
+
+  /*
+   * A rich-text table (pasted from a wide WordPress source table, e.g. the
+   * Pañcaka-nāma table in the Guru Pūrṇimā post, or the Leaf/Botanical-name
+   * table in the Ganeśa-pūjā post) can be wider than a mobile viewport.
+   * `display: block` turns the <table> element itself into the scrollable
+   * container (its internal tbody/tr/td children keep their normal table
+   * layout, so columns/rows still align correctly) -- the table scrolls
+   * independently within its own bounds instead of forcing the entire page
+   * to scroll horizontally. No wrapper element is needed, so this works
+   * identically for the public post page's `dangerouslySetInnerHTML` body
+   * and the admin Tiptap editor's live preview, with zero HTML changes and
+   * zero change to table content/structure.
+   */
+  .prose-blog table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
   }
 }

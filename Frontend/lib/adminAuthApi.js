@@ -54,6 +54,30 @@ export async function verifyMfa(mfaToken, code) {
   return parseResponse(res);
 }
 
+// Mandatory-MFA enrollment (e.g. a Super Admin logging in before ever
+// enabling MFA) — a separate pair of endpoints from mfa/setup|verify above,
+// authorized by the short-lived enrollmentToken login() returns instead of a
+// real session (see Backend/.../auth.service.js: signMfaEnrollmentToken).
+export async function enrollMfaSetup(enrollmentToken) {
+  const res = await safeFetch(`${API_BASE}/auth/mfa/enroll/setup`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enrollmentToken }),
+  });
+  return parseResponse(res);
+}
+
+export async function enrollMfaVerify(enrollmentToken, code) {
+  const res = await safeFetch(`${API_BASE}/auth/mfa/enroll/verify`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enrollmentToken, code }),
+  });
+  return parseResponse(res);
+}
+
 export async function refreshSession() {
   const res = await safeFetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',

@@ -12,6 +12,8 @@ import {
   verifyRefreshToken,
   signMfaPendingToken,
   verifyMfaPendingToken,
+  signMfaEnrollmentToken,
+  verifyMfaEnrollmentToken,
   generateTotpSecret,
   totpKeyUri,
   verifyTotp,
@@ -27,14 +29,22 @@ const LOCK_DURATION_MS = 15 * 60 * 1000;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const REFRESH_COOKIE_NAME = 'vyoma_refresh';
 
-function refreshCookieOptions() {
+// Identity attributes only (no maxAge) -- shared by both setting the cookie
+// (issueSession, with maxAge added) and clearing it (logout, as-is). Express
+// 4.x's clearCookie computes Expires from a passed maxAge instead of forcing
+// an immediate past expiry (it logs its own deprecation warning for this),
+// so logout must never receive maxAge here.
+function refreshCookieAttributes() {
   return {
     httpOnly: true,
     secure: env.nodeEnv === 'production',
     sameSite: 'lax',
     path: '/api/v1/auth',
-    maxAge: env.auth.refreshTokenTtlDays * 24 * 60 * 60 * 1000,
   };
+}
+
+function refreshCookieOptions() {
+  return { ...refreshCookieAttributes(), maxAge: env.auth.refreshTokenTtlDays * 24 * 60 * 60 * 1000 };
 }
 
 async function issueSession(res, user, role) {
@@ -88,6 +98,17 @@ export async function login(req, res, next) {
       await user.save();
       const mfaToken = signMfaPendingToken(user);
       return sendSuccess(res, { mfaRequired: true, mfaToken });
+    }
+
+    // Role.mfaRequired (e.g. super_admin) but this account hasn't enrolled
+    // yet: never issue a full session (and never call issueSession, so no
+    // refresh cookie is set either). Instead hand back a narrowly-scoped
+    // enrollment token that only POST /mfa/enroll/setup|verify accept.
+    if (role?.mfaRequired) {
+      await user.save();
+      const enrollmentToken = signMfaEnrollmentToken(user);
+      await recordAudit({ actor: user, action: 'auth.mfa_enrollment_required', req });
+      return sendSuccess(res, { mfaEnrollmentRequired: true, enrollmentToken });
     }
 
     user.lastLoginAt = new Date();
@@ -162,6 +183,13 @@ export async function refresh(req, res, next) {
     }
 
     const role = await RoleModel.findOne({ key: user.roleKey });
+    // Defense in depth: under the current login() flow a refresh cookie is
+    // never issued to an account pending mandatory MFA enrollment in the
+    // first place, but this closes the same gap for any refresh token that
+    // may have been issued before this check existed.
+    if (role?.mfaRequired && !user.mfaEnabled) {
+      throw new ApiError(401, 'MFA_ENROLLMENT_REQUIRED', 'Mandatory MFA enrollment was not completed. Please log in again.');
+    }
     const session = await issueSession(res, user, role);
     return sendSuccess(res, session);
   } catch (err) {
@@ -172,7 +200,7 @@ export async function refresh(req, res, next) {
 // POST /api/v1/auth/logout
 export async function logout(req, res, next) {
   try {
-    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieOptions());
+    res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieAttributes());
     return sendSuccess(res, { loggedOut: true });
   } catch (err) {
     next(err);
@@ -230,6 +258,96 @@ export async function mfaVerify(req, res, next) {
     await recordAudit({ actor: user, action: 'auth.mfa_enabled', req });
     // Recovery codes are shown exactly once — only the hashes are persisted.
     return sendSuccess(res, { mfaEnabled: true, recoveryCodes });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// POST /api/v1/auth/mfa/enroll/setup — body: { enrollmentToken }. Breaks the
+// deadlock a fully-enforced mandatory MFA requirement would otherwise create
+// (requireAuth-gated mfa/setup needs a real session, but a mandatory-MFA
+// account is never issued one): this is the same shape as mfa/setup, but
+// authorized by the narrowly-scoped enrollment token from login() instead of
+// a real session, and usable only before enrollment completes.
+export async function mfaEnrollSetup(req, res, next) {
+  try {
+    const { enrollmentToken } = req.body || {};
+    if (!enrollmentToken) throw new ApiError(422, 'VALIDATION_ERROR', 'enrollmentToken is required.');
+
+    let payload;
+    try {
+      payload = verifyMfaEnrollmentToken(enrollmentToken);
+    } catch {
+      throw new ApiError(401, 'MFA_ENROLLMENT_TOKEN_INVALID', 'This enrollment attempt has expired. Please log in again.');
+    }
+
+    const user = await UserModel.findById(payload.sub);
+    if (!user || user.status !== 'active') {
+      throw new ApiError(401, 'MFA_ENROLLMENT_TOKEN_INVALID', 'This enrollment attempt is no longer valid.');
+    }
+    if (user.mfaEnabled) {
+      throw new ApiError(409, 'MFA_ALREADY_ENABLED', 'MFA is already enabled for this account.');
+    }
+
+    const secret = generateTotpSecret();
+    user.mfaPendingSecret = secret;
+    await user.save();
+
+    return sendSuccess(res, { otpauthUri: totpKeyUri(user.email, secret), secret });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// POST /api/v1/auth/mfa/enroll/verify — body: { enrollmentToken, code }.
+// Completes mandatory enrollment AND finishes the login that was paused for
+// it, in one step: only on a valid code does this enable MFA and issue the
+// real session + refresh cookie (via issueSession) — exactly like a normal
+// login would have, had enrollment not been required.
+export async function mfaEnrollVerify(req, res, next) {
+  try {
+    const { enrollmentToken, code } = req.body || {};
+    if (!enrollmentToken || !code) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'enrollmentToken and code are required.');
+    }
+
+    let payload;
+    try {
+      payload = verifyMfaEnrollmentToken(enrollmentToken);
+    } catch {
+      throw new ApiError(401, 'MFA_ENROLLMENT_TOKEN_INVALID', 'This enrollment attempt has expired. Please log in again.');
+    }
+
+    const user = await UserModel.findById(payload.sub);
+    if (!user || user.status !== 'active') {
+      throw new ApiError(401, 'MFA_ENROLLMENT_TOKEN_INVALID', 'This enrollment attempt is no longer valid.');
+    }
+    if (user.mfaEnabled) {
+      throw new ApiError(409, 'MFA_ALREADY_ENABLED', 'MFA is already enabled for this account.');
+    }
+    if (!user.mfaPendingSecret) {
+      throw new ApiError(400, 'MFA_SETUP_NOT_STARTED', 'Call mfa/enroll/setup first.');
+    }
+
+    if (!verifyTotp(user.mfaPendingSecret, code)) {
+      await recordAudit({ actor: user, action: 'auth.mfa_enrollment_failed', req });
+      throw new ApiError(401, 'MFA_INVALID', 'Invalid authentication code.');
+    }
+
+    const recoveryCodes = generateRecoveryCodes();
+    user.mfaSecret = user.mfaPendingSecret;
+    user.mfaPendingSecret = null;
+    user.mfaEnabled = true;
+    user.mfaRecoveryCodesHashed = await hashRecoveryCodes(recoveryCodes);
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    const role = await RoleModel.findOne({ key: user.roleKey });
+    const session = await issueSession(res, user, role);
+    await recordAudit({ actor: user, action: 'auth.mfa_enrolled', req });
+    await recordAudit({ actor: user, action: 'auth.login', details: { via: 'mandatory_mfa_enrollment' }, req });
+    // Recovery codes are shown exactly once — only the hashes are persisted.
+    return sendSuccess(res, { ...session, recoveryCodes });
   } catch (err) {
     next(err);
   }

@@ -4,6 +4,8 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import {
   login as apiLogin,
   verifyMfa as apiVerifyMfa,
+  enrollMfaSetup as apiEnrollMfaSetup,
+  enrollMfaVerify as apiEnrollMfaVerify,
   refreshSession,
   logoutSession,
   authedFetch,
@@ -47,7 +49,12 @@ export function AdminAuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const result = await apiLogin(email, password);
-    if (result.mfaRequired) return result; // { mfaRequired: true, mfaToken } — caller shows the MFA step
+    // { mfaRequired: true, mfaToken } — already-enrolled account, caller
+    // shows the TOTP step. { mfaEnrollmentRequired: true, enrollmentToken }
+    // — role.mfaRequired but never enrolled, caller shows the enrollment
+    // step. Neither case has issued a real session yet, so neither must
+    // fall through to the accessToken/authenticated branch below.
+    if (result.mfaRequired || result.mfaEnrollmentRequired) return result;
     accessTokenRef.current = result.accessToken;
     setUser(result.user);
     setStatus('authenticated');
@@ -60,6 +67,16 @@ export function AdminAuthProvider({ children }) {
     setUser(result.user);
     setStatus('authenticated');
     return result;
+  }, []);
+
+  const enrollMfaSetup = useCallback(async (enrollmentToken) => apiEnrollMfaSetup(enrollmentToken), []);
+
+  const enrollMfaVerify = useCallback(async (enrollmentToken, code) => {
+    const result = await apiEnrollMfaVerify(enrollmentToken, code);
+    accessTokenRef.current = result.accessToken;
+    setUser(result.user);
+    setStatus('authenticated');
+    return result; // includes recoveryCodes — the caller must show these exactly once
   }, []);
 
   const logout = useCallback(async () => {
@@ -128,7 +145,9 @@ export function AdminAuthProvider({ children }) {
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ status, user, login, verifyMfa, logout, apiFetch, apiFetchWithMeta, enablePreview }}>
+    <AdminAuthContext.Provider
+      value={{ status, user, login, verifyMfa, enrollMfaSetup, enrollMfaVerify, logout, apiFetch, apiFetchWithMeta, enablePreview }}
+    >
       {children}
     </AdminAuthContext.Provider>
   );

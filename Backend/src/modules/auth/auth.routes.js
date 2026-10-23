@@ -8,6 +8,8 @@ import {
   mfaSetup,
   mfaVerify,
   mfaDisable,
+  mfaEnrollSetup,
+  mfaEnrollVerify,
   forgotPassword,
   resetPassword,
   changePassword,
@@ -29,6 +31,11 @@ const logoutLimiter = makeRateLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
 
 authRouter.post('/login', loginLimiter, login);
 authRouter.post('/login/mfa', loginLimiter, loginMfa);
+// Same bucket as login/login-mfa -- both are part of the same login funnel,
+// gated by a short-lived enrollment token verified inside the controller
+// (not requireAuth; see signMfaEnrollmentToken's comment for why).
+authRouter.post('/mfa/enroll/setup', loginLimiter, mfaEnrollSetup);
+authRouter.post('/mfa/enroll/verify', loginLimiter, mfaEnrollVerify);
 authRouter.post('/refresh', refreshLimiter, refresh);
 authRouter.post('/logout', logoutLimiter, logout);
 authRouter.get('/me', requireAuth, me);

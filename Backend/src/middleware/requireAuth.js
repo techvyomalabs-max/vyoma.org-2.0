@@ -24,6 +24,13 @@ export async function requireAuth(req, res, next) {
 
   try {
     const payload = verifyAccessToken(token);
+    // signAccessToken never sets `purpose` -- only the intermediate,
+    // narrowly-scoped tokens (mfa_pending, mfa_enrollment) do. Both are
+    // signed with this same secret, so without this check either one would
+    // otherwise verify successfully here and be treated as a real session.
+    if (payload.purpose) {
+      return next(new ApiError(401, 'UNAUTHENTICATED', 'Access token is invalid or expired.'));
+    }
     const isActive = await UserModel.exists({ _id: payload.sub, status: 'active' });
     if (!isActive) {
       return next(new ApiError(401, 'UNAUTHENTICATED', 'This account is no longer active.'));

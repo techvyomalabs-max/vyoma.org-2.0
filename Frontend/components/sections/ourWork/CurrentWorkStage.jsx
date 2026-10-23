@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { hasRealLink } from './platformLink.mjs';
 
 function cwPositions(list, radiusPct) {
   return list.map((_, i) => {
@@ -59,7 +60,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
   const platPos = cwPositions(platforms, 28);
   const progPos = cwPositions(programmes, 42);
   const openLink = (u) => {
-    if (u && u !== '#') window.open(u, '_blank', 'noopener');
+    if (hasRealLink(u)) window.open(u, '_blank', 'noopener');
   };
 
   const Node = ({ it, kind, pos }) => (
@@ -126,7 +127,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
                 <div className="ey">{active.kind === 'prog' ? 'Programme' : 'Platform'}</div>
                 <h2>{active.it.t}</h2>
                 <div className="d">{active.it.d}</div>
-                {active.it.u && (
+                {hasRealLink(active.it.u) && (
                   <a href={active.it.u} target="_blank" rel="noopener noreferrer">
                     {active.it.ul} ↗
                   </a>
@@ -172,7 +173,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
                   >
                     <div className="font-sans text-[17px] font-bold text-vyoma-blue">{it.t}</div>
                     <div className="mt-1 font-sans text-sm leading-normal text-charcoal">{it.d}</div>
-                    {it.u && (
+                    {hasRealLink(it.u) && (
                       <a
                         href={it.u}
                         target="_blank"

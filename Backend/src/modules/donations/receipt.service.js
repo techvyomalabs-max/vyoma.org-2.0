@@ -1,6 +1,25 @@
 import { DonationModel } from './donation.model.js';
 import { sendMail } from '../../services/mailer.js';
 import { recordAudit } from '../audit/audit.service.js';
+import { escapeHtml } from '../../utils/htmlEscape.js';
+
+// `donorName` and `currency` are both user-submitted at checkout
+// (createDonationOrder passes req.body.donor and req.body.currency straight
+// through, with no format validation) and must be escaped before becoming
+// part of this HTML email. `amount` is a validated Number (schema + a
+// Number.isFinite check at the API boundary) and can't carry markup;
+// `schemeSlug` here is the matched DonationScheme's own `slug` (admin-
+// managed content, resolved server-side -- not the raw, unvalidated
+// `req.body.schemeSlug` used only as a lookup key), so it isn't user-
+// controlled in the same sense and is left as-is, consistent with how
+// scheme fields are already treated as trusted elsewhere (publicSchemeShape.js).
+// `receiptNo` is server-generated. Exported (and the exact function
+// sendDonationReceiptIfNeeded calls) so tests exercise this real code path.
+export function buildReceiptEmailHtml({ donorName, currency, amount, schemeSlug, receiptNo }) {
+  return `<p>Namaste ${escapeHtml(donorName || '')},</p>
+             <p>Thank you for your donation of ${escapeHtml(currency)} ${amount} to ${schemeSlug}.</p>
+             <p>Receipt number: <strong>${receiptNo}</strong></p>`;
+}
 
 // Week 4 Decision W4-4. Both `verifyDonation` (browser path) and
 // `razorpayWebhook` (server path) call this after a donation reaches
@@ -46,9 +65,13 @@ export async function sendDonationReceiptIfNeeded(donationId) {
     const result = await sendMail({
       to: claimed.donor.email,
       subject: 'Your donation receipt — Vyoma Linguistic Labs Foundation',
-      html: `<p>Namaste ${claimed.donor.name || ''},</p>
-             <p>Thank you for your donation of ${claimed.currency} ${claimed.amount} to ${claimed.schemeSlug}.</p>
-             <p>Receipt number: <strong>${receiptNo}</strong></p>`,
+      html: buildReceiptEmailHtml({
+        donorName: claimed.donor.name,
+        currency: claimed.currency,
+        amount: claimed.amount,
+        schemeSlug: claimed.schemeSlug,
+        receiptNo,
+      }),
     });
 
     if (!result.sent) {

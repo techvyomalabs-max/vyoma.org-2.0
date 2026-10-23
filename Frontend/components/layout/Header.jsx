@@ -29,8 +29,16 @@ export function Header() {
           vyoma-org-design-system Vercel preview). The clipping wrapper is
           scoped to ONLY this layer (not `nav` itself) — the NavItem
           dropdowns below are also descendants of `nav` and are meant to
-          extend past its bottom edge; clipping `nav` as a whole hid them. */}
-      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          extend past its bottom edge; clipping `nav` as a whole hid them.
+          `alt=""` on each image already removes them from the accessibility
+          tree (the standard WCAG technique for a purely decorative image);
+          `aria-hidden` on the wrapper is redundant-but-conventional extra
+          robustness, matching the same alt="" + aria-hidden pairing already
+          used for the other purely decorative image in this codebase (the
+          ActivityCard background icon, app/(public)/page.js) — one
+          attribute here covers all three images at once rather than
+          repeating it on each. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <Image src="/images/cloud-1.png" alt="" width={676} height={213} className="absolute" style={{ top: '-43px', left: '696px', opacity: 0.3 }} />
         <Image src="/images/cloud-2.png" alt="" width={726} height={166} className="absolute" style={{ top: '72px', left: '-147px', opacity: 0.32 }} />
         <Image src="/images/cloud-3.png" alt="" width={654} height={167} className="absolute" style={{ top: '0px', left: '66px', opacity: 0.28 }} />

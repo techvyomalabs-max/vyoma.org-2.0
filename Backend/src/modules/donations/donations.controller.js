@@ -7,6 +7,16 @@ import { isRazorpayConfigured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { shapePublicScheme } from './publicSchemeShape.js';
 
+// Once a donation reaches one of these, no later event (an invalid/garbage
+// /verify signature submitted against an arbitrary donationId, or a delayed
+// payment.failed webhook for a stale/earlier payment attempt on the same
+// order) may downgrade it. Enforced via the filter on an atomic
+// findOneAndUpdate/updateOne -- not a read-then-write in-memory check -- so
+// this holds even if a downgrade attempt and the write that reaches
+// paid_verified race each other; whichever lands first in MongoDB wins, and
+// the second one's filter simply won't match anymore.
+const PAID_STATUSES = ['paid_verified', 'receipt_sent'];
+
 // GET /api/v1/public/donation-schemes — LLD 9.1. Active schemes only, sorted
 // by admin-controlled displayOrder (Phase D) — inactive schemes are excluded
 // from the public list entirely, never shown as if available.
@@ -105,24 +115,36 @@ export async function verifyDonation(req, res, next) {
     });
 
     if (!valid) {
-      donation.status = 'verification_failed';
-      await donation.save();
+      // Conditional on current status, not the copy read above -- a donation
+      // already confirmed paid (by an earlier valid /verify call, or by a
+      // webhook that landed in between) must never be downgraded just
+      // because this particular request's signature didn't check out.
+      await DonationModel.updateOne(
+        { _id: donationId, status: { $nin: PAID_STATUSES } },
+        { $set: { status: 'verification_failed' } }
+      );
       throw new ApiError(400, 'SIGNATURE_INVALID', 'Payment signature verification failed.');
     }
 
-    donation.razorpayPaymentId = razorpayPaymentId;
-    donation.status = 'paid_verified';
-    await donation.save();
+    // A valid signature is always allowed to (re-)confirm payment, even if
+    // an earlier attempt on this same order was previously recorded as
+    // failed/verification_failed -- a real retry succeeding must still be
+    // able to mark the donation paid.
+    const updated = await DonationModel.findOneAndUpdate(
+      { _id: donationId },
+      { $set: { razorpayPaymentId, status: 'paid_verified' } },
+      { new: true }
+    );
 
     // Best-effort, never lets a receipt-send problem affect this response —
     // the payment is already verified regardless of what happens next.
     try {
-      await sendDonationReceiptIfNeeded(donation._id);
+      await sendDonationReceiptIfNeeded(updated._id);
     } catch (receiptErr) {
       console.error('[donations] receipt attempt threw unexpectedly:', receiptErr.message);
     }
 
-    return sendSuccess(res, { status: donation.status });
+    return sendSuccess(res, { status: updated.status });
   } catch (err) {
     next(err);
   }
@@ -153,19 +175,34 @@ export async function razorpayWebhook(req, res, next) {
 
     const orderId = event.payload?.payment?.entity?.order_id;
     if (orderId) {
-      const donation = await DonationModel.findOne({ razorpayOrderId: orderId });
-      if (donation) {
-        if (event.event === 'payment.captured') donation.status = 'paid_verified';
-        else if (event.event === 'payment.failed') donation.status = 'failed';
-        await donation.save();
-
-        if (event.event === 'payment.captured') {
+      if (event.event === 'payment.captured') {
+        // Always allowed to confirm, regardless of current status -- a
+        // later successful attempt must still be able to mark the donation
+        // paid even if an earlier attempt on the same order was already
+        // recorded as failed.
+        const donation = await DonationModel.findOneAndUpdate(
+          { razorpayOrderId: orderId },
+          { $set: { status: 'paid_verified' } },
+          { new: true }
+        );
+        if (donation) {
           try {
             await sendDonationReceiptIfNeeded(donation._id);
           } catch (receiptErr) {
             console.error('[donations] receipt attempt threw unexpectedly:', receiptErr.message);
           }
         }
+      } else if (event.event === 'payment.failed') {
+        // Conditional: a delayed payment.failed for a stale/earlier attempt
+        // must never downgrade a donation a later attempt (or /verify) has
+        // already confirmed paid. The filter is evaluated against whatever
+        // is in MongoDB at write time, not a value read earlier, so this is
+        // race-safe against a concurrent payment.captured/verify landing
+        // first.
+        await DonationModel.updateOne(
+          { razorpayOrderId: orderId, status: { $nin: PAID_STATUSES } },
+          { $set: { status: 'failed' } }
+        );
       }
     }
 

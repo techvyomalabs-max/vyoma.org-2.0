@@ -3,6 +3,7 @@ import { getDonationSchemes, getDonationSchemeBySlug } from '@/services/donation
 import { PageHero } from '@/components/sections/PageHero';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { QuickDonate } from '@/components/sections/donate/QuickDonate';
+import { getPublicSchemeFields } from '@/components/sections/donate/donationSchemePublicFields.mjs';
 
 // Phase D: only ACTIVE schemes are statically pre-rendered — an inactive
 // scheme's page still works (see below), it's just rendered on-demand at
@@ -60,32 +61,28 @@ export default async function DonationSchemePage({ params }) {
     );
   }
 
-  const isActive = scheme.status !== 'inactive';
+  const publicScheme = getPublicSchemeFields(scheme);
+  const isActive = publicScheme.status !== 'inactive';
 
   return (
     <div className="font-sans">
-      <PageHero eyebrow="Donate" title={scheme.name} body={scheme.body} />
+      <PageHero eyebrow="Donate" title={publicScheme.name} body={publicScheme.body} />
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[900px]">
           <div className="aspect-[2/1] w-full">
-            {scheme.image?.url ? (
+            {publicScheme.image?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={scheme.image.url} alt={scheme.name} className="h-full w-full object-cover" />
+              <img src={publicScheme.image.url} alt={publicScheme.name} className="h-full w-full object-cover" />
             ) : (
-              <ImagePlaceholder shape="rect" caption={`${scheme.name} — 2:1 image`} />
+              <ImagePlaceholder shape="rect" caption={`${publicScheme.name} — 2:1 image`} />
             )}
           </div>
-          {scheme.note && (
-            <div className="mt-6 rounded-sm border border-dashed border-amber-gold bg-amber-gold/10 px-3 py-2.5 font-sans text-sm leading-normal text-[#9a6a00]">
-              <strong>Handoff note:</strong> {scheme.note}
-            </div>
-          )}
         </div>
       </section>
 
       {isActive ? (
-        <QuickDonate schemeSlug={scheme.slug} />
+        <QuickDonate schemeSlug={publicScheme.slug} />
       ) : (
         // Phase D decision: a distinct, donor-friendly unavailable state —
         // never a silent fallback to "not found" and never an active

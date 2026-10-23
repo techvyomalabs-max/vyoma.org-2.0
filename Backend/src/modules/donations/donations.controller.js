@@ -5,6 +5,7 @@ import { createOrder, verifyCheckoutSignature, verifyWebhookSignature } from './
 import { sendDonationReceiptIfNeeded } from './receipt.service.js';
 import { isRazorpayConfigured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { shapePublicScheme } from './publicSchemeShape.js';
 
 // GET /api/v1/public/donation-schemes — LLD 9.1. Active schemes only, sorted
 // by admin-controlled displayOrder (Phase D) — inactive schemes are excluded
@@ -12,8 +13,7 @@ import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 export async function listDonationSchemes(req, res, next) {
   try {
     const schemes = await DonationSchemeModel.find({ status: 'active' }).sort({ displayOrder: 1 }).lean();
-    const shaped = schemes.map((s) => ({ slug: s.slug, name: s.name, body: s.description, note: s.note || undefined, image: s.image || undefined }));
-    return sendSuccess(res, shaped);
+    return sendSuccess(res, schemes.map(shapePublicScheme));
   } catch (err) {
     next(err);
   }
@@ -30,14 +30,7 @@ export async function getDonationSchemeBySlug(req, res, next) {
     if (!scheme) {
       throw new ApiError(404, 'SCHEME_NOT_FOUND', `Unknown donation scheme "${req.params.slug}".`);
     }
-    return sendSuccess(res, {
-      slug: scheme.slug,
-      name: scheme.name,
-      body: scheme.description,
-      note: scheme.note || undefined,
-      status: scheme.status,
-      image: scheme.image || undefined,
-    });
+    return sendSuccess(res, shapePublicScheme(scheme));
   } catch (err) {
     next(err);
   }

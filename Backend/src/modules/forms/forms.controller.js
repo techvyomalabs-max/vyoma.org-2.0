@@ -2,6 +2,7 @@ import { FormSubmissionModel } from './formSubmission.model.js';
 import { SiteSettingsModel } from '../settings/setting.model.js';
 import { sendMail } from '../../services/mailer.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { escapeHtml } from '../../utils/htmlEscape.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Mirrors the frontend's NAME_RE (ContactForm.jsx, ContactPageForm.jsx,
@@ -26,6 +27,16 @@ const FALLBACK_CONTACT_INBOX = 'support@vyomalabs.in';
 async function resolveNotificationRecipient() {
   const settings = await SiteSettingsModel.findOne({}).select('contactInboxEmail').lean();
   return settings?.contactInboxEmail?.trim() || FALLBACK_CONTACT_INBOX;
+}
+
+// `values` is entirely user-submitted (any field, any content) and was only
+// ever validated for length/shape, never for HTML-safety -- the serialized
+// JSON text must be escaped before it becomes part of this HTML email body,
+// or a submitter could inject markup into whatever mail client opens it.
+// Exported (and the exact function submitFormHandler calls) so tests can
+// exercise this real code path directly, not a reimplementation of it.
+export function buildNotificationEmailHtml(values) {
+  return `<pre>${escapeHtml(JSON.stringify(values, null, 2))}</pre>`;
 }
 
 // LLD Section 8.1/14: required fields, email format, length limits, basic
@@ -92,10 +103,12 @@ export async function submitFormHandler(req, res, next) {
     // Best-effort notification: a mail failure must not fail the submission
     // itself (LLD 8.1 step 7: "Return accessible success/error response").
     try {
+      // Only the email's HTML is built from an escaped copy here -- the
+      // `values` object already stored on `submission` above is untouched.
       const result = await sendMail({
         to: await resolveNotificationRecipient(),
         subject: `New ${formKey} submission`,
-        html: `<pre>${JSON.stringify(values, null, 2)}</pre>`,
+        html: buildNotificationEmailHtml(values),
       });
       submission.notificationSent = !!result.sent;
       await submission.save();

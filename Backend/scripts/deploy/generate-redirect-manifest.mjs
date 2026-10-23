@@ -12,6 +12,13 @@
 // Redirect CRUD screen, unchanged) — this script is a one-way export run
 // whenever that collection changes and a fresh deploy is needed.
 //
+// Matching tolerates either trailing-slash form of a request path (e.g. a
+// rule authored as "/blog-post/rathasaptami/" also matches a request for
+// "/blog-post/rathasaptami") via resolveRedirect() — the same function the
+// generated artifact embeds, so both runtimes stay byte-for-byte identical.
+// No new Redirect documents or duplicate records are needed for this; it's
+// handled entirely in the matching function, not the stored data.
+//
 // Usage: node scripts/deploy/generate-redirect-manifest.mjs
 // (no --commit/--dry-run distinction — this script never writes to Mongo
 // at all, in either mode; it only ever reads Mongo and writes a local file)
@@ -22,6 +29,7 @@ import { fileURLToPath } from 'node:url';
 
 import { connectDb, disconnectDb } from '../../src/config/db.js';
 import { RedirectModel } from '../../src/modules/redirects/redirect.model.js';
+import { resolveRedirect } from '../../src/modules/redirects/resolveRedirect.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(__dirname, '../../../infra/cloudfront');
@@ -152,9 +160,14 @@ function buildCloudFrontFunctionSource(map, ruleCount) {
     '//\n' +
     '// Matching semantics (must not be "improved" without re-approving the\n' +
     '// underlying decision — see infra/cloudfront/README.md):\n' +
-    '//   - Exact pathname match only, case-sensitive, no trailing-slash\n' +
-    '//     normalization — identical semantics to the existing Express\n' +
-    '//     redirectMiddleware (Backend/src/middleware/redirectMiddleware.js).\n' +
+    '//   - Case-sensitive exact pathname match, with one normalization: if\n' +
+    '//     the exact path misses, the other trailing-slash form is tried\n' +
+    '//     (slash added if absent, stripped if present) — identical\n' +
+    '//     semantics to the existing Express redirectMiddleware\n' +
+    '//     (Backend/src/middleware/redirectMiddleware.js), since both\n' +
+    '//     embed/call the exact same resolveRedirect() function (see\n' +
+    '//     Backend/src/modules/redirects/resolveRedirect.js — its source is\n' +
+    '//     copied verbatim below via .toString(), not reimplemented).\n' +
     '//   - Percent-encoded legacy paths are matched literally (CloudFront\n' +
     '//     delivers event.request.uri already percent-encoded as received;\n' +
     '//     this function does not decode or re-encode it).\n' +
@@ -165,10 +178,12 @@ function buildCloudFrontFunctionSource(map, ruleCount) {
     '\n' +
     'var REDIRECT_MAP = ' + mapJson + ';\n' +
     '\n' +
+    resolveRedirect.toString() + '\n' +
+    '\n' +
     'function handler(event) {\n' +
     '  var request = event.request;\n' +
     '  var uri = request.uri;\n' +
-    '  var rule = REDIRECT_MAP[uri];\n' +
+    '  var rule = resolveRedirect(uri, REDIRECT_MAP);\n' +
     '  if (!rule) {\n' +
     '    return request;\n' +
     '  }\n' +

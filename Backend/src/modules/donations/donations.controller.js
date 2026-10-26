@@ -138,11 +138,25 @@ export async function verifyDonation(req, res, next) {
     // an earlier attempt on this same order was previously recorded as
     // failed/verification_failed -- a real retry succeeding must still be
     // able to mark the donation paid.
-    const updated = await DonationModel.findOneAndUpdate(
-      { _id: donationId },
-      { $set: { razorpayPaymentId, status: 'paid_verified' } },
-      { new: true }
-    );
+    let updated;
+    try {
+      updated = await DonationModel.findOneAndUpdate(
+        { _id: donationId },
+        { $set: { razorpayPaymentId, status: 'paid_verified' } },
+        { new: true }
+      );
+    } catch (err) {
+      // razorpayPaymentId carries a unique index (donation.model.js) --
+      // this is the only field this specific write can conflict on, but
+      // keyPattern is checked explicitly (not just err.code === 11000)
+      // so a future, unrelated unique-index conflict on this same
+      // operation would still fall through to the generic handler below
+      // rather than being mislabeled as a payment conflict.
+      if (err.code === 11000 && err.keyPattern?.razorpayPaymentId) {
+        throw new ApiError(409, 'PAYMENT_ALREADY_ASSIGNED', 'This payment has already been recorded against a different donation.');
+      }
+      throw err;
+    }
 
     // Best-effort, never lets a receipt-send problem affect this response —
     // the payment is already verified regardless of what happens next.

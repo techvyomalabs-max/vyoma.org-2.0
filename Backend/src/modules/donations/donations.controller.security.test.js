@@ -206,7 +206,7 @@ test('repeated valid verification does not re-trigger an already-sent receipt', 
   assert.equal(stored.receipt.sentAt.toISOString(), '2026-01-01T00:00:00.000Z', 'the already-sent receipt must never be reprocessed');
 });
 
-test('a valid signature reusing a paymentId already assigned to another donation is rejected (unique index)', async () => {
+test('FIXED: a valid signature reusing a paymentId already assigned to another donation returns a clean 409, not a raw 500', async () => {
   const donationA = await createDonation();
   const paymentId = 'pay_duplicate_target';
   const sigForA = checkoutSignature(donationA.razorpayOrderId, paymentId);
@@ -214,12 +214,23 @@ test('a valid signature reusing a paymentId already assigned to another donation
   assert.equal(okRes.res.status, 200);
 
   const donationB = await createDonation();
+  const statusBeforeDup = (await DonationModel.findById(donationB._id).lean()).status;
   const sigForB = checkoutSignature(donationB.razorpayOrderId, paymentId); // genuinely valid for B's own order
   const dupRes = await verify({ donationId: donationB._id.toString(), razorpayPaymentId: paymentId, razorpaySignature: sigForB });
-  assert.notEqual(dupRes.res.status, 200, 'assigning an already-used paymentId to a second donation must not succeed');
+
+  assert.equal(dupRes.res.status, 409, 'must be a clean 409 Conflict, not a 500');
+  assert.equal(dupRes.body.code, 'PAYMENT_ALREADY_ASSIGNED');
+  assert.equal(dupRes.body.message, 'This payment has already been recorded against a different donation.');
+
+  const rawBody = JSON.stringify(dupRes.body);
+  assert.doesNotMatch(rawBody, /E11000|MongoServerError|duplicate key|collection:|index:/i, 'no raw MongoDB error details may reach the client');
+  assert.doesNotMatch(rawBody, /Test Donor|donor@example\.test/i, 'no donor name or email may appear in the error response');
 
   const storedB = await DonationModel.findById(donationB._id).lean();
   assert.notEqual(storedB.razorpayPaymentId, paymentId, 'donation B must not end up with donation A\'s payment ID');
+  assert.equal(storedB.status, statusBeforeDup, 'donation B\'s status must be completely unchanged by the rejected write');
+  assert.equal(storedB.receipt?.status ?? 'pending', 'pending', 'no receipt processing may have been attempted for donation B');
+
   const storedA = await DonationModel.findById(donationA._id).lean();
   assert.equal(storedA.razorpayPaymentId, paymentId, 'donation A\'s own payment ID must be untouched');
 });

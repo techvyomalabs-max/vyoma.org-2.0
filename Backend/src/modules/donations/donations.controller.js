@@ -59,6 +59,14 @@ export async function createDonationOrder(req, res, next) {
     if (!Number.isFinite(amount) || amount <= 0) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'A valid positive amount is required.', { amount: 'Required.' });
     }
+    // India/Razorpay only (see this function's header comment) -- the
+    // destructuring default above already maps a missing currency to
+    // 'INR', so this rejects every explicitly-supplied value that isn't
+    // exactly that string (wrong case, unsupported code, wrong type,
+    // malicious content, etc.) rather than normalizing or coercing it.
+    if (currency !== 'INR') {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'Only INR donations are supported.', { currency: 'Must be "INR".' });
+    }
 
     const scheme = await DonationSchemeModel.findOne({ slug: schemeSlug, status: 'active' });
     if (!scheme) {

@@ -5,6 +5,7 @@ import { uploadObject, deleteObject, buildStorageKey } from './s3.adapter.js';
 import { isS3Configured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
+import { matchesDeclaredFileType } from './fileSignature.js';
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15MB
 // Extended for the CMS redesign's Document/Excel-resource field types
@@ -77,6 +78,9 @@ export async function createMedia(req, res, next) {
     }
     if (!ALLOWED_MIME.has(req.file.mimetype)) {
       throw new ApiError(422, 'UNSUPPORTED_FILE_TYPE', `Unsupported file type "${req.file.mimetype}".`);
+    }
+    if (!matchesDeclaredFileType(req.file.mimetype, req.file.buffer)) {
+      throw new ApiError(422, 'FILE_CONTENT_MISMATCH', `File content does not match the declared type "${req.file.mimetype}".`);
     }
     if (!isS3Configured()) {
       throw new ApiError(

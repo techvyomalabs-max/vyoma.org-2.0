@@ -321,6 +321,48 @@ test('a genuine OOXML package (with the [Content_Types].xml marker) passes valid
   assert.equal(body.code, 'MEDIA_NOT_CONFIGURED');
 });
 
+test('a TXT upload passes controller validation (reaches the S3-unconfigured stage), unaffected by Content-Disposition support', async () => {
+  const user = await createTestUser({ email: 'media-admin-txt@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+  const { res, body } = await uploadFile({ token, mimeType: 'text/plain', bytes: Buffer.from('just some plain notes'), filename: 'notes.txt' });
+  assert.equal(res.status, 503, 'a genuine TXT upload must not be rejected as a content mismatch or unsupported type');
+  assert.equal(body.code, 'MEDIA_NOT_CONFIGURED');
+});
+
+test('a CSV upload passes controller validation (reaches the S3-unconfigured stage), unaffected by Content-Disposition support', async () => {
+  const user = await createTestUser({ email: 'media-admin-csv@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+  const { res, body } = await uploadFile({ token, mimeType: 'text/csv', bytes: Buffer.from('a,b,c\n1,2,3'), filename: 'data.csv' });
+  assert.equal(res.status, 503);
+  assert.equal(body.code, 'MEDIA_NOT_CONFIGURED');
+});
+
+test('HTML content declared as text/plain still passes controller validation (text/plain has no content-signature check; unaffected by Content-Disposition support)', async () => {
+  const user = await createTestUser({ email: 'media-admin-html-as-txt@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+  const { res, body } = await uploadFile({
+    token,
+    mimeType: 'text/plain',
+    bytes: Buffer.from('<html><body><script>alert(document.domain)</script></body></html>'),
+    filename: 'fake.txt',
+  });
+  assert.equal(res.status, 503, 'text/plain intentionally has no content-signature check -- this task only changes delivery headers, not content validation');
+  assert.equal(body.code, 'MEDIA_NOT_CONFIGURED');
+});
+
+test('HTML content declared as text/csv still passes controller validation (text/csv has no content-signature check; unaffected by Content-Disposition support)', async () => {
+  const user = await createTestUser({ email: 'media-admin-html-as-csv@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+  const { res, body } = await uploadFile({
+    token,
+    mimeType: 'text/csv',
+    bytes: Buffer.from('<html><body><script>alert(document.domain)</script></body></html>'),
+    filename: 'fake.csv',
+  });
+  assert.equal(res.status, 503);
+  assert.equal(body.code, 'MEDIA_NOT_CONFIGURED');
+});
+
 test('HTML/script content declared as image/png is rejected with 422 FILE_CONTENT_MISMATCH', async () => {
   const user = await createTestUser({ email: 'media-admin-spoof-html@example.test', roleKey: 'admin' });
   const token = signAccessToken(user, adminRole);

@@ -1,7 +1,7 @@
 import multer from 'multer';
 import mongoose from 'mongoose';
 import { MediaModel } from './media.model.js';
-import { uploadObject, deleteObject, buildStorageKey } from './s3.adapter.js';
+import { uploadObject, deleteObject, buildStorageKey, buildContentDisposition } from './s3.adapter.js';
 import { isS3Configured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
@@ -91,7 +91,8 @@ export async function createMedia(req, res, next) {
     }
 
     const key = buildStorageKey(req.file.originalname);
-    const result = await uploadObject({ key, buffer: req.file.buffer, mimeType: req.file.mimetype });
+    const contentDisposition = buildContentDisposition(req.file.mimetype, req.file.originalname);
+    const result = await uploadObject({ key, buffer: req.file.buffer, mimeType: req.file.mimetype, contentDisposition });
     if (!result) {
       throw new ApiError(503, 'MEDIA_NOT_CONFIGURED', 'File storage is not configured on this server yet.');
     }

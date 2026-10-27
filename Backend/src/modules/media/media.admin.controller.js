@@ -15,7 +15,11 @@ const ALLOWED_MIME = new Set([
   'image/png',
   'image/webp',
   'image/gif',
-  'image/svg+xml',
+  // image/svg+xml intentionally excluded: an SVG can embed <script>/event
+  // handlers that execute when the file is navigated to directly (not when
+  // rendered via <img>, which browsers already treat as an inert image
+  // context) -- nothing in this upload path sanitizes SVG content, and
+  // this feature has no confirmed need for SVG support today.
   'application/pdf',
   'text/plain',
   'text/csv',

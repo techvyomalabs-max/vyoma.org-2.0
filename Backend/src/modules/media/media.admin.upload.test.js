@@ -109,6 +109,32 @@ test('an unsupported MIME type is rejected with 422, before the S3-configuration
   assert.equal(await mediaCount(), before);
 });
 
+test('a plain SVG upload is rejected with 422 (image/svg+xml is no longer in ALLOWED_MIME)', async () => {
+  const user = await createTestUser({ email: 'media-admin-svg-plain@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+  const before = await mediaCount();
+
+  const plainSvg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"></svg>');
+  const { res, body } = await uploadFile({ token, bytes: plainSvg, mimeType: 'image/svg+xml', filename: 'icon.svg' });
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'UNSUPPORTED_FILE_TYPE');
+  assert.equal(await mediaCount(), before, 'no Media record may be created for a rejected SVG upload');
+});
+
+test('an SVG containing a <script> tag and an onload handler is rejected with 422, identically to a benign SVG', async () => {
+  const user = await createTestUser({ email: 'media-admin-svg-malicious@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+  const before = await mediaCount();
+
+  const maliciousSvg = Buffer.from(
+    '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(document.domain)"><script>alert(document.domain)</script></svg>'
+  );
+  const { res, body } = await uploadFile({ token, bytes: maliciousSvg, mimeType: 'image/svg+xml', filename: 'malicious.svg' });
+  assert.equal(res.status, 422, 'rejection happens at the MIME-type check, before any file content is ever inspected');
+  assert.equal(body.code, 'UNSUPPORTED_FILE_TYPE');
+  assert.equal(await mediaCount(), before, 'the malicious SVG must never reach Media creation or S3');
+});
+
 test('an oversized file is rejected with the existing 413 FILE_TOO_LARGE response', async () => {
   const user = await createTestUser({ email: 'media-admin-oversized@example.test', roleKey: 'admin' });
   const token = signAccessToken(user, adminRole);

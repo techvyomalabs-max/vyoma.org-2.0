@@ -32,6 +32,18 @@ const { generateJSON, generateHTML } = await import('@tiptap/core');
 const { blogEditorExtensions } = await import('./richTextEditorExtensions.mjs');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// sanitizeBody.js imports Backend/src/config/env.js, which (as of the
+// staging-readiness hardening) requires NODE_ENV to be explicitly
+// development/staging/production, or ALLOW_LOCAL_DEV_DEFAULTS=true if
+// unset -- this Frontend test's own process has neither set by default.
+// Only applied when NODE_ENV is genuinely unset, and never overwrites an
+// already-set ALLOW_LOCAL_DEV_DEFAULTS, exactly matching
+// Backend/scripts/testEnvDefaults.mjs's own safe, narrowly-scoped pattern.
+if (!process.env.NODE_ENV) {
+  process.env.ALLOW_LOCAL_DEV_DEFAULTS ??= 'true';
+}
+
 const { sanitizeBlogBody } = await import(
   pathToFileURL(path.join(__dirname, '..', '..', '..', '..', '..', 'Backend', 'src', 'modules', 'blog', 'sanitizeBody.js')).href
 );

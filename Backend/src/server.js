@@ -5,6 +5,7 @@ import { ContentModel } from './modules/content/content.model.js';
 import { RoleModel } from './modules/auth/role.model.js';
 import { runSeed } from '../scripts/runSeed.js';
 import { seedRoles, bootstrapSuperAdmin } from '../scripts/bootstrapAuth.js';
+import { maybeAutoSeedMockContent } from './startup/autoSeedMockContent.js';
 
 async function main() {
   if (env.nodeEnv === 'production' && !isAuthSecretConfigured()) {
@@ -15,15 +16,16 @@ async function main() {
 
   await connectDb();
 
-  // Auto-seed only when the database is completely empty. In practice this
-  // only fires for the ephemeral in-memory fallback (a fresh instance every
-  // process start) — a real, already-seeded MongoDB is never touched here.
-  const count = await ContentModel.countDocuments();
-  if (count === 0) {
-    console.log('[server] database is empty — auto-seeding from mock data...');
-    const result = await runSeed();
-    console.log(`[server] seeded ${result.contentTypes} content types, ${result.donationSchemes} donation schemes, ${result.blogPosts} blog posts`);
-  }
+  // Auto-seed only when the database is completely empty, AND only when
+  // mock-content seeding is allowed for this environment (see
+  // isMockContentSeedAllowed() in config/env.js) -- defaults to on for local
+  // development, off for staging/production, overridable either way via
+  // ALLOW_MOCK_CONTENT_SEED. In practice the "empty" case mostly fires for
+  // the ephemeral in-memory fallback (a fresh instance every process start);
+  // this guard exists specifically so a brand-new staging/production
+  // MongoDB doesn't get silently populated with placeholder mock content
+  // the first time the server connects to it.
+  await maybeAutoSeedMockContent({ ContentModel, runSeed });
 
   // Roles are seeded independently of content (idempotent upsert either
   // way) so auth works even against a real, already-content-seeded Mongo

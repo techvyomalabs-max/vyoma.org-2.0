@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requirePermission } from '../../middleware/requireRole.js';
 import { makeRateLimiter } from '../../middleware/rateLimit.js';
+import { makeConcurrencyLimiter } from '../../middleware/concurrencyLimit.js';
 import { listMedia, createMedia, deleteMedia, uploadMiddleware } from './media.admin.controller.js';
 
 // Mounted under /api/v1/admin, which already applies requireAuth.
@@ -39,10 +40,35 @@ const mediaUploadLimiter = makeRateLimiter({
   keyGenerator: mediaUploadRateLimitKey,
 });
 
+// A different axis of protection from mediaUploadLimiter above: that one
+// bounds request COUNT over a 15-minute window; this one bounds how many
+// uploads can be buffering a file in memory AT THE SAME MOMENT, regardless
+// of how far under the rate-limit window a user still is. Reuses the same
+// fail-safe mediaUploadRateLimitKey (per-user id, throws rather than
+// collapsing into a shared bucket if req.user.id is ever missing).
+// Limits: 3 concurrent per user, 20 concurrent globally -- see
+// media.concurrency.test.js and the preceding investigation for the
+// reasoning (the current Media Library UI only ever uploads one file per
+// user action, so 3 is already generous headroom; 20 globally keeps the
+// worst-case raw in-memory buffer total at 300MB for this single-process
+// Backend).
+const mediaUploadConcurrencyGuard = makeConcurrencyLimiter({
+  perUserMax: 3,
+  globalMax: 20,
+  keyGenerator: mediaUploadRateLimitKey,
+});
+
 mediaAdminRouter.get('/', requirePermission('media:read'), listMedia);
-// Rate limiting runs after requirePermission (so an unauthorized request
-// never consumes a legitimate quota slot) and before uploadMiddleware (so a
-// rate-limited request is rejected before Multer ever buffers the file into
-// memory -- the actual resource-exhaustion concern this guards against).
-mediaAdminRouter.post('/', requirePermission('media:write'), mediaUploadLimiter, uploadMiddleware, createMedia);
+// Rate limiting and the concurrency guard both run after requirePermission
+// (so an unauthorized request never consumes a legitimate quota/slot) and
+// before uploadMiddleware (so a rejected request never reaches Multer,
+// which is where the actual memory-buffering happens).
+mediaAdminRouter.post(
+  '/',
+  requirePermission('media:write'),
+  mediaUploadLimiter,
+  mediaUploadConcurrencyGuard,
+  uploadMiddleware,
+  createMedia
+);
 mediaAdminRouter.delete('/:id', requirePermission('media:write'), deleteMedia);

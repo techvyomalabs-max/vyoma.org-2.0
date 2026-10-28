@@ -222,10 +222,16 @@ test('mediaUploadLimiter is configured with the documented 60-per-15-minute wind
 });
 
 test('mediaUploadLimiter is attached only to POST /, not to GET / or DELETE /:id', () => {
-  assert.match(
-    mediaRoutesSource,
-    /mediaAdminRouter\.post\('\/', requirePermission\('media:write'\), mediaUploadLimiter, uploadMiddleware, createMedia\)/
-  );
+  // The POST / registration spans multiple lines (one middleware per line,
+  // added when mediaUploadConcurrencyGuard was introduced) -- matched here
+  // with a multi-line-aware pattern rather than a single-line regex.
+  const postCall = mediaRoutesSource.match(/mediaAdminRouter\.post\(\s*'\/',([\s\S]*?)\);/);
+  assert.ok(postCall, 'expected to find the POST / route registration');
+  assert.match(postCall[1], /requirePermission\('media:write'\)/);
+  assert.match(postCall[1], /mediaUploadLimiter/);
+  assert.match(postCall[1], /uploadMiddleware/);
+  assert.match(postCall[1], /createMedia/);
+
   const getLine = mediaRoutesSource.split('\n').find((l) => l.includes("mediaAdminRouter.get('/'"));
   const deleteLine = mediaRoutesSource.split('\n').find((l) => l.includes("mediaAdminRouter.delete("));
   assert.doesNotMatch(getLine, /mediaUploadLimiter/);
@@ -233,10 +239,12 @@ test('mediaUploadLimiter is attached only to POST /, not to GET / or DELETE /:id
 });
 
 test('requirePermission still runs before mediaUploadLimiter, which runs before uploadMiddleware (order unchanged from the task spec)', () => {
-  const postLine = mediaRoutesSource.split('\n').find((l) => l.includes("mediaAdminRouter.post('/'"));
-  const permIndex = postLine.indexOf('requirePermission');
-  const limiterIndex = postLine.indexOf('mediaUploadLimiter');
-  const uploadIndex = postLine.indexOf('uploadMiddleware');
+  const postCall = mediaRoutesSource.match(/mediaAdminRouter\.post\(\s*'\/',([\s\S]*?)\);/);
+  assert.ok(postCall, 'expected to find the POST / route registration');
+  const args = postCall[1];
+  const permIndex = args.indexOf('requirePermission');
+  const limiterIndex = args.indexOf('mediaUploadLimiter');
+  const uploadIndex = args.indexOf('uploadMiddleware');
   assert.ok(permIndex < limiterIndex && limiterIndex < uploadIndex, 'expected order: requirePermission -> mediaUploadLimiter -> uploadMiddleware');
 });
 

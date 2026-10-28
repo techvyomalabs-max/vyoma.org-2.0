@@ -40,19 +40,28 @@ export const getResources = async () => {
   const m = await loadMedia();
   return { categories: m.RESOURCE_CATEGORIES, rows: m.RESOURCE_ROWS };
 };
-// WHAT_SANSKRIT_CATEGORIES/WHAT_SANSKRIT_ROWS are new keys (Batch B), not
-// yet present in either the mock dataset or any Content document until
-// their migration script commits — defensively defaulted so the page
-// renders an empty (not crashed) state in the meantime.
+// WHAT_SANSKRIT_CATEGORIES/WHAT_SANSKRIT_ROWS are Batch B keys. Per
+// Backend/scripts/wordpress/import/what-sanskrit-migration.mjs and the
+// pre-write backup it recorded locally, this content has previously been
+// migrated — the mock dataset (seedData/media.js, mockData/media.js) is
+// never expected to carry it, by this project's design. The current
+// real-database state has not been independently re-verified here, so the
+// defaults below remain as a defensive fallback for a not-yet-migrated or
+// not-yet-reachable Content document, not as a sign that migration is
+// still pending.
 export const getWhatSanskrit = async () => {
   const m = await loadMedia();
   return { categories: m.WHAT_SANSKRIT_CATEGORIES || [], rows: m.WHAT_SANSKRIT_ROWS || {} };
 };
-// WHERE_IKS_SERIES/WHERE_IKS_CATEGORIES/WHERE_IKS_ROWS are new keys (Batch
-// C), being migrated series-by-series (A-series first) — defensively
-// defaulted so the page renders an empty/"coming soon" state rather than
-// crashing both before any series has been migrated and while only some
-// series have landed.
+// WHERE_IKS_SERIES/WHERE_IKS_CATEGORIES/WHERE_IKS_ROWS are Batch C keys. Per
+// Backend/scripts/wordpress/import/where-iks-{a,b,c}-series-migration.mjs
+// and the pre-write backups they recorded locally, all three series
+// (A, B, and C — the full 29-category taxonomy) have previously been
+// migrated — the mock dataset is never expected to carry it, by this
+// project's design. The current real-database state has not been
+// independently re-verified here, so the defaults below remain as a
+// defensive fallback for a not-yet-migrated or not-yet-reachable Content
+// document, not as a sign that migration is still pending or partial.
 export const getWhereIks = async () => {
   const m = await loadMedia();
   return { series: m.WHERE_IKS_SERIES || [], categories: m.WHERE_IKS_CATEGORIES || [], rows: m.WHERE_IKS_ROWS || {} };

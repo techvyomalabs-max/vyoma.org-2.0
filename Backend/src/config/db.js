@@ -65,6 +65,36 @@ function registerConnectionEventListeners() {
   });
 }
 
+// Phase 1 Task 4D: explicit, conservative connection/server-selection
+// timeouts, tightened from the MongoDB driver's own 30s defaults so a
+// misconfigured or unreachable MONGODB_URI fails noticeably faster and is
+// less likely to be silently swallowed by a deployment platform's own
+// (typically shorter) startup-health-check window.
+//
+// serverSelectionTimeoutMS is not only a one-time startup setting: the
+// driver re-runs server selection for EVERY operation, not just the initial
+// connect, so this same bound also applies mid-life -- e.g. if the topology
+// is unhealthy (a replica-set election in progress, the current primary
+// unreachable) when some later operation is issued, that operation waits up
+// to this same 10s to find a suitable server before failing. What neither
+// this nor connectTimeoutMS ever bounds is how long an operation takes to
+// RUN once a server has actually been selected and the operation dispatched
+// -- that is socketTimeoutMS's job, deliberately left at the driver's
+// unbounded default and NOT touched here. This distinction matters because
+// connectDb() is shared by this server AND by every script under
+// scripts/wordpress/import/ plus scripts/seed.js and scripts/bootstrapAuth.js
+// -- all of which call connectDb() exactly once, then run their real
+// (sometimes long-running, sometimes genuinely destructive via deleteMany())
+// work on that one already-established connection. Confirmed by inspecting
+// those callers: none of them re-invoke connectDb() mid-run, and since a
+// healthy topology selects a server near-instantly, this change cannot
+// impose any practical limit on their actual data-processing duration --
+// only on how long they'd wait during a genuine, ongoing topology outage.
+const CONNECTION_OPTIONS = {
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
+};
+
 export async function connectDb() {
   registerConnectionEventListeners();
 
@@ -72,7 +102,7 @@ export async function connectDb() {
   const hasRealUri = typeof uri === 'string' && uri.trim().length > 0;
 
   if (hasRealUri) {
-    await mongoose.connect(uri);
+    await mongoose.connect(uri, CONNECTION_OPTIONS);
     console.log('[db] connected (configured URI)');
     return;
   }
@@ -89,7 +119,7 @@ export async function connectDb() {
   console.warn(
     '[db] MONGODB_URI not set — using an in-memory MongoDB instance. Data will NOT persist across restarts. Set MONGODB_URI for staging/production.'
   );
-  await mongoose.connect(memoryUri);
+  await mongoose.connect(memoryUri, CONNECTION_OPTIONS);
   console.log('[db] connected (in-memory)');
 }
 

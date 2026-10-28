@@ -103,17 +103,33 @@ export async function runSeed() {
 
   // Array index becomes each scheme's initial displayOrder — preserves the
   // exact pre-migration visible order (see donationScheme.model.js). Using
-  // upsert (not insert) means existing records keep their _id/createdAt;
-  // only the fields listed here are ever touched by seeding, and `status`
-  // is upserted to 'active' only on first creation via $setOnInsert, so a
-  // scheme an admin has since archived is never silently reactivated by a
-  // reseed/restart.
+  // upsert (not insert) means existing records keep their _id/createdAt.
+  //
+  // Every field below is $setOnInsert-only: this seed is a one-time
+  // bootstrap for a brand-new scheme, never a resync of an existing one.
+  // Phase 1 Task 5B fix: name/description/note/displayOrder previously
+  // lived under $set, which reapplied the seedData value on EVERY call --
+  // silently discarding an administrator's edit (through the admin CRUD
+  // API) to any of those four fields on the next reseed/restart. Only
+  // `status` was ever correctly protected this way before this fix. Once a
+  // scheme exists, reseeding is now a true no-op for it; updating already-
+  // live scheme content is the job of the admin UI or a dedicated,
+  // reviewed migration script (see donationSchemeContentPlan.js), never of
+  // re-running this seed.
+  //
+  // `slug` is deliberately NOT listed in either $set or $setOnInsert:
+  // verified directly against the installed Mongoose/MongoDB driver (a
+  // disposable mongodb-memory-server probe) that an upsert's equality
+  // filter field is already applied to a newly-inserted document on its
+  // own -- adding it to $setOnInsert would be redundant, and it must never
+  // appear in $set, since slug is immutable once a scheme exists (not
+  // editable via the admin CRUD API either) and doubling it as both the
+  // match key and a $set target added nothing but noise.
   for (const [i, s] of donate.DONATION_SCHEMES.entries()) {
     await DonationSchemeModel.findOneAndUpdate(
       { slug: s.slug },
       {
-        $set: { slug: s.slug, name: s.name, description: s.body, note: s.note || null, displayOrder: i },
-        $setOnInsert: { status: 'active' },
+        $setOnInsert: { name: s.name, description: s.body, note: s.note || null, displayOrder: i, status: 'active' },
       },
       { upsert: true, new: true }
     );

@@ -4,8 +4,10 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 
 import { env } from './config/env.js';
+import { sendSuccess, sendError } from './utils/apiResponse.js';
 import { contentRouter } from './modules/content/content.routes.js';
 import { formsRouter } from './modules/forms/forms.routes.js';
 import {
@@ -44,6 +46,26 @@ export function createApp() {
   app.use(cookieParser());
 
   app.get('/api/v1/health', (req, res) => res.json({ success: true, data: { status: 'ok' } }));
+
+  // GET /api/v1/ready — a database-aware readiness probe, deliberately
+  // separate from /health above: /health is an unconditional liveness ping
+  // (is the process itself responding at all), left completely unchanged
+  // here; /ready additionally reports whether MongoDB is actually reachable,
+  // so a deployment platform's readiness check can stop routing traffic to
+  // an instance whose DB connection is down instead of treating it as
+  // healthy just because the HTTP server is still up.
+  //
+  // Reads mongoose.connection's already-established readyState only -- never
+  // opens a new connection, issues a query, or touches connectDb()/
+  // disconnectDb() -- so this stays cheap even when MongoDB itself is slow
+  // or unreachable, and never exposes the connection string, hostname, or
+  // any credential.
+  app.get('/api/v1/ready', (req, res) => {
+    if (mongoose.connection.readyState !== 1) {
+      return sendError(res, { status: 503, code: 'NOT_READY', message: 'Database connection is not ready.' });
+    }
+    return sendSuccess(res, { status: 'ready' });
+  });
 
   // Local-development-only: serves background-removal results written by
   // localDev.storageAdapter.js. Never mounted in production -- real

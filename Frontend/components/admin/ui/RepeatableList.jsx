@@ -2,6 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
+import {
+  updateItemAt,
+  addItem as computeNewItem,
+  moveItem,
+  deleteItemAt,
+  getMatchedIndices,
+  getPagination,
+} from './repeatableListLogic.mjs';
 
 // Generic Add/Edit/Delete/Reorder/Enable-Disable shell for a repeatable
 // content array (hero slides, sponsors, team members, FAQ items, ...). The
@@ -49,43 +57,29 @@ export function RepeatableList({
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  const updateItem = (index, next) => {
-    const copy = items.slice();
-    copy[index] = next;
-    onChange(copy);
-  };
+  const updateItem = (index, next) => onChange(updateItemAt(items, index, next));
 
   const addItem = () => {
-    const template =
-      items.length && cloneLastItem ? JSON.parse(JSON.stringify(items[items.length - 1])) : JSON.parse(JSON.stringify(newItemTemplate));
-    onChange([...items, template]);
+    onChange(computeNewItem(items, { newItemTemplate, cloneLastItem }));
     if (pageSize) setPage(Math.ceil((items.length + 1) / pageSize));
   };
 
   const move = (index, delta) => {
-    const target = index + delta;
-    if (target < 0 || target >= items.length) return;
-    const copy = items.slice();
-    [copy[index], copy[target]] = [copy[target], copy[index]];
-    onChange(copy);
+    const next = moveItem(items, index, delta);
+    if (next) onChange(next);
   };
 
   const confirmDelete = () => {
-    onChange(items.filter((_, i) => i !== pendingDelete));
+    onChange(deleteItemAt(items, pendingDelete));
     setPendingDelete(null);
   };
 
-  const matchedIndices = useMemo(() => {
-    const all = items.map((_, i) => i);
-    if (!searchable || !search.trim()) return all;
-    const q = search.trim().toLowerCase();
-    const keys = searchKeys || (items[0] ? Object.keys(items[0]) : []);
-    return all.filter((i) => keys.some((k) => String(items[i]?.[k] ?? '').toLowerCase().includes(q)));
-  }, [items, search, searchable, searchKeys]);
+  const matchedIndices = useMemo(
+    () => getMatchedIndices(items, { searchable, search, searchKeys }),
+    [items, search, searchable, searchKeys]
+  );
 
-  const totalPages = pageSize ? Math.max(1, Math.ceil(matchedIndices.length / pageSize)) : 1;
-  const currentPage = Math.min(page, totalPages);
-  const visibleIndices = pageSize ? matchedIndices.slice((currentPage - 1) * pageSize, currentPage * pageSize) : matchedIndices;
+  const { totalPages, currentPage, visibleIndices } = getPagination(matchedIndices, { pageSize, page });
 
   const Pager = () =>
     pageSize && matchedIndices.length > pageSize ? (

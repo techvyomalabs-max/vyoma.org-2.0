@@ -5,6 +5,7 @@ import sharp from 'sharp';
 import { env } from '../../config/env.js';
 import { PhotoProcessingJobModel } from './photoProcessingJob.model.js';
 import { saveProcessedImage, isLocalDevStorageAllowed } from './localDev.storageAdapter.js';
+import { ApiError } from '../../utils/apiResponse.js';
 
 export const BG_COLOR = { r: 0xf1, g: 0xf5, b: 0xf9, alpha: 1 }; // #F1F5F9
 
@@ -41,24 +42,31 @@ function isPrivateOrLoopback(address, family) {
   return false;
 }
 
+// Throws ApiError (the same error class every other controller/service in
+// this app throws -- see settings.controller.js, documents.controller.js
+// uses its own raw-response convention instead, but this module's caller,
+// photoProcessing.admin.controller.js, follows the ApiError/errorHandler
+// convention) so that errorHandler.js's `err instanceof ApiError` check
+// actually recognizes these as the intended 422/UNTRUSTED_HOST responses,
+// instead of falling through to a generic 500 -- confirmed as a real bug
+// during Phase 1 Task 1 regression testing: a plain Error decorated with
+// .status/.code properties is not an ApiError instance, so the admin UI was
+// receiving 500 INTERNAL_ERROR for every invalid/untrusted sourceUrl.
 export async function assertSafeSourceUrl(rawUrl) {
   let url;
   try {
     url = new URL(rawUrl);
   } catch {
-    throw Object.assign(new Error('Not a valid URL.'), { status: 422, code: 'VALIDATION_ERROR' });
+    throw new ApiError(422, 'VALIDATION_ERROR', 'Not a valid URL.');
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw Object.assign(new Error('Only http/https URLs are allowed.'), { status: 422, code: 'VALIDATION_ERROR' });
+    throw new ApiError(422, 'VALIDATION_ERROR', 'Only http/https URLs are allowed.');
   }
 
   const isLocalDevHost = url.hostname === 'localhost' && String(url.port || '') === String(env.port) && url.pathname.startsWith('/local-media/');
   const isAllowedHost = ALLOWED_HOSTS.has(url.hostname) || S3_HOST_RE.test(url.hostname);
   if (!isLocalDevHost && !isAllowedHost) {
-    throw Object.assign(
-      new Error('That image is not on a trusted host -- only the site\'s own media hosts are allowed.'),
-      { status: 422, code: 'UNTRUSTED_HOST' }
-    );
+    throw new ApiError(422, 'UNTRUSTED_HOST', 'That image is not on a trusted host -- only the site\'s own media hosts are allowed.');
   }
 
   if (!isLocalDevHost) {
@@ -66,13 +74,13 @@ export async function assertSafeSourceUrl(rawUrl) {
     // host, since that one is intentionally loopback.
     if (net.isIP(url.hostname)) {
       if (isPrivateOrLoopback(url.hostname, net.isIP(url.hostname))) {
-        throw Object.assign(new Error('That host is not reachable.'), { status: 422, code: 'UNTRUSTED_HOST' });
+        throw new ApiError(422, 'UNTRUSTED_HOST', 'That host is not reachable.');
       }
     } else {
       const records = await dns.lookup(url.hostname, { all: true }).catch(() => []);
       for (const r of records) {
         if (isPrivateOrLoopback(r.address, r.family)) {
-          throw Object.assign(new Error('That host is not reachable.'), { status: 422, code: 'UNTRUSTED_HOST' });
+          throw new ApiError(422, 'UNTRUSTED_HOST', 'That host is not reachable.');
         }
       }
     }

@@ -209,6 +209,39 @@ database without all of the following:**
 - A fresh, verified-restorable backup of that database taken immediately
   beforehand (see below).
 
+## Known accepted risk: CSV/spreadsheet upload formula content (pending security-owner sign-off)
+
+CSV, XLSX, and XLS files uploaded through the admin Media module
+(`media.admin.controller.js`) are stored and served as opaque files,
+preserved byte-for-byte — the same as every other upload type (PDF/DOCX).
+Upload is restricted to authenticated administrators holding the
+`media:write` permission; nothing parses, validates, or rewrites the
+content of these files.
+
+One consequence: a CSV/XLSX/XLS file may contain active spreadsheet
+formulas (or macros, for XLS/XLSX), and this pipeline never strips or
+escapes them. `Content-Disposition: attachment` (already set on these
+uploads — see `buildContentDisposition()` in `s3.adapter.js`) only forces
+a browser "Save As" instead of an inline render; **it does not neutralize
+spreadsheet formulas or macros**, which still execute normally once the
+downloaded file is opened in a spreadsheet application. Some of these
+files (Credibility/Resources page attachments) are downloadable by any
+public site visitor, so a malicious or compromised administrator account
+could distribute a file that triggers formula/macro execution in a
+visitor's own spreadsheet application when opened.
+
+This is being recorded as a **documented, pending risk acceptance**, not
+fixed in code: the only code-level mitigation (parsing and rewriting CSV
+cell content) risks corrupting legitimate uploads that intentionally
+contain real formulas, and no equivalent mitigation exists today for the
+same (and larger) macro risk already present in `.xlsx`/`.xls`/`.docx`
+uploads. The controlling safeguard is the `media:write` permission
+boundary itself, not file-content sanitization. See Phase 1, Task 2 (CSV
+Formula-Injection Review) for the full analysis.
+
+**Requires explicit security-owner acceptance of this risk before
+production launch.**
+
 ## MongoDB backup/restore (documented only — not run as part of this task)
 
 No backup/restore tooling currently exists in this repository. Until a

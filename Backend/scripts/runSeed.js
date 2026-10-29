@@ -98,7 +98,13 @@ export async function runSeed() {
   for (const [type, mod] of Object.entries(CONTENT_SEED)) {
     let data = type === 'pages/about' ? normalizeAbout(mod) : { ...mod };
     if (type === 'pages/donate') data = withoutDonationSchemes(data);
-    await ContentModel.findOneAndUpdate({ type }, { type, data }, { upsert: true, new: true });
+    // $setOnInsert-only, like the DonationSchemeModel fix above: this is a
+    // one-time bootstrap for a brand-new type, never a resync of an
+    // existing one. `type` is deliberately omitted -- the upsert filter
+    // already applies it to a newly-inserted document on its own. Updating
+    // already-live ContentModel data is the job of the admin CMS or a
+    // dedicated, reviewed migration script, never of re-running this seed.
+    await ContentModel.findOneAndUpdate({ type }, { $setOnInsert: { data } }, { upsert: true, new: true });
   }
 
   // Array index becomes each scheme's initial displayOrder — preserves the

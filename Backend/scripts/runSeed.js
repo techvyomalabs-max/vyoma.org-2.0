@@ -82,10 +82,16 @@ async function seedBlogCategories() {
 async function seedBlogPosts() {
   for (const p of blog.BLOG_POSTS) {
     const data = { title: p.title, excerpt: p.excerpt, body: p.body, featuredImage: null, author: p.author, categories: p.categories, tags: [], seo: {} };
+    // $setOnInsert-only, like the ContentModel and DonationSchemeModel fixes
+    // above: this seed initializes a brand-new post only. `slug` is
+    // deliberately omitted -- the upsert filter already applies it to a
+    // newly-inserted document on its own. Updating an already-published
+    // post's content is the job of the admin CMS, never of re-running this
+    // seed.
     // eslint-disable-next-line no-await-in-loop
     await BlogPostModel.findOneAndUpdate(
       { slug: p.slug },
-      { $set: { slug: p.slug, data }, $setOnInsert: { status: 'published', publishedAt: p.publishedAt, draftData: null } },
+      { $setOnInsert: { data, status: 'published', publishedAt: p.publishedAt, draftData: null } },
       { upsert: true, new: true }
     );
   }

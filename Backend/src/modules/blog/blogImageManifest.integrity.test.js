@@ -19,16 +19,23 @@
 // in that importer is changed, and importing it triggers no database
 // activity (its main() only ever runs on direct CLI invocation, proven in
 // Task 7C.1's own regression tests).
+//
+// Task 7F.2: the manifest-loading and path-safety helpers below now live in
+// Backend/scripts/wordpress/import/blogImageManifest.js, the same shared
+// module the importer's own image-preservation logic uses -- imported
+// here, not duplicated, so this test exercises the exact helpers the
+// importer relies on rather than a parallel copy that could drift from it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseWxr, DEFAULT_WXR_PATH, SLUG_OVERRIDES } from '../../../scripts/wordpress/import/batch1-import.mjs';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const BLOG_MEDIA_DIR = path.resolve(__dirname, '../../../.local-media/blog');
-const MANIFEST_PATH = path.resolve(__dirname, '../../../.local-media/blog-image-manifest.json');
+import {
+  BLOG_MEDIA_DIR,
+  MANIFEST_PATH,
+  isSafeLocalFilename,
+  resolveWithinBlogMediaDir,
+  loadBlogImageManifest,
+} from '../../../scripts/wordpress/import/blogImageManifest.js';
 
 const manifestExists = fs.existsSync(MANIFEST_PATH);
 const wxrExists = fs.existsSync(DEFAULT_WXR_PATH);
@@ -40,34 +47,12 @@ const WXR_SKIP_REASON =
   'Backend/.migration-data/...xml (the real WordPress export) is absent (gitignored, not present in this checkout/CI) -- ' +
   'skipping the body cross-reference check. This is NOT a confirmation that the mapping is correct.';
 
-// --- Path-safety helpers -----------------------------------------------------
-// Defense against path traversal: a manifest entry's localFilename must be
-// a bare filename (no directory separators, no "..", identical to its own
-// path.basename()) before it is ever joined with BLOG_MEDIA_DIR, and the
-// final resolved absolute path must still live inside BLOG_MEDIA_DIR. Both
-// checks are applied to every manifest entry, independent of whether the
-// file actually exists on disk.
-export function isSafeLocalFilename(name) {
-  if (typeof name !== 'string' || !name) return false;
-  if (name.includes('/') || name.includes('\\')) return false;
-  if (name.includes('..')) return false;
-  if (name !== path.basename(name)) return false;
-  return true;
-}
-
-export function resolveWithinBlogMediaDir(filename) {
-  if (!isSafeLocalFilename(filename)) return null;
-  const resolved = path.resolve(BLOG_MEDIA_DIR, filename);
-  const dirWithSep = BLOG_MEDIA_DIR + path.sep;
-  if (resolved !== BLOG_MEDIA_DIR && !resolved.startsWith(dirWithSep)) return null;
-  return resolved;
-}
-
 function readManifest() {
-  // A JSON.parse failure here is a genuine failure (malformed manifest),
-  // not caught/swallowed -- per the "fail rather than skip" requirement.
-  const raw = fs.readFileSync(MANIFEST_PATH, 'utf8');
-  return JSON.parse(raw);
+  // loadBlogImageManifest() throws on a malformed (present-but-invalid)
+  // manifest -- a genuine failure, not caught/swallowed here, per the "fail
+  // rather than skip" requirement. It returns null on absence, which every
+  // call site below already guards against via `manifestExists` first.
+  return loadBlogImageManifest();
 }
 
 // --- Path-safety helper unit tests (run unconditionally -- pure functions,

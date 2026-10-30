@@ -188,6 +188,39 @@ export function assertDisposableTestDatabase(connection, memoryServer) {
   return true;
 }
 
+// Task 7F.2A: fail-closed, unconditional guard against the one combination
+// that can persist a localhost image URL into a real, persistent database
+// --commit always means "write to whatever database is configured right
+// now"; --dev-image-preview exists ONLY to preview locally-staged images
+// and must never write to any database at all. Combining them would let a
+// real, persistent database whose name isn't the one protected name
+// assertSafeDatabaseTarget() knows about, and whose NODE_ENV isn't
+// literally "production" (e.g. a real staging cluster), end up holding
+// BlogPost documents with http://localhost:<port>/... image URLs.
+//
+// Deliberately independent of both of this file's other safety checks:
+// - Does NOT consult env.nodeEnv at all (unlike the separate
+//   devImagePreview-in-production check below, which this does not
+//   replace) -- a persistent database can exist under any NODE_ENV value.
+// - Does NOT consult the database name or connection (unlike
+//   assertSafeDatabaseTarget()) -- this must reject before any connection
+//   is even attempted, for ANY database, not just the one named protected
+//   one.
+// - Takes plain booleans, not `process.argv`, so flag ORDER on the command
+//   line can never matter (process.argv.includes() is already
+//   order-independent, and this function doesn't touch argv at all).
+// Exported so it is directly unit-testable without spawning a real CLI
+// process or any database connection.
+export function assertCommitDevPreviewNotCombined(commit, devImagePreview) {
+  if (commit && devImagePreview) {
+    throw new Error(
+      '--commit and --dev-image-preview must never be combined. --dev-image-preview exists only for a local/' +
+        'staging preview that writes to no database at all; --commit always means "write to whatever database ' +
+        'is currently configured". No database connection was made.'
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Minimal WXR reader (mirrors the read-only helpers used throughout the
 // review — clean()/tag()/categoriesOf()/postmeta() — kept self-contained
@@ -735,6 +768,19 @@ async function main() {
   const devImagePreview = process.argv.includes('--dev-image-preview');
   const wxrArgIdx = process.argv.indexOf('--wxr');
   const wxrPath = wxrArgIdx !== -1 ? process.argv[wxrArgIdx + 1] : DEFAULT_WXR_PATH;
+
+  // Task 7F.2A: checked first, before ANY other branch (including
+  // --fix-media-sync below) — no write-capable code path in this file may
+  // ever see --commit and --dev-image-preview together. See
+  // assertCommitDevPreviewNotCombined()'s own comment for why this check is
+  // independent of NODE_ENV, the database name, and CLI flag order.
+  try {
+    assertCommitDevPreviewNotCombined(commit, devImagePreview);
+  } catch (err) {
+    console.error(`\nABORT: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
 
   if (fixMediaSyncOnly) {
     return runFixMediaSync(wxrPath, commit);

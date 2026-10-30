@@ -17,6 +17,9 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import sanitizeHtml from 'sanitize-html';
@@ -27,6 +30,7 @@ import {
   rewriteInlineImages,
   resolveFeaturedImage,
   upsertBlogPosts,
+  assertCommitDevPreviewNotCombined,
   SLUG_OVERRIDES,
   DEFAULT_WXR_PATH,
 } from '../../../scripts/wordpress/import/batch1-import.mjs';
@@ -34,6 +38,9 @@ import { MANIFEST_PATH, loadBlogImageManifest, buildImageUrlMap } from '../../..
 import { BlogPostModel } from './blogPost.model.js';
 import { BlogPostRevisionModel } from './blogPostRevision.model.js';
 import { BlogCategoryModel } from './blogCategory.model.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const IMPORTER_CLI_PATH = path.resolve(__dirname, '../../../scripts/wordpress/import/batch1-import.mjs');
 
 const manifestExists = fs.existsSync(MANIFEST_PATH);
 const wxrExists = fs.existsSync(DEFAULT_WXR_PATH);
@@ -292,4 +299,105 @@ test('a full insert-then-rerun cycle with image mapping enabled is fully idempot
     const after = secondRun.find((d) => d.slug === before.slug);
     assert.deepEqual(after.data, before.data, `content drifted for "${before.slug}" across reruns`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Task 7F.2A — the --commit + --dev-image-preview fail-closed guard
+//
+// The unit tests below exercise the exported assertCommitDevPreviewNotCombined()
+// directly (fast, no subprocess). The CLI tests spawn the real importer as a
+// child process, with MONGODB_URI explicitly cleared, to prove the guard
+// fires before ANY other code in main() -- including the WXR-file check
+// (which runs before connectDb()) -- regardless of NODE_ENV or flag order.
+// None of these ever create, or wait for, a real MongoDB connection: every
+// "guard fires" case is rejected before the WXR check even runs, and the
+// two "guard does not wrongly fire" cases point --wxr at a nonexistent path
+// so the subprocess fails at that check too, strictly before connectDb().
+// ---------------------------------------------------------------------------
+
+test('assertCommitDevPreviewNotCombined throws only when both commit and devImagePreview are true', () => {
+  assert.throws(() => assertCommitDevPreviewNotCombined(true, true), /must never be combined/);
+  assert.doesNotThrow(() => assertCommitDevPreviewNotCombined(true, false));
+  assert.doesNotThrow(() => assertCommitDevPreviewNotCombined(false, true));
+  assert.doesNotThrow(() => assertCommitDevPreviewNotCombined(false, false));
+});
+
+function runImporterCli(args, nodeEnv) {
+  try {
+    const output = execFileSync(process.execPath, [IMPORTER_CLI_PATH, ...args], {
+      encoding: 'utf8',
+      env: { ...process.env, NODE_ENV: nodeEnv, MONGODB_URI: '', ALLOW_LOCAL_DEV_DEFAULTS: '' },
+      timeout: 10000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return { exitCode: 0, stdout: output, stderr: '' };
+  } catch (err) {
+    return {
+      exitCode: typeof err.status === 'number' ? err.status : 1,
+      stdout: err.stdout ? err.stdout.toString() : '',
+      stderr: err.stderr ? err.stderr.toString() : '',
+    };
+  }
+}
+
+function assertGuardFiredCleanly(result) {
+  assert.notEqual(result.exitCode, 0, 'expected a non-zero exit code');
+  assert.match(result.stderr, /ABORT: --commit and --dev-image-preview must never be combined/);
+  // Proves rejection happened before literally anything else in main() --
+  // not just before connectDb(), but before even the WXR-file-existence
+  // check that itself runs before connectDb(). Neither a successful
+  // connection message nor connectDb()'s own distinct "MONGODB_URI must be
+  // set" error (which an UNGUARDED run under NODE_ENV=staging/production
+  // with no MONGODB_URI would instead produce) appears anywhere.
+  assert.ok(!result.stderr.includes('[db] connected'));
+  assert.ok(!result.stdout.includes('[OK] Connected'));
+  assert.ok(!result.stderr.includes('MONGODB_URI must be set'));
+  assert.ok(!result.stderr.includes('WXR file not found'));
+}
+
+// 1 & 4. --commit --dev-image-preview is rejected (NODE_ENV=development)
+test('CLI: --commit --dev-image-preview is rejected under NODE_ENV=development', () => {
+  assertGuardFiredCleanly(runImporterCli(['--commit', '--dev-image-preview'], 'development'));
+});
+
+// 2. Reversing flag order is also rejected
+test('CLI: reversing the flag order (--dev-image-preview --commit) is also rejected', () => {
+  assertGuardFiredCleanly(runImporterCli(['--dev-image-preview', '--commit'], 'development'));
+});
+
+// 5. NODE_ENV=staging cannot bypass the guard
+test('CLI: --commit --dev-image-preview is rejected under NODE_ENV=staging', () => {
+  assertGuardFiredCleanly(runImporterCli(['--commit', '--dev-image-preview'], 'staging'));
+});
+
+// 6. NODE_ENV=production cannot bypass the guard
+test('CLI: --commit --dev-image-preview is rejected under NODE_ENV=production', () => {
+  assertGuardFiredCleanly(runImporterCli(['--commit', '--dev-image-preview'], 'production'));
+});
+
+// Step 2's "check any other write-capable CLI path" requirement:
+// --fix-media-sync is a separate write-capable entry point that never
+// touches image mapping at all, but the guard is checked before main()
+// even looks at --fix-media-sync, so the dangerous combination is rejected
+// here too, uniformly, rather than relying on --fix-media-sync's own logic
+// (which has no image-awareness to rely on in the first place).
+test('CLI: --fix-media-sync --commit --dev-image-preview is also rejected, before reaching that code path', () => {
+  assertGuardFiredCleanly(runImporterCli(['--fix-media-sync', '--commit', '--dev-image-preview'], 'development'));
+});
+
+// 7. Safe dry-run and normal importer behavior remain unchanged: the new
+// guard must never fire for either flag used alone. --wxr points at a
+// nonexistent path so each of these fails at the pre-existing WXR check
+// (itself before connectDb()) rather than proceeding to a real connection
+// attempt -- this test only cares whether the 7F.2A guard wrongly fired.
+test('CLI: --dev-image-preview alone (no --commit) is never rejected by the new guard', () => {
+  const result = runImporterCli(['--dev-image-preview', '--wxr', '/nonexistent/path/does-not-exist.xml'], 'development');
+  assert.ok(!result.stderr.includes('--commit and --dev-image-preview must never be combined'));
+  assert.match(result.stderr, /WXR file not found/);
+});
+
+test('CLI: --commit alone (no --dev-image-preview) is never rejected by the new guard', () => {
+  const result = runImporterCli(['--commit', '--wxr', '/nonexistent/path/does-not-exist.xml'], 'development');
+  assert.ok(!result.stderr.includes('--commit and --dev-image-preview must never be combined'));
+  assert.match(result.stderr, /WXR file not found/);
 });

@@ -63,12 +63,14 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import mongoose from 'mongoose';
 
 import { connectDb, disconnectDb } from '../../../src/config/db.js';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { BlogCategoryModel } from '../../../src/modules/blog/blogCategory.model.js';
+import { sanitizeBlogBody } from '../../../src/modules/blog/sanitizeBody.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -76,7 +78,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Frozen decisions (from the approved review — not invented here)
 // ---------------------------------------------------------------------------
 
-const DEFAULT_WXR_PATH = path.resolve(
+export const DEFAULT_WXR_PATH = path.resolve(
   __dirname,
   '../../../.migration-data/vyomalinguisticlabsfoundation.WordPress.2026-09-29.xml'
 );
@@ -87,7 +89,7 @@ const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // oldSlug -> approved final ASCII slug (the 5-slug freeze table, plus
 // yoga_day — found to fail SLUG_RE only when the dry-run actually ran;
 // approved separately, underscore -> hyphen, title unchanged).
-const SLUG_OVERRIDES = new Map([
+export const SLUG_OVERRIDES = new Map([
   ['unveiling-the-mysteries-of-ga%e1%b9%87apati', 'unveiling-the-mysteries-of-ganapati'],
   [
     'edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga%e1%b9%87esa-puja',
@@ -103,7 +105,7 @@ const SLUG_OVERRIDES = new Map([
 // already be gone from a prior partial run). Any BlogPost slug or
 // BlogCategory name found that is NOT in one of these known sets (demo or
 // real) aborts the run — see classifyBaselineState().
-const EXPECTED_DEMO_BLOG_SLUGS = [
+export const EXPECTED_DEMO_BLOG_SLUGS = [
   'how-the-pancatantra-teaches-without-teaching',
   'what-a-decade-of-sanskrit-camps-taught-us-about-retention',
   'grammar-as-play-rethinking-the-first-lesson',
@@ -126,6 +128,63 @@ const HOME_CURATED_NAMES = new Set(['Prof. Shrinivasa Varakhedi Ph.D', 'Ms. Rita
 // after the first Batch 1 commit; fixed here so every future run (full or
 // the narrow --fix-media-sync correction) keeps both in step.
 const MEDIA_CONTENT_TYPES = ['pages/media', 'media'];
+
+// Blocker C (Task 7C): this script must never run, read, or write against
+// the standing-rules-protected dry-run database, regardless of what
+// MONGODB_URI happens to be configured to at invocation time. Checked by
+// database NAME only (never the full connection string, which could carry
+// credentials) — see assertSafeDatabaseTarget() below, called immediately
+// after every connectDb() in this file, before any query or write.
+const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
+
+// Aborts (throws) if the active mongoose connection's database name is on
+// the protected list. Takes a mongoose connection object (not a URI string)
+// so nothing resembling a credential is ever inspected, logged, or printed
+// — only the database name, exactly like connectDb()'s own existing
+// never-log-the-connection-string convention.
+export function assertSafeDatabaseTarget(connection) {
+  const dbName = connection?.name || connection?.db?.databaseName || null;
+  if (dbName && PROTECTED_DB_NAMES.has(dbName)) {
+    throw new Error(
+      `Refusing to proceed: the active database ("${dbName}") is on this script's protected list and must never be read, written, reset, or reseeded by this importer.`
+    );
+  }
+  return dbName;
+}
+
+// Task 7C.1: a STRONGER, allow-list-style guard for automated integration
+// tests specifically -- unlike assertSafeDatabaseTarget() above (a
+// blocklist that only rejects one specific protected name, and would say
+// nothing about any OTHER real/persistent database), this requires the
+// caller to explicitly supply the exact MongoMemoryServer instance that is
+// supposed to be backing the current connection, and verifies the live
+// connection's host/port actually resolve to that same instance -- not
+// merely "isn't named something bad". Never inspects or logs credentials;
+// host/port only, same convention as assertSafeDatabaseTarget().
+//
+// This is deliberately NOT wired into the CLI path (main()/runFixMediaSync):
+// a real, operator-run migration legitimately targets a real, ambiently-
+// configured database once explicitly authorized via --commit, and that
+// path is unaffected by this function. It exists so a test file's own
+// setup can assert, before any write, that it is unquestionably talking to
+// the disposable instance it just created -- not whatever `mongoose`'s
+// default connection happens to be at that moment.
+export function assertDisposableTestDatabase(connection, memoryServer) {
+  if (!memoryServer || typeof memoryServer.getUri !== 'function') {
+    throw new Error(
+      'Refusing to run test write operations: an explicit, disposable mongodb-memory-server instance must be supplied (none was given).'
+    );
+  }
+  const expected = new URL(memoryServer.getUri());
+  const actualHost = connection?.host ?? null;
+  const actualPort = connection?.port != null ? String(connection.port) : null;
+  if (actualHost !== expected.hostname || actualPort !== expected.port) {
+    throw new Error(
+      'Refusing to run test write operations: the active connection does not match the explicitly supplied disposable mongodb-memory-server instance.'
+    );
+  }
+  return true;
+}
 
 // ---------------------------------------------------------------------------
 // Minimal WXR reader (mirrors the read-only helpers used throughout the
@@ -163,8 +222,9 @@ function postmetaOf(block) {
 // Blog post bodies are stored as Gutenberg blocks (`<!-- wp:paragraph -->`
 // etc.), not Divi shortcodes — confirmed during the review (Section D). This
 // strips only the block-editor HTML comments, leaving the real markup
-// (<p>, <h2>, <a>, ...) untouched for sanitizeBody() to allowlist-filter at
-// publish time, same as any other admin-authored post.
+// (<p>, <h2>, <a>, ...) for sanitizeBlogBody() to allowlist-filter next, in
+// toBlogPostRecord() below — the same single sanitization boundary every
+// other admin-authored post's body goes through.
 function stripGutenbergComments(html) {
   return (html || '').replace(/<!--\s*\/?wp:[\s\S]*?-->/g, '').trim();
 }
@@ -178,7 +238,7 @@ function plainTextExcerpt(html, maxLen = 200) {
   return text.length > maxLen ? text.slice(0, maxLen).replace(/\s+\S*$/, '') + '…' : text;
 }
 
-function parseWxr(wxrPath) {
+export function parseWxr(wxrPath) {
   const xml = fs.readFileSync(wxrPath, 'utf8');
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => m[1]);
 
@@ -224,8 +284,17 @@ function parseWxr(wxrPath) {
 // (Backend/src/modules/blog/blogPost.model.js)
 // ---------------------------------------------------------------------------
 
-function toBlogPostRecord(post) {
+export function toBlogPostRecord(post) {
   const finalSlug = SLUG_OVERRIDES.get(post.oldSlug) || post.oldSlug;
+  // Blocker B (Task 7C): every body passes through the app's own, already
+  // WordPress-content-audited sanitizer (Backend/src/modules/blog/
+  // sanitizeBody.js) right here, at transform time — not left for a later
+  // "publish time" step that, for this script, never actually existed (see
+  // the Task 7B investigation this fix came out of). The excerpt is derived
+  // from this same sanitized HTML, not the raw WXR markup, so a disallowed
+  // tag's inner text (e.g. a hypothetical <script>) can never leak into the
+  // plain-text excerpt either.
+  const sanitizedBody = sanitizeBlogBody(post.bodyHtml);
   return {
     slug: finalSlug,
     oldSlug: post.oldSlug, // kept only for the report; not written to Mongo
@@ -234,8 +303,8 @@ function toBlogPostRecord(post) {
       title: post.title,
       // Real content, mechanically derived (truncated plain text) — not
       // invented. WordPress's own excerpt field was empty for all 19 posts.
-      excerpt: plainTextExcerpt(post.bodyHtml, 200),
-      body: post.bodyHtml,
+      excerpt: plainTextExcerpt(sanitizedBody, 200),
+      body: sanitizedBody,
       // Media/S3 migration is explicitly out of scope for Batch 1 — no
       // featured image is wired here even where a WordPress thumbnail
       // existed; that is real, deferred work, not an oversight.
@@ -249,6 +318,42 @@ function toBlogPostRecord(post) {
       },
     },
   };
+}
+
+// Blocker A (Task 7C): insert-only, via $setOnInsert — never a bare
+// replacement document. The prior shape (`{ slug, data, status,
+// publishedAt }` with no operator) told MongoDB to REPLACE the whole
+// existing document on every match, which would have silently discarded an
+// admin's edited `data`, their in-progress `draftData` (replaced away
+// entirely, since it isn't listed), and any `status`/`publishedAt` change,
+// on every rerun — exactly the bug class already fixed for runSeed.js in
+// Phase 1 Task 6I-B/6I-B3, which never covered this independently-written
+// importer. `slug` is deliberately NOT repeated inside $setOnInsert: the
+// upsert filter already applies it to a newly-inserted document on its own
+// (verified for this exact pattern elsewhere in this codebase — see
+// runSeed.js's own comment on the same point). `draftData: null` is set
+// explicitly on insert so a freshly-created post has the same shape as one
+// created through the normal admin flow; once a post exists, this
+// importer never touches draftData again, on this call or any rerun.
+export async function upsertBlogPosts(blogRecords) {
+  const results = [];
+  for (const r of blogRecords) {
+    // eslint-disable-next-line no-await-in-loop
+    const doc = await BlogPostModel.findOneAndUpdate(
+      { slug: r.slug },
+      {
+        $setOnInsert: {
+          data: r.data,
+          status: 'published',
+          publishedAt: r.publishedAt,
+          draftData: null,
+        },
+      },
+      { upsert: true, new: true }
+    );
+    results.push(doc);
+  }
+  return results;
 }
 
 function toHomeTestimonialRecord(t) {
@@ -265,7 +370,7 @@ function toMediaAllTestimonialRecord(t) {
 // Validation of parsed WXR content (no DB connection needed for this part)
 // ---------------------------------------------------------------------------
 
-function validateParsedContent(parsed) {
+export function validateParsedContent(parsed) {
   const errors = [];
 
   if (parsed.blogPosts.length !== 19) {
@@ -308,7 +413,7 @@ function setIntersect(a, b) {
   return a.filter((x) => bSet.has(x));
 }
 
-async function classifyBaselineState(realSlugs, realCategoryNames) {
+export async function classifyBaselineState(realSlugs, realCategoryNames) {
   const errors = [];
 
   const existingPosts = await BlogPostModel.find({}, { slug: 1 }).lean();
@@ -416,7 +521,7 @@ async function writeMediaTestimonials(featuredRecords, allRecords) {
 // draft data. If this ever finds a hit, the run aborts and deletes nothing
 // — this is what keeps the hard-delete decision safe rather than just
 // assumed safe.
-async function assertNoOtherReferences() {
+export async function assertNoOtherReferences() {
   const offenders = await BlogPostModel.find(
     {
       slug: { $nin: EXPECTED_DEMO_BLOG_SLUGS },
@@ -473,9 +578,10 @@ async function runFixMediaSync(wxrPath, commit) {
   const allRecords = old.map(toMediaAllTestimonialRecord);
 
   await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
   try {
+    const dbName = assertSafeDatabaseTarget(mongoose.connection);
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+
     const mediaErrors = await assertMediaBaseline();
     if (mediaErrors.length) {
       console.error('\nVALIDATION FAILED (database baseline):');
@@ -555,9 +661,10 @@ async function main() {
   const realCategoryNames = [...new Set(parsed.blogPosts.flatMap((p) => p.categories))].sort();
 
   await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
   try {
+    const dbName = assertSafeDatabaseTarget(mongoose.connection);
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+
     const baseline = await classifyBaselineState(finalSlugs, realCategoryNames);
     if (baseline.errors.length) {
       console.error('\nVALIDATION FAILED (database baseline):');
@@ -664,14 +771,8 @@ async function main() {
     }
     console.log(`[done] ${realCategoryNames.length} BlogCategory upserts.`);
 
-    for (const r of blogRecords) {
-      await BlogPostModel.findOneAndUpdate(
-        { slug: r.slug },
-        { slug: r.slug, data: r.data, status: 'published', publishedAt: r.publishedAt },
-        { upsert: true, new: true }
-      );
-    }
-    console.log(`[done] ${blogRecords.length} BlogPost upserts.`);
+    await upsertBlogPosts(blogRecords);
+    console.log(`[done] ${blogRecords.length} BlogPost upserts (insert-only — see upsertBlogPosts()).`);
 
     if (demoPostsToDelete.length) {
       const delPosts = await BlogPostModel.deleteMany({ slug: { $in: demoPostsToDelete } });
@@ -704,7 +805,19 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nFATAL:', err.message);
-  process.exitCode = 1;
-});
+// Blocker C (Task 7C): `main()` must only run when this file is executed
+// directly as the CLI entry point (`node batch1-import.mjs [...]`), never
+// as a side effect of `import`-ing it. This is what makes the exported
+// functions above (parseWxr, toBlogPostRecord, upsertBlogPosts,
+// assertSafeDatabaseTarget, classifyBaselineState, assertNoOtherReferences)
+// safe for a test file to import directly and exercise against its own
+// disposable mongodb-memory-server connection — no ambient MONGODB_URI, no
+// accidental connectDb() call, no accidental write, just from importing
+// this module.
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nFATAL:', err.message);
+    process.exitCode = 1;
+  });
+}

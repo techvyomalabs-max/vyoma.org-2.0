@@ -7,6 +7,10 @@
 // cleanly when the gitignored manifest/assets are absent, and never touches
 // the network either.
 //
+// Section 8b added in Task 7F.8C: regression tests for the conditional-write
+// (IfNoneMatch: '*') race-protection hardening -- see that section and the
+// "Task 7F.8C hardening" comment in uploadBlogImagesToS3.mjs itself.
+//
 // No database connection, no MongoDB, no real S3 object created, read, or
 // deleted anywhere in this file.
 import { test } from 'node:test';
@@ -60,6 +64,14 @@ const MOCK_BASE_URL = 'https://mock-bucket.s3.us-east-1.amazonaws.com/';
 // behavior precisely: the SAME store backs the preflight read, the
 // post-upload verify read, and (via mockFetchFromStore below) the public
 // fetch, exactly as a real bucket would.
+//
+// Task 7F.8C: putObject() also models S3's real IfNoneMatch: '*' semantics
+// -- if `key` is already present in the store at PUT time (whether from an
+// earlier call in the same test, or because a test deliberately writes into
+// the store from inside a putObject override to simulate a concurrent
+// process winning a race), it returns `{ conditionalConflict: true }`
+// instead of silently overwriting, exactly like createRealS3Ops()'s real
+// putObject() does on a live 412 from S3.
 function createFakeS3({ putFailuresRemaining = {} } = {}) {
   const store = new Map(); // key -> Buffer
   const calls = { put: [], get: [], delete: [] };
@@ -73,6 +85,9 @@ function createFakeS3({ putFailuresRemaining = {} } = {}) {
       if ((remaining[key] || 0) > 0) {
         remaining[key] -= 1;
         throw new Error(`simulated transient S3 error for ${key}`);
+      }
+      if (store.has(key)) {
+        return { conditionalConflict: true };
       }
       store.set(key, buffer);
       return { url: `${MOCK_BASE_URL}${key}` };
@@ -388,6 +403,107 @@ test('runUploadPlan: an existing object with MATCHING content is recognized live
 });
 
 // ---------------------------------------------------------------------------
+// 8b. Conditional-write (IfNoneMatch) race handling (Task 7F.8C)
+// ---------------------------------------------------------------------------
+
+test('runUploadPlan: a race where another process wins with IDENTICAL content between preflight and PUT resolves safely as already-present, never overwritten', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const loadLocalImage = fakeLocalImage('race-same');
+  const localBuffer = Buffer.from('fake-bytes-race-same');
+  const fakeS3 = createFakeS3();
+  const realPutObject = fakeS3.putObject.bind(fakeS3);
+  fakeS3.putObject = async (args) => {
+    // Simulates another process winning the race and writing the IDENTICAL
+    // content to this exact key in the window between this script's own
+    // preflight read (which found nothing) and this PUT call -- the fake's
+    // own IfNoneMatch modeling (see createFakeS3 above) then rejects this
+    // PUT exactly like a live S3 412 would.
+    fakeS3.store.set(args.key, localBuffer);
+    return realPutObject(args);
+  };
+
+  const { results } = await runUploadPlan([item(key)], {
+    s3Ops: fakeS3,
+    commit: true,
+    loadLocalImage,
+    fetchImpl: mockFetchFromStore(fakeS3.store),
+    sleep: noopSleep,
+  });
+  assert.equal(results[0].status, 'already-present-and-verified');
+  assert.equal(fakeS3.calls.put.length, 1, 'exactly one PUT was attempted and rejected -- no retry/second PUT for a 412');
+  assert.deepEqual(fakeS3.store.get(key), localBuffer, 'the winning process\'s object must be the one left in place, never overwritten by a second PUT');
+});
+
+test('runUploadPlan: a race where another process wins with DIFFERENT content is a conflict, never overwritten and never deleted by cleanup', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const loadLocalImage = fakeLocalImage('race-mine');
+  const winningContent = Buffer.from('someone-elses-different-content-from-a-racing-process');
+  const fakeS3 = createFakeS3();
+  const realPutObject = fakeS3.putObject.bind(fakeS3);
+  fakeS3.putObject = async (args) => {
+    fakeS3.store.set(args.key, winningContent);
+    return realPutObject(args);
+  };
+
+  const { results } = await runUploadPlan([item(key)], {
+    s3Ops: fakeS3,
+    commit: true,
+    loadLocalImage,
+    fetchImpl: mockFetchFromStore(fakeS3.store),
+    sleep: noopSleep,
+  });
+  assert.equal(results[0].status, 'failed');
+  assert.equal(results[0].stage, 'conflict');
+  assert.equal(results[0].putSucceeded, false, 'our own PUT never actually wrote anything -- S3 rejected it atomically');
+
+  // Task 7F.8C requirement 7: cleanup must never be able to delete an
+  // object created by another process after this script's own upload --
+  // putSucceeded:false on this result is exactly what structurally
+  // prevents that.
+  const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
+  assert.deepEqual(rolledBack, []);
+  assert.deepEqual(fakeS3.store.get(key), winningContent, 'the racing process\'s object must still be exactly what it was');
+});
+
+test('runUploadPlan: a 409 ConditionalRequestConflict-shaped putObject failure is retried like a transient error, not treated as a stable conflict', async () => {
+  // AWS documents 409 ConditionalRequestConflict (a genuinely racing
+  // concurrent write, distinct from 412's "already exists") as "on a 409
+  // failure you should retry the upload" -- so, unlike a 412 (which
+  // createRealS3Ops().putObject() catches and turns into a non-throwing
+  // `{ conditionalConflict: true }` sentinel, see that function), a 409 is
+  // deliberately left to propagate as a normal thrown error, which
+  // withRetries() -- already wrapping every s3Ops.putObject() call in
+  // runUploadPlan() -- retries exactly like any other transient failure.
+  // This test exercises that contract at the s3Ops boundary runUploadPlan()
+  // actually depends on, the same boundary every other retry/overwrite
+  // test in this file uses.
+  const key = 'media/blog/a/inline-1.png';
+  let putAttempts = 0;
+  const fakeS3 = createFakeS3();
+  const realPutObject = fakeS3.putObject.bind(fakeS3);
+  fakeS3.putObject = async (args) => {
+    putAttempts += 1;
+    if (putAttempts === 1) {
+      const err = new Error('ConditionalRequestConflict');
+      err.$metadata = { httpStatusCode: 409 };
+      throw err;
+    }
+    return realPutObject(args);
+  };
+
+  const { results } = await runUploadPlan([item(key)], {
+    s3Ops: fakeS3,
+    commit: true,
+    loadLocalImage: fakeLocalImage('sha-a'),
+    fetchImpl: mockFetchFromStore(fakeS3.store),
+    maxAttempts: 2,
+    sleep: noopSleep,
+  });
+  assert.equal(results[0].status, 'uploaded-and-verified');
+  assert.equal(putAttempts, 2);
+});
+
+// ---------------------------------------------------------------------------
 // 9. Retries on transient failures
 // ---------------------------------------------------------------------------
 
@@ -572,14 +688,19 @@ test('buildProductionUrlRows produces exactly the {postSlug, originalUrl, produc
 // ---------------------------------------------------------------------------
 
 test('rollbackFailedUploads deletes only items that were actually PUT but failed verification, never a never-uploaded or conflicting failure', async () => {
+  const bufA = Buffer.from('content-a-unchanged-since-upload');
+  const bufB = Buffer.from('content-b-unchanged-since-upload');
+  const fakeS3 = createFakeS3();
+  fakeS3.store.set('media/blog/a/inline-1.png', bufA);
+  fakeS3.store.set('media/blog/b/inline-1.png', bufB);
+
   const results = [
-    { key: 'media/blog/a/inline-1.png', status: 'failed', stage: 'verify', putSucceeded: true },
-    { key: 'media/blog/b/inline-1.png', status: 'failed', stage: 'public-retrieval', putSucceeded: true },
+    { key: 'media/blog/a/inline-1.png', status: 'failed', stage: 'verify', putSucceeded: true, sha256: sha256Hex(bufA) },
+    { key: 'media/blog/b/inline-1.png', status: 'failed', stage: 'public-retrieval', putSucceeded: true, sha256: sha256Hex(bufB) },
     { key: 'media/blog/c/inline-1.png', status: 'failed', stage: 'upload', putSucceeded: false },
     { key: 'media/blog/d/inline-1.png', status: 'failed', stage: 'conflict', putSucceeded: false }, // a pre-existing UNRELATED object -- must never be touched
     { key: 'media/blog/e/inline-1.png', status: 'uploaded-and-verified' },
   ];
-  const fakeS3 = createFakeS3();
   const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
   assert.deepEqual(
     rolledBack.map((r) => r.key).sort(),
@@ -589,11 +710,74 @@ test('rollbackFailedUploads deletes only items that were actually PUT but failed
 });
 
 test('rollbackFailedUploads in dry-run mode reports intent but never calls deleteObject', async () => {
-  const results = [{ key: 'media/blog/a/inline-1.png', status: 'failed', stage: 'verify', putSucceeded: true }];
+  const results = [{ key: 'media/blog/a/inline-1.png', status: 'failed', stage: 'verify', putSucceeded: true, sha256: 'whatever' }];
   const fakeS3 = createFakeS3();
   const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: false });
   assert.deepEqual(rolledBack, [{ key: 'media/blog/a/inline-1.png', status: 'would-delete-dry-run' }]);
   assert.equal(fakeS3.calls.delete.length, 0);
+});
+
+// Task 7F.8C: cleanup must never delete an object another process wrote to
+// this exact key AFTER this uploader's own successful PUT (e.g. during the
+// window between a verify/public-retrieval failure and a later
+// --cleanup-failed run) -- only a live, content-matching re-check may
+// authorize a delete.
+
+test('rollbackFailedUploads refuses to delete when the object at the key no longer matches what this uploader wrote (overwritten by another process since)', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const whatThisScriptUploaded = Buffer.from('what-this-script-actually-uploaded');
+  const anotherProcessContent = Buffer.from('a-later-process-own-unrelated-content');
+  const fakeS3 = createFakeS3();
+  fakeS3.store.set(key, anotherProcessContent);
+
+  const results = [{ key, status: 'failed', stage: 'verify', putSucceeded: true, sha256: sha256Hex(whatThisScriptUploaded) }];
+  const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
+  assert.equal(rolledBack[0].status, 'delete-skipped-content-changed');
+  assert.equal(fakeS3.calls.delete.length, 0);
+  assert.deepEqual(fakeS3.store.get(key), anotherProcessContent, "the later process's object must be left completely untouched");
+});
+
+test('rollbackFailedUploads refuses to delete when the key has since been deleted entirely by another process', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const fakeS3 = createFakeS3(); // store starts empty -- key already absent
+  const results = [{ key, status: 'failed', stage: 'public-retrieval', putSucceeded: true, sha256: sha256Hex(Buffer.from('whatever-was-uploaded')) }];
+  const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
+  assert.equal(rolledBack[0].status, 'delete-skipped-content-changed');
+  assert.equal(fakeS3.calls.delete.length, 0);
+});
+
+test('rollbackFailedUploads refuses to delete when the recorded result carries no sha256 to verify against (defensive default)', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const fakeS3 = createFakeS3();
+  fakeS3.store.set(key, Buffer.from('anything-at-all'));
+  const results = [{ key, status: 'failed', stage: 'verify', putSucceeded: true }]; // no sha256
+  const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
+  assert.equal(rolledBack[0].status, 'delete-skipped-content-changed');
+  assert.equal(fakeS3.calls.delete.length, 0);
+});
+
+test('rollbackFailedUploads skips (never deletes blindly) when the live re-check read itself fails', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const fakeS3 = createFakeS3();
+  fakeS3.getObject = async () => {
+    throw new Error('simulated network error during cleanup recheck');
+  };
+  const results = [{ key, status: 'failed', stage: 'verify', putSucceeded: true, sha256: sha256Hex(Buffer.from('x')) }];
+  const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
+  assert.equal(rolledBack[0].status, 'delete-skipped-recheck-failed');
+  assert.equal(fakeS3.calls.delete.length, 0);
+});
+
+test('rollbackFailedUploads still deletes normally when the object is unchanged since this uploader wrote it', async () => {
+  const key = 'media/blog/a/inline-1.png';
+  const buffer = Buffer.from('exactly-what-this-script-uploaded');
+  const fakeS3 = createFakeS3();
+  fakeS3.store.set(key, buffer);
+  const results = [{ key, status: 'failed', stage: 'public-retrieval', putSucceeded: true, sha256: sha256Hex(buffer) }];
+  const rolledBack = await rollbackFailedUploads(results, { s3Ops: fakeS3, commit: true });
+  assert.equal(rolledBack[0].status, 'deleted');
+  assert.equal(fakeS3.calls.delete.length, 1);
+  assert.equal(fakeS3.store.has(key), false);
 });
 
 // ---------------------------------------------------------------------------

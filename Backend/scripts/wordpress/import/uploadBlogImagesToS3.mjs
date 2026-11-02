@@ -18,15 +18,18 @@
 // non-nested key shape (media/<timestamp>-<hex><ext>) that can never
 // produce a path under media/blog/.
 //
-// Reuses, UNMODIFIED: s3.adapter.js's uploadObject()/deleteObject()/
-// isS3Configured() for every WRITE operation (this script adds no new
-// write capability of its own), and fileSignature.js's
+// Reuses, UNMODIFIED: s3.adapter.js's deleteObject()/isS3Configured() for
+// every delete/configuration check, and fileSignature.js's
 // matchesDeclaredFileType() for the same magic-byte check the admin
-// upload API itself relies on. The one capability the existing adapter
-// does not expose -- a read-back (GetObject) -- is added narrowly, here
-// only, in createRealS3Ops() below, strictly for this script's own
-// upload-then-verify step; s3.adapter.js itself is left untouched (Task
-// 7F.8A's restriction).
+// upload API itself relies on. Two capabilities the existing adapter does
+// not expose -- a read-back (GetObject) and a conditional, race-proof
+// write (PutObject with IfNoneMatch: '*', added in Task 7F.8C -- see the
+// "Task 7F.8C hardening" comment above) -- are added narrowly, here only,
+// in createRealS3Ops() below, strictly for this script's own atomic
+// upload-then-verify flow; s3.adapter.js's own uploadObject() (used by the
+// unrelated admin media upload workflow, which writes unique, randomly
+// generated keys and has no analogous overwrite-race concern) is left
+// completely untouched by this script, both still and as of Task 7F.8C.
 //
 // Modes:
 //   node uploadBlogImagesToS3.mjs                 -> dry-run (default):
@@ -91,6 +94,36 @@
 // for this script to blindly overwrite a pre-existing, unrelated object
 // that happens to already occupy one of its deterministic keys.
 //
+// Task 7F.8C hardening -- closing the preflight-to-upload race: the
+// live preflight read above only proves the key was absent AT THE MOMENT
+// OF THAT READ. Nothing stops another process (a second, accidentally
+// concurrent invocation of this same script; anything else) from writing
+// to that exact key in the window between the preflight read returning and
+// the subsequent PutObject call. To close this window atomically on S3's
+// own side rather than relying on any client-side timing, every PutObject
+// this script issues (see createRealS3Ops().putObject() below) sets the
+// conditional-write header `IfNoneMatch: '*'`, which tells S3 to reject the
+// write with a 412 Precondition Failed if an object already exists at that
+// key, and to reply 409 ConditionalRequestConflict (safe to retry -- see
+// withRetries()) if a conflicting write was racing it. A 412 is never
+// retried blindly: instead the key is read back live and compared against
+// the local file -- identical content means a concurrent run of this exact
+// upload already won the race harmlessly (treated as already-present, and
+// still carried through every verification gate below); different content
+// means a genuine conflict, and this script refuses to proceed for that
+// item, exactly as the plain preflight-conflict case above already does.
+// Since our own PUT was rejected in either sub-case, putSucceeded is always
+// false here too, so rollbackFailedUploads() -- which only ever deletes
+// putSucceeded:true items -- can never delete an object this script did not
+// itself just write (see that function's own comment for the full
+// invariant). No new IAM permission is required: IfNoneMatch is a request
+// header on the existing s3:PutObject action, not a separate permission,
+// and conditional writes work on any standard S3 bucket with no special
+// bucket-level configuration needed to USE them (AWS additionally lets a
+// bucket OWNER optionally require them via bucket policy, which is an
+// unrelated, opt-in enforcement feature this script neither needs nor
+// assumes).
+//
 // Local run-state file (Backend/.local-media/blog-image-upload-state.json,
 // gitignored -- .local-media/, same as the manifest and production URL
 // map): kept purely as a durable audit record of each key's last known
@@ -154,10 +187,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
 import { env, isS3Configured } from '../../../src/config/env.js';
-import { uploadObject, deleteObject } from '../../../src/modules/media/s3.adapter.js';
+import { deleteObject } from '../../../src/modules/media/s3.adapter.js';
 import { matchesDeclaredFileType } from '../../../src/modules/media/fileSignature.js';
 import { loadBlogImageManifest, isAlreadySafeImageHost, resolveWithinBlogMediaDir, isSafeProductionImageUrl } from './blogImageManifest.js';
 
@@ -304,7 +337,7 @@ export async function withRetries(fn, { maxAttempts = 3, baseDelayMs = 200, slee
 
 export function createRealS3Ops() {
   let client = null;
-  function getReadClient() {
+  function getClient() {
     if (!isS3Configured()) return null;
     if (!client) {
       client = new S3Client({ region: env.s3.region, credentials: { accessKeyId: env.s3.accessKeyId, secretAccessKey: env.s3.secretAccessKey } });
@@ -314,8 +347,32 @@ export function createRealS3Ops() {
 
   return {
     isConfigured: () => isS3Configured(),
+    // Deliberately does NOT delegate to s3.adapter.js's uploadObject() --
+    // see the "Task 7F.8C hardening" header comment above. Issues the PUT
+    // with `IfNoneMatch: '*'` so S3 itself atomically rejects the write
+    // (412) if an object already exists at this key, closing the race
+    // window between runUploadPlan()'s preflight read and this call. A 412
+    // is a stable, meaningful outcome (not a transient failure) and is
+    // returned as `{ conditionalConflict: true }` rather than thrown, so it
+    // is never blindly retried by withRetries() -- the caller re-checks the
+    // key live and decides. A 409 ConditionalRequestConflict (a genuinely
+    // racing concurrent write, per AWS's own documented guidance for this
+    // header) is deliberately left to propagate and be retried normally by
+    // withRetries(), same as any other transient failure.
     async putObject({ key, buffer, mimeType }) {
-      return uploadObject({ key, buffer, mimeType });
+      const s3 = getClient();
+      if (!s3) return null;
+      try {
+        await s3.send(
+          new PutObjectCommand({ Bucket: env.s3.bucket, Key: key, Body: buffer, ContentType: mimeType, IfNoneMatch: '*' })
+        );
+        return { url: `https://${env.s3.bucket}.s3.${env.s3.region}.amazonaws.com/${key}` };
+      } catch (err) {
+        if (err.name === 'PreconditionFailed' || err.$metadata?.httpStatusCode === 412) {
+          return { conditionalConflict: true };
+        }
+        throw err;
+      }
     },
     // Returns { buffer, url } for an existing object, or null if the key
     // genuinely does not exist (NoSuchKey/404 -- the one failure mode that
@@ -325,7 +382,7 @@ export function createRealS3Ops() {
     // propagates so withRetries()'s caller retries it, rather than this
     // function silently turning a real problem into a false "absent".
     async getObject({ key }) {
-      const s3 = getReadClient();
+      const s3 = getClient();
       if (!s3) return null;
       try {
         const response = await s3.send(new GetObjectCommand({ Bucket: env.s3.bucket, Key: key }));
@@ -442,14 +499,44 @@ export async function runUploadPlan(plan, { s3Ops, commit, state = {}, maxAttemp
       // SAME public-retrievability check below before being trusted.
       uploadResult = { url: preflight.url, alreadyPresent: true };
     } else {
-      // Genuinely absent -- safe to upload.
+      // Genuinely absent at preflight time -- attempt the upload. The PUT
+      // itself is conditional (IfNoneMatch: '*', see createRealS3Ops()), so
+      // even if another process wins a race and writes this exact key in
+      // the window between the preflight read above and this call, S3
+      // itself (not client-side timing) is what rejects the write.
       try {
         // eslint-disable-next-line no-await-in-loop
         uploadResult = await withRetries(() => s3Ops.putObject({ key: item.key, buffer: local.buffer, mimeType: 'image/png' }), { maxAttempts, sleep });
-        if (!uploadResult || !uploadResult.url) {
+
+        if (uploadResult && uploadResult.conditionalConflict) {
+          // Our PUT was atomically rejected by S3 because something now
+          // occupies this key -- putSucceeded stays false (nothing was
+          // written by us), so rollbackFailedUploads() can never delete
+          // whatever is actually there. Re-check live, exactly like the
+          // plain preflight-conflict branch above, rather than assuming
+          // either outcome.
+          // eslint-disable-next-line no-await-in-loop
+          const recheck = await withRetries(() => s3Ops.getObject({ key: item.key }), { maxAttempts, sleep });
+          if (recheck && sha256Hex(recheck.buffer) === local.sha256) {
+            // Whoever won the race wrote the exact same content (e.g. a
+            // second, accidentally concurrent invocation of this script) --
+            // no actual overwrite occurred; still carried through the same
+            // verification gates below before being trusted.
+            uploadResult = { url: recheck.url, alreadyPresent: true };
+          } else {
+            results.push({
+              ...item,
+              status: 'failed',
+              stage: 'conflict',
+              putSucceeded: false,
+              error: `Another process created "${item.key}" between the preflight check and upload (conditional write rejected), and its content ${recheck ? 'differs from' : 'is missing despite the rejection, for'} the local file -- refusing to overwrite it.`,
+            });
+            nextState[item.key] = { status: 'failed', error: 'conditional-write-conflict: object created by another process between preflight and upload' };
+            continue;
+          }
+        } else if (!uploadResult || !uploadResult.url) {
           throw new Error('Upload did not return a URL (S3 not configured?)');
-        }
-        if (!isSafeProductionImageUrl(uploadResult.url)) {
+        } else if (!isSafeProductionImageUrl(uploadResult.url)) {
           throw new Error(`Upload returned an unsafe (non-https) URL, refusing to trust it: ${uploadResult.url}`);
         }
       } catch (err) {
@@ -465,7 +552,9 @@ export async function runUploadPlan(plan, { s3Ops, commit, state = {}, maxAttemp
           throw new Error('Post-upload verification failed: the object read back from S3 does not match the local file byte-for-byte.');
         }
       } catch (err) {
-        results.push({ ...item, status: 'failed', stage: 'verify', putSucceeded: true, url: uploadResult.url, error: err.message });
+        // sha256 included so rollbackFailedUploads() can re-verify live
+        // content before ever deleting this key -- see that function.
+        results.push({ ...item, status: 'failed', stage: 'verify', putSucceeded: true, url: uploadResult.url, sha256: local.sha256, error: err.message });
         nextState[item.key] = { status: 'failed', error: err.message, url: uploadResult.url };
         continue;
       }
@@ -480,7 +569,9 @@ export async function runUploadPlan(plan, { s3Ops, commit, state = {}, maxAttemp
       // eslint-disable-next-line no-await-in-loop
       await withRetries(() => verifyPubliclyRetrievable(uploadResult.url, { fetchImpl, expectedSha256: local.sha256 }), { maxAttempts, sleep });
     } catch (err) {
-      results.push({ ...item, status: 'failed', stage: 'public-retrieval', putSucceeded: true, url: uploadResult.url, error: err.message });
+      // sha256 included so rollbackFailedUploads() can re-verify live
+      // content before ever deleting this key -- see that function.
+      results.push({ ...item, status: 'failed', stage: 'public-retrieval', putSucceeded: true, url: uploadResult.url, sha256: local.sha256, error: err.message });
       nextState[item.key] = { status: 'failed', error: err.message, url: uploadResult.url };
       continue;
     }
@@ -517,6 +608,25 @@ export function writeProductionUrlMap(rows) {
 // never succeeded (putSucceeded:false/undefined) -- there is nothing in S3
 // to delete for those, and calling delete on a key that was never written
 // serves no purpose.
+//
+// Task 7F.8C hardening -- concurrent modification after a successful PUT:
+// putSucceeded:true only proves THIS script's own PUT once landed; it says
+// nothing about what is at that key right now. A verify/public-retrieval
+// failure, by definition, already involves a window of time between that
+// PUT and this cleanup step (same run or a later --cleanup-failed run) --
+// if another process wrote its own, different, legitimate object to this
+// exact key during that window, a blind delete-by-key would destroy THAT
+// process's object, not merely "undo" this script's own upload. To make
+// this structurally impossible, every delete is preceded by a live,
+// authenticated re-read of the key, compared byte-for-byte (via sha256)
+// against `r.sha256` (the content THIS script itself uploaded, threaded
+// through from runUploadPlan()'s verify/public-retrieval failure results)
+// -- deletion proceeds only when the object currently there is still
+// exactly what this script wrote. Any mismatch (content differs, the key
+// is now absent entirely, the result carries no sha256 to check against,
+// or the re-check read itself fails) is treated as "do not touch it" and
+// reported as a distinct, non-deleting outcome rather than silently
+// skipped or forced through.
 export async function rollbackFailedUploads(results, { s3Ops, commit }) {
   const rolledBack = [];
   for (const r of results) {
@@ -525,6 +635,20 @@ export async function rollbackFailedUploads(results, { s3Ops, commit }) {
       rolledBack.push({ key: r.key, status: 'would-delete-dry-run' });
       continue;
     }
+
+    let current;
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      current = await s3Ops.getObject({ key: r.key });
+    } catch (err) {
+      rolledBack.push({ key: r.key, status: 'delete-skipped-recheck-failed', error: err.message });
+      continue;
+    }
+    if (!r.sha256 || !current || sha256Hex(current.buffer) !== r.sha256) {
+      rolledBack.push({ key: r.key, status: 'delete-skipped-content-changed' });
+      continue;
+    }
+
     try {
       // eslint-disable-next-line no-await-in-loop
       await s3Ops.deleteObject({ key: r.key });

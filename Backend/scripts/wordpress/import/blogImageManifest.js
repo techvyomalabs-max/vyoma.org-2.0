@@ -122,3 +122,70 @@ export function resolveLocalMediaUrl(row, devImagePreviewPort) {
   if (!resolved) return null;
   return `http://localhost:${devImagePreviewPort}/local-media/blog/${row.localFilename}`;
 }
+
+// ---------------------------------------------------------------------------
+// Task 7F.7 — production-safe image URL lookup.
+//
+// Deliberately a SEPARATE file/loader from blog-image-manifest.json above,
+// not an extra field bolted onto it: the manifest above exists purely to
+// drive the dev-preview local-media route (never safe to write to a real
+// database — see resolveLocalMediaUrl()'s http://localhost URLs), while
+// this lookup exists to hold the opposite — a real, publicly reachable URL
+// (e.g. an S3 object URL, once Task 7F.6's audited upload actually happens)
+// that IS safe to persist in any environment, including a real --commit
+// run. Same .local-media/ gitignore convention as the manifest (absent in
+// a fresh checkout / CI by default), and the same null-if-absent /
+// throw-if-malformed contract as loadBlogImageManifest(). No entry is ever
+// written here by this codebase itself — every row only ever comes from a
+// human, after a real, verified upload; this module never fabricates one.
+export const PRODUCTION_IMAGE_URL_MAP_PATH = path.resolve(__dirname, '../../../.local-media/blog-image-production-urls.json');
+
+// A production URL must be absolute https. This is a structural guarantee
+// (independent of --dev-image-preview / NODE_ENV / Task 7F.2A's
+// assertCommitDevPreviewNotCombined, which all guard the UNRELATED
+// dev-preview path) that a localhost/http URL — or any other malformed
+// value — could never reach rewriteInlineImages()/resolveFeaturedImage()'s
+// production-URL branch, even if this file were ever hand-edited incorrectly.
+export function isSafeProductionImageUrl(url) {
+  try {
+    return new URL(url).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+// Same null-if-absent / throw-if-malformed contract as
+// loadBlogImageManifest() above.
+export function loadProductionImageUrlMap() {
+  if (!fs.existsSync(PRODUCTION_IMAGE_URL_MAP_PATH)) return null;
+  const raw = fs.readFileSync(PRODUCTION_IMAGE_URL_MAP_PATH, 'utf8');
+  const manifest = JSON.parse(raw);
+  if (!manifest || !Array.isArray(manifest.rows)) {
+    throw new Error(`Production image URL map at ${PRODUCTION_IMAGE_URL_MAP_PATH} is malformed: expected an object with a "rows" array.`);
+  }
+  return manifest;
+}
+
+// Builds Map<"postSlug|originalUrl", productionUrl> — the same composite
+// key shape as buildImageUrlMap()'s inlineMap/featuredByPostSlug lookups
+// above, so rewriteInlineImages() and resolveFeaturedImage() can look up
+// both maps identically. A row missing postSlug/originalUrl, or whose
+// productionUrl fails isSafeProductionImageUrl(), is never included in the
+// map — callers then treat it exactly like "no mapping exists at all"
+// (never throws, never silently accepts an unsafe value). Returned
+// separately as `invalidRows` only so a caller (main()) can log a loud,
+// explicit warning rather than fail completely silently.
+export function buildProductionImageUrlMap(manifest) {
+  const productionUrlMap = new Map();
+  const invalidRows = [];
+  if (!manifest) return { productionUrlMap, invalidRows };
+
+  for (const row of manifest.rows) {
+    if (!row || typeof row.postSlug !== 'string' || typeof row.originalUrl !== 'string' || !isSafeProductionImageUrl(row.productionUrl)) {
+      invalidRows.push(row);
+      continue;
+    }
+    productionUrlMap.set(`${row.postSlug}|${row.originalUrl}`, row.productionUrl);
+  }
+  return { productionUrlMap, invalidRows };
+}

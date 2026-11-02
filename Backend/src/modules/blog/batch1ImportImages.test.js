@@ -34,7 +34,12 @@ import {
   SLUG_OVERRIDES,
   DEFAULT_WXR_PATH,
 } from '../../../scripts/wordpress/import/batch1-import.mjs';
-import { MANIFEST_PATH, loadBlogImageManifest, buildImageUrlMap } from '../../../scripts/wordpress/import/blogImageManifest.js';
+import {
+  MANIFEST_PATH,
+  loadBlogImageManifest,
+  buildImageUrlMap,
+  buildProductionImageUrlMap,
+} from '../../../scripts/wordpress/import/blogImageManifest.js';
 import { BlogPostModel } from './blogPost.model.js';
 import { BlogPostRevisionModel } from './blogPostRevision.model.js';
 import { BlogCategoryModel } from './blogCategory.model.js';
@@ -239,6 +244,110 @@ test('exactly the 12 known posts resolve a featuredImage; all others (including 
   const yogaDay = parsed.blogPosts.find((p) => p.oldSlug === 'yoga_day');
   const yogaDayRecord = toBlogPostRecord(yogaDay, { inlineMap, featuredByPostSlug, devImagePreview: false, devImagePreviewPort: env.port });
   assert.equal(yogaDayRecord.data.featuredImage, null);
+});
+
+// ---------------------------------------------------------------------------
+// Task 7F.7 — production image URL lookup, wired into rewriteInlineImages()/
+// resolveFeaturedImage()/toBlogPostRecord(). Every mock production URL below
+// is synthetic test data ONLY (see buildProductionImageUrlMap()'s own
+// docs) -- this task never writes one into
+// Backend/.local-media/blog-image-production-urls.json, and none of these
+// tests touch AWS, S3, or any real network location.
+// ---------------------------------------------------------------------------
+
+// --- 11. A production URL mapping resolves an inline image with no --dev-image-preview ---
+test('a production URL mapping resolves an inline image without --dev-image-preview, with no manifest row needed at all', () => {
+  const body = '<img src="https://example-untrusted.test/a.png" alt="First image" />';
+  const productionUrlMap = new Map([['fake-slug|https://example-untrusted.test/a.png', 'https://mock-bucket.s3.us-east-1.amazonaws.com/media/blog/fake-slug/inline-1.png']]);
+  // inlineMap is deliberately empty/null -- proves the production path does
+  // not depend on the dev-preview manifest at all.
+  const { html, issues } = rewriteInlineImages(body, 'fake-slug', null, { devImagePreview: false, productionUrlMap });
+  assert.deepEqual(issues, []);
+  assert.match(html, /src="https:\/\/mock-bucket\.s3\.us-east-1\.amazonaws\.com\/media\/blog\/fake-slug\/inline-1\.png"/);
+  assert.ok(!html.includes('example-untrusted.test'));
+  assert.match(html, /alt="First image"/, 'non-src attributes must survive untouched');
+});
+
+// --- 12. The production mapping takes precedence over the dev-preview local-media route ---
+test('when both a production mapping and a dev-preview manifest row exist, the production URL wins', () => {
+  const body = '<img src="https://example-untrusted.test/a.png" />';
+  const row = { postSlug: 'fake-slug', originalUrl: 'https://example-untrusted.test/a.png', localFilename: 'a-aaaa1111.png', type: 'inline' };
+  const inlineMap = new Map([['fake-slug|https://example-untrusted.test/a.png', row]]);
+  const productionUrlMap = new Map([['fake-slug|https://example-untrusted.test/a.png', 'https://mock-bucket.s3.us-east-1.amazonaws.com/media/blog/fake-slug/inline-1.png']]);
+  const { html, issues } = rewriteInlineImages(body, 'fake-slug', inlineMap, { devImagePreview: true, devImagePreviewPort: 4000, productionUrlMap });
+  assert.deepEqual(issues, []);
+  assert.ok(html.includes('https://mock-bucket.s3.us-east-1.amazonaws.com/media/blog/fake-slug/inline-1.png'));
+  assert.ok(!html.includes('localhost'), 'the dev-preview local-media URL must never be used once a production mapping exists');
+});
+
+// --- 13. A missing production mapping continues to fail safely (unchanged pre-7F.7 behavior) ---
+test('a production URL map that does not cover a given image falls through to the existing (unchanged) issue behavior', () => {
+  const body = '<img src="https://example-untrusted.test/unmapped.png" />';
+  // Non-empty productionUrlMap, but with no entry for THIS image/post pair.
+  const productionUrlMap = new Map([['some-other-slug|https://example-untrusted.test/other.png', 'https://mock-bucket.s3.us-east-1.amazonaws.com/x.png']]);
+  const { issues: issuesNoDevPreview } = rewriteInlineImages(body, 'fake-slug', new Map(), { devImagePreview: false, productionUrlMap });
+  assert.equal(issuesNoDevPreview.length, 1);
+  assert.match(issuesNoDevPreview[0], /No manifest mapping found/);
+
+  const row = { postSlug: 'fake-slug', originalUrl: 'https://example-untrusted.test/unmapped.png', localFilename: 'unmapped-aaaa.png', type: 'inline' };
+  const inlineMap = new Map([['fake-slug|https://example-untrusted.test/unmapped.png', row]]);
+  const { issues: issuesNoDevPreviewMapped } = rewriteInlineImages(body, 'fake-slug', inlineMap, { devImagePreview: false, productionUrlMap });
+  assert.equal(issuesNoDevPreviewMapped.length, 1);
+  assert.match(issuesNoDevPreviewMapped[0], /Production-safe mapping unavailable/);
+});
+
+// --- 14. resolveFeaturedImage resolves a non-already-safe-host row via a production mapping ---
+test('resolveFeaturedImage uses a production URL mapping for a featured row whose original host is not already-safe', () => {
+  const featuredByPostSlug = new Map([['some-slug', { postSlug: 'some-slug', originalUrl: 'https://untrusted-host.test/featured.png', type: 'featured' }]]);
+  const productionUrlMap = new Map([['some-slug|https://untrusted-host.test/featured.png', 'https://mock-bucket.s3.us-east-1.amazonaws.com/media/blog/some-slug/featured.png']]);
+
+  const withoutMapping = resolveFeaturedImage('some-slug', featuredByPostSlug);
+  assert.equal(withoutMapping.featuredImage, null);
+  assert.equal(withoutMapping.issues.length, 1);
+
+  const withMapping = resolveFeaturedImage('some-slug', featuredByPostSlug, productionUrlMap);
+  assert.deepEqual(withMapping.issues, []);
+  assert.deepEqual(withMapping.featuredImage, { url: 'https://mock-bucket.s3.us-east-1.amazonaws.com/media/blog/some-slug/featured.png', alt: null });
+});
+
+// --- 15. All 5 real affected posts / 8 Google-hosted images resolve cleanly via a mocked
+// production map, with --dev-image-preview OFF -- i.e. exactly what a real --commit run
+// would need once a genuine (non-mock) map is populated after a verified upload. ---
+test('a mocked production URL map resolves all 8 Google-hosted images across all 5 affected posts, without --dev-image-preview', (t) => {
+  if (!manifestExists) return t.skip(MANIFEST_SKIP);
+  if (!wxrExists) return t.skip(WXR_SKIP);
+  const { parsed, inlineMap, featuredByPostSlug } = loadParsedAndMap();
+
+  // Build a synthetic (mock) production map covering every inline row for
+  // the 5 known-Google posts, derived from the real manifest's own
+  // postSlug/originalUrl pairs -- never hardcoded fragile URL strings, and
+  // never a real S3/bucket location.
+  const mockProductionRows = [];
+  let n = 0;
+  for (const row of inlineMap.values()) {
+    if (!KNOWN_GOOGLE_SLUGS.map((s) => SLUG_OVERRIDES.get(s) || s).includes(row.postSlug)) continue;
+    n += 1;
+    mockProductionRows.push({
+      postSlug: row.postSlug,
+      originalUrl: row.originalUrl,
+      productionUrl: `https://mock-bucket.s3.us-east-1.amazonaws.com/media/blog/${row.postSlug}/inline-${n}.png`,
+    });
+  }
+  const { productionUrlMap, invalidRows } = buildProductionImageUrlMap({ rows: mockProductionRows });
+  assert.deepEqual(invalidRows, []);
+  assert.equal(productionUrlMap.size, 8, 'expected the mock map to cover exactly the 8 known Google-hosted images');
+
+  let totalResolved = 0;
+  for (const post of parsed.blogPosts) {
+    if (!KNOWN_GOOGLE_SLUGS.includes(post.oldSlug)) continue;
+    const record = toBlogPostRecord(post, { inlineMap, featuredByPostSlug, devImagePreview: false, productionUrlMap });
+    assert.deepEqual(record.imageIssues, [], `expected no image issues for "${post.oldSlug}" once production mappings are supplied`);
+    assert.ok(!record.data.body.includes('googleusercontent.com'), `expected no remaining googleusercontent.com reference in "${post.oldSlug}"`);
+    assert.ok(!record.data.body.includes('localhost'), `expected no localhost URL in a production-mode (devImagePreview=false) body for "${post.oldSlug}"`);
+    const mockUrlMatches = [...record.data.body.matchAll(/https:\/\/mock-bucket\.s3\.us-east-1\.amazonaws\.com\/[^"]+/g)];
+    totalResolved += mockUrlMatches.length;
+  }
+  assert.equal(totalResolved, 8, 'expected exactly 8 Google-hosted images resolved via the mocked production map across the 5 known posts');
 });
 
 // --- Database-backed tests (8 and 10): disposable mongodb-memory-server only ---

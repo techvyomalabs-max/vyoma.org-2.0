@@ -28,6 +28,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 import { parseWxr, DEFAULT_WXR_PATH, SLUG_OVERRIDES } from '../../../scripts/wordpress/import/batch1-import.mjs';
 import {
   BLOG_MEDIA_DIR,
@@ -35,6 +36,10 @@ import {
   isSafeLocalFilename,
   resolveWithinBlogMediaDir,
   loadBlogImageManifest,
+  PRODUCTION_IMAGE_URL_MAP_PATH,
+  isSafeProductionImageUrl,
+  loadProductionImageUrlMap,
+  buildProductionImageUrlMap,
 } from '../../../scripts/wordpress/import/blogImageManifest.js';
 
 const manifestExists = fs.existsSync(MANIFEST_PATH);
@@ -81,6 +86,74 @@ test('resolveWithinBlogMediaDir refuses to resolve outside the approved director
   const safe = resolveWithinBlogMediaDir('guru-purnima-f4f66f5e.png');
   assert.ok(safe);
   assert.ok(safe.startsWith(BLOG_MEDIA_DIR));
+});
+
+// --- Task 7F.7 — production image URL map helper unit tests (pure
+// functions, synthetic data only -- never skip, never touch AWS/S3, never
+// read a real production map file beyond its own absence check) -----------
+
+test('isSafeProductionImageUrl accepts only absolute https URLs', () => {
+  assert.equal(isSafeProductionImageUrl('https://example-bucket.s3.us-east-1.amazonaws.com/media/blog/x.png'), true);
+  assert.equal(isSafeProductionImageUrl('http://example-bucket.s3.us-east-1.amazonaws.com/media/blog/x.png'), false);
+  assert.equal(isSafeProductionImageUrl('http://localhost:4000/local-media/blog/x.png'), false);
+  assert.equal(isSafeProductionImageUrl('ftp://example.com/x.png'), false);
+  assert.equal(isSafeProductionImageUrl('not a url'), false);
+  assert.equal(isSafeProductionImageUrl(''), false);
+  assert.equal(isSafeProductionImageUrl(null), false);
+  assert.equal(isSafeProductionImageUrl(undefined), false);
+});
+
+test('loadProductionImageUrlMap returns null when the file is absent (expected until a real upload is recorded)', () => {
+  // This file is gitignored and deliberately never written by this
+  // codebase with real or placeholder data (see Task 7F.7) -- it is
+  // expected to be absent in this checkout/CI, exactly like the blog image
+  // manifest itself when unpopulated.
+  assert.equal(fs.existsSync(PRODUCTION_IMAGE_URL_MAP_PATH), false, 'this task must never introduce this file into the repo');
+  assert.equal(loadProductionImageUrlMap(), null);
+});
+
+test('buildProductionImageUrlMap returns empty structures for a null/absent manifest', () => {
+  const { productionUrlMap, invalidRows } = buildProductionImageUrlMap(null);
+  assert.equal(productionUrlMap.size, 0);
+  assert.deepEqual(invalidRows, []);
+});
+
+test('buildProductionImageUrlMap includes only well-formed, https rows and rejects the rest', () => {
+  const manifest = {
+    rows: [
+      { postSlug: 'ramanavami', originalUrl: 'https://lh7-us.googleusercontent.com/a', productionUrl: 'https://bucket.s3.us-east-1.amazonaws.com/media/blog/ramanavami/inline-1.png' },
+      { postSlug: 'ramanavami', originalUrl: 'https://lh7-us.googleusercontent.com/b', productionUrl: 'http://bucket.s3.us-east-1.amazonaws.com/media/blog/ramanavami/inline-2.png' }, // not https
+      { postSlug: 'guru-purnima', originalUrl: 'https://lh7-us.googleusercontent.com/c', productionUrl: 'http://localhost:4000/local-media/blog/x.png' }, // localhost, not https
+      { postSlug: 42, originalUrl: 'https://lh7-us.googleusercontent.com/d', productionUrl: 'https://bucket.s3.us-east-1.amazonaws.com/x.png' }, // bad postSlug type
+      { postSlug: 'why-samskrtam', originalUrl: 'https://lh7-rt.googleusercontent.com/e', productionUrl: 'https://bucket.s3.us-east-1.amazonaws.com/media/blog/why-samskrtam/inline-1.png' },
+    ],
+  };
+  const { productionUrlMap, invalidRows } = buildProductionImageUrlMap(manifest);
+  assert.equal(productionUrlMap.size, 2);
+  assert.equal(productionUrlMap.get('ramanavami|https://lh7-us.googleusercontent.com/a'), 'https://bucket.s3.us-east-1.amazonaws.com/media/blog/ramanavami/inline-1.png');
+  assert.equal(productionUrlMap.get('why-samskrtam|https://lh7-rt.googleusercontent.com/e'), 'https://bucket.s3.us-east-1.amazonaws.com/media/blog/why-samskrtam/inline-1.png');
+  assert.equal(invalidRows.length, 3);
+});
+
+test('loadProductionImageUrlMap throws on a malformed (present but invalid) file — never silently treated as absent', (t) => {
+  // Never touch a real file if one unexpectedly already exists at this
+  // (gitignored, normally-absent) path -- a real one is never this test's
+  // to create, overwrite, or delete.
+  if (fs.existsSync(PRODUCTION_IMAGE_URL_MAP_PATH)) {
+    return t.skip('A real production image URL map file already exists here -- not touching it; skipping this malformed-file check.');
+  }
+  fs.mkdirSync(path.dirname(PRODUCTION_IMAGE_URL_MAP_PATH), { recursive: true });
+  try {
+    // Case 1: not valid JSON at all.
+    fs.writeFileSync(PRODUCTION_IMAGE_URL_MAP_PATH, '{ this is not valid JSON');
+    assert.throws(() => loadProductionImageUrlMap());
+
+    // Case 2: valid JSON, but missing the required "rows" array shape.
+    fs.writeFileSync(PRODUCTION_IMAGE_URL_MAP_PATH, JSON.stringify({ notRows: [] }));
+    assert.throws(() => loadProductionImageUrlMap(), /malformed/);
+  } finally {
+    fs.unlinkSync(PRODUCTION_IMAGE_URL_MAP_PATH);
+  }
 });
 
 // --- Manifest-dependent tests ------------------------------------------------

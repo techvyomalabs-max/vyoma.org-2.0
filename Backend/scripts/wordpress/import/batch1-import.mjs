@@ -72,7 +72,14 @@ import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { BlogCategoryModel } from '../../../src/modules/blog/blogCategory.model.js';
 import { sanitizeBlogBody } from '../../../src/modules/blog/sanitizeBody.js';
-import { isAlreadySafeImageHost, loadBlogImageManifest, buildImageUrlMap, resolveLocalMediaUrl } from './blogImageManifest.js';
+import {
+  isAlreadySafeImageHost,
+  loadBlogImageManifest,
+  buildImageUrlMap,
+  resolveLocalMediaUrl,
+  loadProductionImageUrlMap,
+  buildProductionImageUrlMap,
+} from './blogImageManifest.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -343,12 +350,21 @@ export function parseWxr(wxrPath) {
 // (sanitizeBlogBody(), called afterward and unmodified, is still the only
 // thing that can ultimately remove an unmapped/unsafe <img>, exactly as it
 // always has).
-export function rewriteInlineImages(bodyHtml, postSlug, inlineMap, { devImagePreview, devImagePreviewPort } = {}) {
+export function rewriteInlineImages(bodyHtml, postSlug, inlineMap, { devImagePreview, devImagePreviewPort, productionUrlMap } = {}) {
   const issues = [];
   if (!bodyHtml) return { html: bodyHtml, issues };
 
   const html = bodyHtml.replace(/<img([^>]*?)\ssrc="([^"]+)"([^>]*)>/gi, (full, before, src, after) => {
     if (isAlreadySafeImageHost(src)) return full; // already safe everywhere — never touched
+
+    // Task 7F.7: a verified production URL (e.g. a real S3 object URL) is
+    // resolved BEFORE the dev-preview path below, and used regardless of
+    // --dev-image-preview — a real https production URL is safe to persist
+    // in every environment, exactly like an already-safe-host URL above.
+    const productionUrl = productionUrlMap ? productionUrlMap.get(`${postSlug}|${src}`) : null;
+    if (productionUrl) {
+      return `<img${before} src="${productionUrl}"${after}>`;
+    }
 
     const row = inlineMap ? inlineMap.get(`${postSlug}|${src}`) : null;
     if (!row) {
@@ -382,17 +398,24 @@ export function rewriteInlineImages(bodyHtml, postSlug, inlineMap, { devImagePre
 // (01_Yoga_Bundle.jpg) is classified "inline" in the manifest, not
 // "featured" — it has no distinct featured-image attachment of its own,
 // and this function must not invent one (see Task 7F's resolved finding).
-export function resolveFeaturedImage(postSlug, featuredByPostSlug) {
+export function resolveFeaturedImage(postSlug, featuredByPostSlug, productionUrlMap) {
   const row = featuredByPostSlug ? featuredByPostSlug.get(postSlug) : null;
   if (!row) return { featuredImage: null, issues: [] };
-  if (!isAlreadySafeImageHost(row.originalUrl)) {
-    // Not expected with the current, reviewed manifest (every known
-    // featured row is vyoma.org-hosted) — handled explicitly rather than
-    // assumed, per "do not silently strip images or fall back to localhost
-    // URLs" for anything destined to be treated as production-safe.
-    return { featuredImage: null, issues: [`Featured image for "${postSlug}" is not from an already-safe host and has no verified production mapping: ${row.originalUrl}`] };
+  if (isAlreadySafeImageHost(row.originalUrl)) {
+    return { featuredImage: { url: row.originalUrl, alt: null }, issues: [] };
   }
-  return { featuredImage: { url: row.originalUrl, alt: null }, issues: [] };
+  // Task 7F.7: not expected with the current, reviewed manifest (every
+  // known featured row today is vyoma.org-hosted), but handled explicitly
+  // for the same reason the inline path is: a verified production URL
+  // (e.g. a real S3 object URL) is checked before giving up, and used
+  // regardless of --dev-image-preview.
+  const productionUrl = productionUrlMap ? productionUrlMap.get(`${postSlug}|${row.originalUrl}`) : null;
+  if (productionUrl) {
+    return { featuredImage: { url: productionUrl, alt: null }, issues: [] };
+  }
+  // Per "do not silently strip images or fall back to localhost URLs" for
+  // anything destined to be treated as production-safe.
+  return { featuredImage: null, issues: [`Featured image for "${postSlug}" is not from an already-safe host and has no verified production mapping: ${row.originalUrl}`] };
 }
 
 // ---------------------------------------------------------------------------
@@ -406,7 +429,7 @@ export function resolveFeaturedImage(postSlug, featuredByPostSlug) {
 // behavior: no inline image is ever rewritten, featuredImage is always
 // null. It is only ever populated by main() below, from a loaded manifest.
 export function toBlogPostRecord(post, imageContext = {}) {
-  const { inlineMap = null, featuredByPostSlug = null, devImagePreview = false, devImagePreviewPort = null } = imageContext;
+  const { inlineMap = null, featuredByPostSlug = null, devImagePreview = false, devImagePreviewPort = null, productionUrlMap = null } = imageContext;
   const finalSlug = SLUG_OVERRIDES.get(post.oldSlug) || post.oldSlug;
 
   // Keyed by the FINAL slug, not post.oldSlug: the real, reviewed manifest
@@ -420,6 +443,7 @@ export function toBlogPostRecord(post, imageContext = {}) {
   const { html: imageMappedBody, issues: inlineImageIssues } = rewriteInlineImages(post.bodyHtml, finalSlug, inlineMap, {
     devImagePreview,
     devImagePreviewPort,
+    productionUrlMap,
   });
 
   // Blocker B (Task 7C): every body passes through the app's own, already
@@ -437,7 +461,7 @@ export function toBlogPostRecord(post, imageContext = {}) {
   // Same FINAL-slug key as above — the manifest's "featured" rows for
   // what-is-samskrtam/why-samskrtam/how-samskrtam are also keyed by the
   // final, not the percent-encoded, slug.
-  const { featuredImage, issues: featuredImageIssues } = resolveFeaturedImage(finalSlug, featuredByPostSlug);
+  const { featuredImage, issues: featuredImageIssues } = resolveFeaturedImage(finalSlug, featuredByPostSlug, productionUrlMap);
 
   return {
     slug: finalSlug,
@@ -852,7 +876,37 @@ async function main() {
     return;
   }
   const { inlineMap, featuredByPostSlug } = buildImageUrlMap(manifest);
-  const imageContext = { inlineMap, featuredByPostSlug, devImagePreview, devImagePreviewPort: env.port };
+
+  // Task 7F.7: a separate, optional production image URL map — absent by
+  // default (same .local-media/ gitignore convention as the manifest
+  // above) until an operator populates it after a real, verified upload
+  // (see Task 7F.6's audit). Loaded and validated here, before any database
+  // connection, same as the manifest above; a malformed file is a loud
+  // abort, an absent one is simply "no production mappings available yet"
+  // and changes nothing about today's behavior.
+  let productionManifest = null;
+  try {
+    productionManifest = loadProductionImageUrlMap();
+  } catch (err) {
+    console.error('\nABORT: the production image URL map exists but is malformed:', err.message);
+    process.exitCode = 1;
+    return;
+  }
+  const { productionUrlMap, invalidRows: invalidProductionRows } = buildProductionImageUrlMap(productionManifest);
+  if (invalidProductionRows.length) {
+    console.log(
+      `\n[WARNING] Ignoring ${invalidProductionRows.length} production image URL map entr${invalidProductionRows.length === 1 ? 'y' : 'ies'} ` +
+        `with a missing/unsafe field (postSlug/originalUrl must be strings; productionUrl must be https):`
+    );
+    for (const r of invalidProductionRows) console.log(' -', JSON.stringify(r));
+  }
+  console.log(
+    productionUrlMap.size
+      ? `[OK] Loaded ${productionUrlMap.size} production image URL mapping(s).`
+      : '[OK] No production image URL mappings loaded (none configured yet — expected until a verified upload is recorded).'
+  );
+
+  const imageContext = { inlineMap, featuredByPostSlug, devImagePreview, devImagePreviewPort: env.port, productionUrlMap };
 
   const blogRecords = parsed.blogPosts.map((p) => toBlogPostRecord(p, imageContext));
   const allImageIssues = blogRecords.flatMap((r) => r.imageIssues);

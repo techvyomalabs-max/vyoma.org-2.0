@@ -32,6 +32,7 @@ export const NAV = [
     children: [
       { label: 'Collaterals', href: '/credibility/collaterals', pending: true },
       { label: 'Annual Reports', href: '/credibility/annual-reports' },
+      { label: 'Audit Reports', href: '/credibility/audit-reports' },
       { label: 'Social Impact Report', href: '/credibility/social-impact-report' },
       { label: 'Compliances & Registrations', href: '/credibility/compliances-registrations' },
       { label: 'Awards & Recognition', href: '/credibility/awards-recognition' },

@@ -60,25 +60,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import mongoose from 'mongoose';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { RedirectModel } from '../../../src/modules/redirects/redirect.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { sanitizeLegalBody } from '../../../src/modules/content/sanitizeLegalBody.js';
-// Task 7H.1: this script connects via connectDb()/env.mongodbUri (the same
-// ambient configuration the real server uses) and, unlike batch1-import.mjs
-// and panchatantra-redirect-migration.mjs, never checked the resulting
-// connection against the standing-rules-protected database name. Reusing
-// batch1-import.mjs's own exported guard here (rather than duplicating the
-// PROTECTED_DB_NAMES/assertSafeDatabaseTarget logic a third time) keeps a
-// single source of truth for "what is the protected name" across every
-// write-capable importer. Importing this module is safe: its own
-// isDirectCliInvocation guard means main() never runs as an import side
-// effect (confirmed by batch1-import.mjs's own header comment and its test
-// file, which imports it the same way).
-import { assertSafeDatabaseTarget } from './batch1-import.mjs';
+// Task 7H.1 first reused batch1-import.mjs's own exported guard here. Task
+// 7H.2 moved that guard into a shared, independently-owned module
+// (migrationDb.mjs, now used by every write-capable migration script, not
+// just this one and batch1-import.mjs) and imports it from there directly.
+import { connectToMigrationDb } from './migrationDb.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -314,9 +306,8 @@ async function main() {
     return;
   }
 
-  await connectDb();
+  const dbName = await connectToMigrationDb();
   try {
-    const dbName = assertSafeDatabaseTarget(mongoose.connection);
     console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
 
     // ---- Baseline: Content -------------------------------------------------

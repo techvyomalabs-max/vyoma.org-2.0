@@ -66,7 +66,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { connectToMigrationDb } from './migrationDb.mjs';
+import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -132,10 +134,9 @@ async function main() {
   console.log(`[OK] Manifest self-check passed: ${totalRows} patron rows across ${Object.keys(PATRON_TIER_ROWS).length} tiers, ${PATRON_TESTIMONIAL_GALLERY.length} testimonial images, ${PATRON_MATCHING_PARTNERS.length} matching partners.`);
   console.log('      Per-tier:', JSON.stringify(Object.fromEntries(Object.entries(PATRON_TIER_ROWS).map(([k, v]) => [k, v.length]))));
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const doc = await ContentModel.findOne({ type: ABOUT_TYPE }).lean();
     const errors = [];
     if (!doc) errors.push(`No Content document found for type "${ABOUT_TYPE}".`);
@@ -288,7 +289,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

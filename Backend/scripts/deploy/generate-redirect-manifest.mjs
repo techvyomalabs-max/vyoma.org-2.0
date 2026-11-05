@@ -25,9 +25,17 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../src/config/db.js';
+import { disconnectDb } from '../../src/config/db.js';
+// Task 7H.2: this script is READ-ONLY against MongoDB (see the file header),
+// but the standing protection on vyoma_migration_dryrun covers reads too --
+// "must never be read, written, reset, or reseeded" -- so it needs the same
+// guard every write-capable WordPress migration script now uses, via the
+// same shared, independently-owned module (this file lives under
+// scripts/deploy/, not scripts/wordpress/import/, hence the different
+// relative path to the same module).
+import { connectToMigrationDb } from '../wordpress/import/migrationDb.mjs';
 import { RedirectModel } from '../../src/modules/redirects/redirect.model.js';
 import { resolveRedirect } from '../../src/modules/redirects/resolveRedirect.js';
 
@@ -91,10 +99,9 @@ async function main() {
   console.log('Redirect manifest generator — READ-ONLY against MongoDB, writes local files only');
   console.log('='.repeat(72));
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const redirects = await RedirectModel.find({}).lean();
     console.log(`[OK] Read ${redirects.length} Redirect document(s).`);
 
@@ -198,7 +205,10 @@ function buildCloudFrontFunctionSource(map, ruleCount) {
   );
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

@@ -51,7 +51,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { connectToMigrationDb } from './migrationDb.mjs';
+import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
 // Per instruction, backups for this batch go outside the repo entirely.
@@ -241,10 +243,9 @@ async function main() {
   const totalLeadership = EXPECTED_BOARD + EXPECTED_ADVISORS + EXPECTED_COMMITTEE + EXPECTED_CORE_TEAM_IMAGES;
   console.log(`[OK] Manifest self-check passed: ${totalLeadership} leadership/core-team images (${EXPECTED_BOARD} Board + ${EXPECTED_ADVISORS} Advisors + ${EXPECTED_COMMITTEE} Committee + ${EXPECTED_CORE_TEAM_IMAGES} Core Team), ${EXPECTED_AWARDS} award images.`);
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const errors = [];
     const aboutDoc = await ContentModel.findOne({ type: ABOUT_TYPE }).lean();
     const credDoc = await ContentModel.findOne({ type: CREDIBILITY_TYPE }).lean();
@@ -436,7 +437,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

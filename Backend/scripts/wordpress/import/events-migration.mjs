@@ -41,7 +41,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { connectToMigrationDb } from './migrationDb.mjs';
+import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -131,10 +133,9 @@ async function main() {
   console.log('Note:', EXCLUDED_EVENT_NOTE);
   console.log('='.repeat(72));
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const docs = {};
     const errors = [];
     for (const type of MEDIA_CONTENT_TYPES) {
@@ -271,7 +272,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

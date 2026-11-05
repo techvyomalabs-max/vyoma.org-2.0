@@ -18,7 +18,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { connectToMigrationDb } from './migrationDb.mjs';
+import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { sanitizeLegalBody } from '../../../src/modules/content/sanitizeLegalBody.js';
 
@@ -84,10 +86,9 @@ async function main() {
   const olCount = { privacy: (corrected.privacy.match(/<ol start=/g) || []).length, terms: (corrected.terms.match(/<ol start=/g) || []).length };
   console.log(`[OK] Re-derived BODY: privacy ${corrected.privacy.length} chars (${olCount.privacy} <ol start> tags), terms ${corrected.terms.length} chars (${olCount.terms} <ol start> tags).`);
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const docs = {};
     for (const slug of LEGAL_SLUGS) {
       const type = TYPE_OF_SLUG[slug];
@@ -141,7 +142,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

@@ -64,10 +64,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import mongoose from 'mongoose';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
 import { env } from '../../../src/config/env.js';
+// Task 7H.2: assertSafeDatabaseTarget now lives in the shared migrationDb.mjs
+// (used by every write-capable migration script, not just this one) --
+// imported here for this file's own internal use and re-exported below so
+// every existing import of it from THIS file (tests, batch2-import.mjs)
+// keeps working unchanged. connectToMigrationDb() wraps connectDb() itself,
+// so this file no longer imports connectDb() directly.
+import { connectToMigrationDb, assertSafeDatabaseTarget } from './migrationDb.mjs';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { BlogCategoryModel } from '../../../src/modules/blog/blogCategory.model.js';
@@ -142,24 +148,10 @@ const MEDIA_CONTENT_TYPES = ['pages/media', 'media'];
 // the standing-rules-protected dry-run database, regardless of what
 // MONGODB_URI happens to be configured to at invocation time. Checked by
 // database NAME only (never the full connection string, which could carry
-// credentials) — see assertSafeDatabaseTarget() below, called immediately
-// after every connectDb() in this file, before any query or write.
-const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
-
-// Aborts (throws) if the active mongoose connection's database name is on
-// the protected list. Takes a mongoose connection object (not a URI string)
-// so nothing resembling a credential is ever inspected, logged, or printed
-// — only the database name, exactly like connectDb()'s own existing
-// never-log-the-connection-string convention.
-export function assertSafeDatabaseTarget(connection) {
-  const dbName = connection?.name || connection?.db?.databaseName || null;
-  if (dbName && PROTECTED_DB_NAMES.has(dbName)) {
-    throw new Error(
-      `Refusing to proceed: the active database ("${dbName}") is on this script's protected list and must never be read, written, reset, or reseeded by this importer.`
-    );
-  }
-  return dbName;
-}
+// credentials) — see assertSafeDatabaseTarget() (./migrationDb.mjs), called
+// immediately after every connectDb() in this file, before any query or
+// write. (Task 7H.2: moved to migrationDb.mjs; re-exported just below.)
+export { assertSafeDatabaseTarget };
 
 // Task 7C.1: a STRONGER, allow-list-style guard for automated integration
 // tests specifically -- unlike assertSafeDatabaseTarget() above (a
@@ -746,9 +738,8 @@ async function runFixMediaSync(wxrPath, commit) {
   const featuredRecords = homeSlider.map(toMediaTestimonialRecord);
   const allRecords = old.map(toMediaAllTestimonialRecord);
 
-  await connectDb();
+  const dbName = await connectToMigrationDb();
   try {
-    const dbName = assertSafeDatabaseTarget(mongoose.connection);
     console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
 
     const mediaErrors = await assertMediaBaseline();
@@ -928,9 +919,8 @@ async function main() {
     console.log('\n[OK] Every required image has a usable mapping for the selected image mode.');
   }
 
-  await connectDb();
+  const dbName = await connectToMigrationDb();
   try {
-    const dbName = assertSafeDatabaseTarget(mongoose.connection);
     console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
 
     const baseline = await classifyBaselineState(finalSlugs, realCategoryNames);

@@ -28,11 +28,20 @@
 //                                                           after the same
 //                                                           validation
 //                                                           passes.
-import mongoose from 'mongoose';
 import { pathToFileURL } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
 import { RedirectModel } from '../../../src/modules/redirects/redirect.model.js';
+// Task 7H.2: previously a self-contained, narrow blocklist guard duplicated
+// here rather than imported from batch1-import.mjs (an unrelated module for
+// an unrelated content type -- importing a cross-cutting safety helper from
+// it would have been an unrelated coupling this narrowly-scoped script had
+// no reason to introduce). That objection no longer applies now that the
+// guard lives in its own small, purpose-built, independently-owned module
+// used by every write-capable migration script -- re-exported below so any
+// existing import of it from THIS file (this file's own test) keeps working
+// unchanged.
+import { connectToMigrationDb, assertSafeDatabaseTarget } from './migrationDb.mjs';
 
 export const PANCHATANTRA_REDIRECT = {
   fromPath: '/media/blog/how-the-pancatantra-teaches-without-teaching',
@@ -43,22 +52,7 @@ export const PANCHATANTRA_REDIRECT = {
     'Task 6I-B/7D/7F). Permanently redirected per the Task 7F content-owner-approved Decision 3.',
 };
 
-// Self-contained, narrow blocklist guard — deliberately NOT imported from
-// Backend/scripts/wordpress/import/batch1-import.mjs (an unrelated module
-// for an unrelated content type; importing a cross-cutting safety helper
-// from it would be an unrelated coupling this narrowly-scoped script has no
-// reason to introduce). Same convention, same protected name, same
-// never-log-the-connection-string rule.
-const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
-export function assertSafeDatabaseTarget(connection) {
-  const dbName = connection?.name || connection?.db?.databaseName || null;
-  if (dbName && PROTECTED_DB_NAMES.has(dbName)) {
-    throw new Error(
-      `Refusing to proceed: the active database ("${dbName}") is on this script's protected list and must never be read, written, reset, or reseeded by this migration.`
-    );
-  }
-  return dbName;
-}
+export { assertSafeDatabaseTarget };
 
 // Insert-only via $setOnInsert — idempotent, matching this project's
 // established overwrite-protection convention (Task 6I-B/6I-B3/7C). A
@@ -90,9 +84,8 @@ async function main() {
   console.log('Intended record:', PANCHATANTRA_REDIRECT);
   console.log('='.repeat(72));
 
-  await connectDb();
+  const dbName = await connectToMigrationDb();
   try {
-    const dbName = assertSafeDatabaseTarget(mongoose.connection);
     console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
 
     const existing = await RedirectModel.findOne({ fromPath: PANCHATANTRA_REDIRECT.fromPath }).lean();

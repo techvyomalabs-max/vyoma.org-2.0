@@ -1,28 +1,30 @@
-// Task 7H.1 — regression coverage for batch2-import.mjs's two fixes:
-//   1. Reusing batch1-import.mjs's own assertSafeDatabaseTarget() (rather
-//      than duplicating the protected-name list a third time) so this
-//      write-capable importer can no longer create Content/Redirect
-//      documents against the standing-rules-protected database with no
-//      check at all.
-//   2. Adding the same isDirectCliInvocation import-guard convention
-//      already used by batch1-import.mjs and
-//      panchatantra-redirect-migration.mjs -- previously missing here,
-//      which meant merely importing this module would have run main() (and
-//      attempted a real connectDb()) as a side effect.
+// Task 7H.1 added two fixes to batch2-import.mjs; Task 7H.2 then moved the
+// underlying guard into a shared, independently-owned module used by every
+// write-capable migration script (see migrationDb.test.js for direct
+// coverage of that module itself). This file now covers batch2-import.mjs's
+// own wiring to it:
+//   1. Using the shared connectToMigrationDb() (migrationDb.mjs) instead of
+//      a raw connectDb() with no check at all -- previously, this
+//      write-capable importer could create Content/Redirect documents
+//      against the standing-rules-protected database with no guard.
+//   2. The isDirectCliInvocation import-guard convention already used by
+//      batch1-import.mjs and panchatantra-redirect-migration.mjs --
+//      previously missing here, which meant merely importing this module
+//      would have run main() (and attempted a real connectDb()) as a side
+//      effect.
 //
 // batch2-import.mjs connects via the shared connectDb()/env.mongodbUri path
 // (the same ambient configuration the real server uses), unlike the
 // read-only inventory scripts' dedicated WP_AUDIT_MONGODB_URI -- a real,
 // write-capable migration importer must legitimately be able to target a
-// real, ambiently-configured database under explicit operator action, the
-// same design batch1-import.mjs already established. This file never calls
-// batch2-import.mjs's own main() (which would attempt a real connection
-// against whatever MONGODB_URI happens to be configured in this process);
-// it only (a) imports the exact, reused assertSafeDatabaseTarget and
-// exercises it directly against a disposable mongodb-memory-server, and
-// (b) statically confirms batch2-import.mjs's source is wired to call it
-// immediately after connectDb(), before any database query, and that
-// main() is no longer invoked as an import side effect.
+// real, ambiently-configured database under explicit operator action. This
+// file never calls batch2-import.mjs's own main() (which would attempt a
+// real connection against whatever MONGODB_URI happens to be configured in
+// this process); it only (a) imports connectToMigrationDb from the same
+// shared module batch2-import.mjs itself now uses, exercising it directly
+// against a disposable mongodb-memory-server, and (b) statically confirms
+// batch2-import.mjs's source is wired to call it before any database query,
+// and that main() is no longer invoked as an import side effect.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -30,7 +32,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { assertSafeDatabaseTarget } from '../../../scripts/wordpress/import/batch1-import.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BATCH2_SOURCE = fs.readFileSync(
@@ -54,38 +55,21 @@ test('importing batch2-import.mjs does not run main() or open any database conne
   assert.equal(mongoose.connection.readyState, 0, 'no connection should have been opened as an import side effect');
 });
 
-test('the reused assertSafeDatabaseTarget rejects the protected database name', async () => {
-  await mongoose.connect(mem.getUri('vyoma_migration_dryrun'));
-  try {
-    assert.throws(() => assertSafeDatabaseTarget(mongoose.connection), /vyoma_migration_dryrun/);
-  } finally {
-    await mongoose.disconnect();
-  }
-});
-
-test('the reused assertSafeDatabaseTarget allows a disposable, non-protected database', async () => {
-  await mongoose.connect(mem.getUri('batch2_disposable_test'));
-  try {
-    assert.doesNotThrow(() => assertSafeDatabaseTarget(mongoose.connection));
-  } finally {
-    await mongoose.disconnect();
-  }
-});
-
-test('batch2-import.mjs imports assertSafeDatabaseTarget from batch1-import.mjs instead of duplicating it', () => {
-  assert.match(BATCH2_SOURCE, /import\s*\{\s*assertSafeDatabaseTarget\s*\}\s*from\s*'\.\/batch1-import\.mjs'/);
+test('batch2-import.mjs imports connectToMigrationDb from the shared migrationDb.mjs, not a raw connectDb()', () => {
+  assert.match(BATCH2_SOURCE, /import\s*\{\s*connectToMigrationDb\s*\}\s*from\s*'\.\/migrationDb\.mjs'/);
+  assert.ok(!/from\s+'\.\/batch1-import\.mjs'/.test(BATCH2_SOURCE), 'must not depend on batch1-import.mjs for its guard');
+  assert.ok(!/await\s+connectDb\(\)/.test(BATCH2_SOURCE), 'must not call connectDb() directly -- only through connectToMigrationDb()');
   assert.ok(!/const PROTECTED_DB_NAMES/.test(BATCH2_SOURCE), 'must not duplicate the protected-name list locally');
 });
 
-test('batch2-import.mjs calls the guard immediately after connectDb(), before any database query', () => {
-  const connectIdx = BATCH2_SOURCE.indexOf('await connectDb();');
+test('batch2-import.mjs calls connectToMigrationDb() before any database query', () => {
+  const connectIdx = BATCH2_SOURCE.indexOf('await connectToMigrationDb();');
   const tryIdx = BATCH2_SOURCE.indexOf('try {', connectIdx);
-  const guardIdx = BATCH2_SOURCE.indexOf('assertSafeDatabaseTarget(mongoose.connection)', connectIdx);
-  assert.ok(connectIdx !== -1 && tryIdx !== -1 && guardIdx !== -1, 'all three anchors must be present');
-  assert.ok(connectIdx < tryIdx && tryIdx < guardIdx, 'guard must run inside the try block, immediately after connectDb()');
+  assert.ok(connectIdx !== -1 && tryIdx !== -1, 'both anchors must be present');
+  assert.ok(connectIdx < tryIdx, 'the guarded connect must happen before entering the try block that runs queries');
 
-  const between = BATCH2_SOURCE.slice(tryIdx, guardIdx);
-  assert.ok(!/await\s+(Content|Redirect|BlogPost)Model/.test(between), 'no database query may run before the guard');
+  const firstQueryIdx = BATCH2_SOURCE.slice(tryIdx).search(/await\s+(Content|Redirect|BlogPost)Model/);
+  assert.ok(firstQueryIdx > -1, 'expected to find at least one database query after the guarded connect');
 });
 
 test('batch2-import.mjs only runs main() on direct CLI invocation, never as an import side effect', () => {

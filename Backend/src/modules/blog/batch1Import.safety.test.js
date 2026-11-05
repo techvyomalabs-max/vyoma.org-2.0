@@ -429,26 +429,32 @@ test('assertDisposableTestDatabase accepts a connection that genuinely matches t
   assert.doesNotThrow(() => assertDisposableTestDatabase(mongoose.connection, mem));
 });
 
-// Point 3: --fix-media-sync must go through the same connectDb() ->
-// assertSafeDatabaseTarget() sequence as the main importer path. Running
-// runFixMediaSync() end-to-end isn't exercised here (it calls connectDb()
-// itself, which this suite deliberately never invokes -- see the file
-// header), so this is a narrow, static regression check: if a future edit
-// ever added a new connectDb() call site, or detached the guard from an
-// existing one, this test fails instead of silently losing coverage.
-test('every connectDb() call site in batch1-import.mjs is immediately followed by assertSafeDatabaseTarget()', async () => {
+// Point 3: --fix-media-sync must go through the same guarded-connection
+// sequence as the main importer path. Running runFixMediaSync() end-to-end
+// isn't exercised here (it calls connectToMigrationDb() itself, which this
+// suite deliberately never invokes -- see the file header), so this is a
+// narrow, static regression check: if a future edit ever added a new,
+// unguarded connectDb() call site, this test fails instead of silently
+// losing coverage.
+//
+// Task 7H.2: batch1-import.mjs no longer calls connectDb() +
+// assertSafeDatabaseTarget() as two separate statements at each call site --
+// both are now combined inside migrationDb.mjs's connectToMigrationDb(),
+// which this file calls instead. That guarantee is therefore baked into the
+// shared helper itself (exercised directly by migrationDb.test.js), not
+// something a call site here could accidentally detach from. This test now
+// confirms two things: this file has exactly the expected two call sites to
+// the guarded helper, and it never bypasses it with a raw, unguarded
+// connectDb() call of its own.
+test('batch1-import.mjs connects to MongoDB only through the shared, guarded connectToMigrationDb()', async () => {
   const fs = await import('node:fs');
   const sourcePath = new URL('../../../scripts/wordpress/import/batch1-import.mjs', import.meta.url);
   const source = fs.readFileSync(sourcePath, 'utf8');
-  const connectCalls = [...source.matchAll(/await connectDb\(\);/g)];
+  const guardedCalls = [...source.matchAll(/await connectToMigrationDb\(\);/g)];
   // One in main() (the full importer path), one in runFixMediaSync() -- if
-  // this count ever changes, the window-based check below should be
-  // revisited alongside it.
-  assert.equal(connectCalls.length, 2, 'expected exactly two connectDb() call sites (main() and runFixMediaSync())');
-  for (const m of connectCalls) {
-    const after = source.slice(m.index, m.index + 300);
-    assert.ok(/assertSafeDatabaseTarget\(/.test(after), 'expected assertSafeDatabaseTarget() to immediately follow this connectDb() call');
-  }
+  // this count ever changes, that's worth a deliberate look.
+  assert.equal(guardedCalls.length, 2, 'expected exactly two connectToMigrationDb() call sites (main() and runFixMediaSync())');
+  assert.ok(!/\bawait connectDb\(\)/.test(source), 'must not call connectDb() directly anywhere -- only through connectToMigrationDb()');
 });
 
 // Point 4: document, without touching, the 5 real posts whose inline images

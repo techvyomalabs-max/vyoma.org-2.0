@@ -33,7 +33,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { connectToMigrationDb } from './migrationDb.mjs';
+import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
 const BACKUP_DIR = 'C:\\Users\\Dell\\vyoma-migration-backups';
@@ -84,10 +86,9 @@ async function main() {
   }
   console.log(`[OK] Manifest self-check passed: ${EXPECTED_COUNT} target images, excluded names correctly absent.`);
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const errors = [];
     const doc = await ContentModel.findOne({ type: ABOUT_TYPE });
     if (!doc) throw new Error(`No Content document found for type "${ABOUT_TYPE}".`);
@@ -191,7 +192,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nFATAL:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nFATAL:', err);
+    process.exitCode = 1;
+  });
+}

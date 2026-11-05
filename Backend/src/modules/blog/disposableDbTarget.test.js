@@ -34,6 +34,16 @@ const REDIRECT_MANIFEST_SOURCE = fs.readFileSync(
   path.resolve(__dirname, '../../../scripts/wordpress/inventory/blog-redirect-manifest.mjs'),
   'utf8'
 );
+// Task 7H.1: the same guard was extended to these two scripts, which had the
+// identical hardcoded-protected-URI-with-no-guard pattern.
+const MEDIA_INVENTORY_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../../scripts/wordpress/inventory/blog-media-inventory.mjs'),
+  'utf8'
+);
+const VERIFY_MEDIA_SYNC_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../../scripts/wordpress/inventory/verify-media-sync.mjs'),
+  'utf8'
+);
 
 test('WP_AUDIT_ENV_VAR is the expected, dedicated variable name', () => {
   assert.equal(WP_AUDIT_ENV_VAR, 'WP_AUDIT_MONGODB_URI');
@@ -76,6 +86,28 @@ test('accepts a syntactically valid, non-protected database target', () => {
   assert.equal(result, 'mongodb://127.0.0.1:27017/some_other_db');
 });
 
+// Task 7H.1: the guard cannot verify a target is genuinely disposable, so it
+// additionally requires a loopback host, closing the gap where a
+// non-protected-NAMED but real, remote, persistent cluster would otherwise
+// have been accepted.
+test('rejects a non-protected database name on a non-loopback (remote) host', () => {
+  assert.throws(
+    () => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://some-real-cluster.example.com:27017/some_other_db' }),
+    /not a recognized loopback address/
+  );
+});
+
+test('accepts localhost and ::1 as loopback hosts, in addition to 127.0.0.1', () => {
+  assert.equal(
+    requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://localhost:27017/some_other_db' }),
+    'mongodb://localhost:27017/some_other_db'
+  );
+  assert.equal(
+    requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://[::1]:27017/some_other_db' }),
+    'mongodb://[::1]:27017/some_other_db'
+  );
+});
+
 test('accepts and returns a real disposable mongodb-memory-server URI unchanged', async () => {
   const mem = await MongoMemoryServer.create();
   try {
@@ -115,4 +147,25 @@ test('blog-redirect-manifest.mjs no longer hardcodes the protected connection st
   );
   assert.match(REDIRECT_MANIFEST_SOURCE, /import\s*\{\s*requireDisposableDbTarget\s*\}\s*from\s*'\.\/disposableDbTarget\.mjs'/);
   assert.match(REDIRECT_MANIFEST_SOURCE, /const MONGO_URI = requireDisposableDbTarget\(\);/);
+});
+
+// Task 7H.1 — the same two scripts flagged as "additional migration scripts
+// with similar risk" in Task 7H's final report, now fixed with the same
+// shared guard.
+test('blog-media-inventory.mjs no longer hardcodes the protected connection string', () => {
+  assert.ok(
+    !HARDCODED_PROTECTED_URI_ASSIGNMENT.test(MEDIA_INVENTORY_SOURCE),
+    'MONGO_URI must not be assigned a literal, hardcoded connection string'
+  );
+  assert.match(MEDIA_INVENTORY_SOURCE, /import\s*\{\s*requireDisposableDbTarget\s*\}\s*from\s*'\.\/disposableDbTarget\.mjs'/);
+  assert.match(MEDIA_INVENTORY_SOURCE, /const MONGO_URI = requireDisposableDbTarget\(\);/);
+});
+
+test('verify-media-sync.mjs no longer hardcodes the protected connection string', () => {
+  assert.ok(
+    !HARDCODED_PROTECTED_URI_ASSIGNMENT.test(VERIFY_MEDIA_SYNC_SOURCE),
+    'MONGO_URI must not be assigned a literal, hardcoded connection string'
+  );
+  assert.match(VERIFY_MEDIA_SYNC_SOURCE, /import\s*\{\s*requireDisposableDbTarget\s*\}\s*from\s*'\.\/disposableDbTarget\.mjs'/);
+  assert.match(VERIFY_MEDIA_SYNC_SOURCE, /const MONGO_URI = requireDisposableDbTarget\(\);/);
 });

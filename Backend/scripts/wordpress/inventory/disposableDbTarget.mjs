@@ -1,8 +1,9 @@
 // Shared safety guard for read-only WordPress-migration inventory scripts
-// (blog-parity-audit.mjs, blog-redirect-manifest.mjs) that connect to
-// MongoDB directly, outside the app's own connectDb()/env.js configuration.
+// (blog-parity-audit.mjs, blog-redirect-manifest.mjs, blog-media-inventory.mjs,
+// verify-media-sync.mjs) that connect to MongoDB directly, outside the app's
+// own connectDb()/env.js configuration.
 //
-// Task 7H: both scripts previously hardcoded
+// Task 7H: these scripts previously hardcoded
 // 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun' -- the exact,
 // standing-rules-protected database -- with no guard at all, unlike
 // scripts/wordpress/import/batch1-import.mjs and
@@ -18,11 +19,28 @@
 //      if it matches the protected list -- entirely from the URI string,
 //      BEFORE any connection is attempted. mongoose.connect() is never
 //      called with an unvalidated URI.
+//   3. (Task 7H.1) Requiring the target host to be a loopback address. This
+//      does NOT prove the target is genuinely disposable -- a persistent
+//      database can run on localhost too, and this guard cannot inspect
+//      what's actually inside a database before connecting to it. What it
+//      closes is the more dangerous gap left by step 2 alone: nothing
+//      stopped WP_AUDIT_MONGODB_URI from being pointed at a real, remote,
+//      persistent cluster (e.g. a MongoDB Atlas SRV string) that simply
+//      isn't named the one protected name. Every legitimate use of these
+//      scripts to date has targeted a local MongoDB instance
+//      (127.0.0.1:27017) or a local mongodb-memory-server instance (also
+//      loopback) -- this makes that the enforced floor, not just the
+//      convention. See requireDisposableDbTarget()'s own comment for the
+//      honest limit of what this can and cannot guarantee.
 //
-// Never inspects or logs anything beyond the database name, consistent with
-// this project's existing never-log-the-connection-string convention (see
-// batch1-import.mjs's assertSafeDatabaseTarget()).
+// Never inspects or logs anything beyond the database name and host,
+// consistent with this project's existing never-log-the-connection-string
+// convention (see batch1-import.mjs's assertSafeDatabaseTarget()).
 const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
+// Node's URL parser reports an IPv6 literal's hostname WITH its brackets
+// (e.g. "[::1]", not "::1") -- both forms are listed so a URI written either
+// way is still recognized correctly.
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
 export const WP_AUDIT_ENV_VAR = 'WP_AUDIT_MONGODB_URI';
 
 // Extracts the database name from a MongoDB connection string using the
@@ -45,8 +63,23 @@ export function extractDatabaseName(uri) {
 
 // Reads WP_AUDIT_MONGODB_URI from the given environment object (defaults to
 // process.env) and returns it once validated. Throws -- making no network
-// connection of any kind -- if the variable is missing/blank, or if it
-// resolves to a protected database name.
+// connection of any kind -- if the variable is missing/blank, if it resolves
+// to a protected database name, or if its host is not a loopback address.
+//
+// Honest limit (Task 7H.1 review): this function can reliably reject the one
+// specific protected database NAME, and can reliably reject a non-loopback
+// host. It CANNOT reliably confirm a target is genuinely disposable --
+// nothing about a connection string proves whether the database behind it
+// is an ephemeral throwaway or a real, persistent local database an
+// operator cares about. A stronger, allow-list-style check exists
+// (batch1-import.mjs's assertDisposableTestDatabase()) but only works by
+// verifying the connection resolves to a specific, already-running
+// MongoMemoryServer instance supplied by the caller -- appropriate for an
+// automated test harness, not for a real CLI invocation against a real
+// local MongoDB an operator stood up by hand. Genuine disposability for a
+// real run is therefore still a human/process guarantee (use a database you
+// are prepared to discard), not something this function can verify by
+// itself.
 export function requireDisposableDbTarget(envObject = process.env) {
   const rawUri = envObject[WP_AUDIT_ENV_VAR];
   if (!rawUri || !String(rawUri).trim()) {
@@ -61,6 +94,15 @@ export function requireDisposableDbTarget(envObject = process.env) {
   if (dbName && PROTECTED_DB_NAMES.has(dbName)) {
     throw new Error(
       `Refusing to proceed: ${WP_AUDIT_ENV_VAR} resolves to the database "${dbName}", which is on this project's protected list and must never be read, written, reset, or reseeded by this script.`
+    );
+  }
+
+  const { hostname } = new URL(uri);
+  if (!LOOPBACK_HOSTS.has(hostname)) {
+    throw new Error(
+      `Refusing to proceed: ${WP_AUDIT_ENV_VAR} targets host "${hostname}", which is not a recognized loopback address ` +
+        '(127.0.0.1, localhost, or ::1). This guard cannot verify a database is genuinely disposable, so it requires a ' +
+        'local MongoDB instance and refuses any remote/persistent-cluster-looking target.'
     );
   }
 

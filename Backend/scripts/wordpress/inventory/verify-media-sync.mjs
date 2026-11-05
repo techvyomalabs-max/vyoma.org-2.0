@@ -1,7 +1,13 @@
 // Read-only verification only. No writes, no seed, no publish/restore.
+//
+// Task 7H.1: requires an explicit WP_AUDIT_MONGODB_URI (see
+// ./disposableDbTarget.mjs) instead of a hardcoded database target -- this
+// script used to connect directly to the standing-rules-protected
+// vyoma_migration_dryrun database with no guard at all.
 import mongoose from 'mongoose';
+import { requireDisposableDbTarget } from './disposableDbTarget.mjs';
 
-const MONGO_URI = 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun';
+const MONGO_URI = requireDisposableDbTarget();
 const FIELDS = [
   'TESTIMONIALS_FEATURED', 'TESTIMONIALS_ALL', 'EVENT_CATEGORIES', 'UPCOMING_EVENTS',
   'PAST_EVENTS', 'GALLERY_ALBUMS', 'NEWSLETTER_LATEST', 'NEWSLETTER_ARCHIVE', 'NEWSLETTER_SPECIAL',

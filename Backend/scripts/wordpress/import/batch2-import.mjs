@@ -59,13 +59,26 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import mongoose from 'mongoose';
 
 import { connectDb, disconnectDb } from '../../../src/config/db.js';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { RedirectModel } from '../../../src/modules/redirects/redirect.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { sanitizeLegalBody } from '../../../src/modules/content/sanitizeLegalBody.js';
+// Task 7H.1: this script connects via connectDb()/env.mongodbUri (the same
+// ambient configuration the real server uses) and, unlike batch1-import.mjs
+// and panchatantra-redirect-migration.mjs, never checked the resulting
+// connection against the standing-rules-protected database name. Reusing
+// batch1-import.mjs's own exported guard here (rather than duplicating the
+// PROTECTED_DB_NAMES/assertSafeDatabaseTarget logic a third time) keeps a
+// single source of truth for "what is the protected name" across every
+// write-capable importer. Importing this module is safe: its own
+// isDirectCliInvocation guard means main() never runs as an import side
+// effect (confirmed by batch1-import.mjs's own header comment and its test
+// file, which imports it the same way).
+import { assertSafeDatabaseTarget } from './batch1-import.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -302,9 +315,10 @@ async function main() {
   }
 
   await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
   try {
+    const dbName = assertSafeDatabaseTarget(mongoose.connection);
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+
     // ---- Baseline: Content -------------------------------------------------
     const existingPrivacy = await ContentModel.findOne({ type: 'pages/privacy' }).lean();
     const existingTerms = await ContentModel.findOne({ type: 'pages/terms' }).lean();
@@ -388,7 +402,17 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+// Task 7H.1: same import-guard convention as batch1-import.mjs and
+// panchatantra-redirect-migration.mjs -- main() only runs on direct CLI
+// invocation, never as a side effect of importing this module. Previously
+// missing here, which meant this script's exported helpers (and the
+// assertSafeDatabaseTarget reuse above) could never be safely imported by a
+// test file -- importing it would have attempted a real connectDb() and,
+// under --commit-equivalent conditions, real writes, immediately.
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

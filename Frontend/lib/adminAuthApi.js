@@ -5,7 +5,18 @@
 // Frontend); the browser only attaches it when the request explicitly opts
 // in like this, and the Backend's CORS config already allows it
 // (Backend/src/app.js: `cors({ origin: env.corsOrigin, credentials: true })`).
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+//
+// Task 7L: this file never had a mock-data branch (every admin action
+// always made a real network call) -- but resolving a missing
+// NEXT_PUBLIC_API_BASE_URL to a hardcoded localhost:4000 URL would, in a
+// misconfigured production deployment, send a real visitor's browser
+// trying to reach ITS OWN localhost, failing in a confusing way rather than
+// with a clear configuration error. resolveApiBase() (lib/apiConfig.js)
+// throws a clear, non-sensitive error in that case instead; the
+// localhost:4000 fallback is preserved for local development only.
+import { resolveApiBase } from './apiConfig.js';
+
+const API_BASE = resolveApiBase(process.env, 'http://localhost:4000/api/v1');
 
 // Wraps the raw `fetch` so a network-level failure (backend unreachable —
 // connection refused, DNS failure, etc.) surfaces as a clear, consistent

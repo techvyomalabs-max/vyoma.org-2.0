@@ -9,6 +9,7 @@
 // never be labeled "Download" — the HTML `download` attribute has no
 // effect on it regardless, so doing so just reopens the same viewer,
 // silently mislabeling it as a downloadable document.
+import { resolveApiBase } from './apiConfig.js';
 export function isPdfUrl(url) {
   return /\.pdf($|\?)/i.test(url || '');
 }
@@ -21,7 +22,12 @@ export function isPdfUrl(url) {
 // fetch the file server-side and stream it back with a real
 // Content-Disposition: attachment header, which is the only way to force a
 // save-as download of a cross-origin file.
+// Task 7L: uses the same resolveApiBase() every other caller uses
+// (lib/apiConfig.js) instead of its own independent copy of the
+// `process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1'` fallback -- in
+// production, a missing configuration now throws a clear error instead of
+// silently building a download link against the wrong origin.
 export function downloadUrlFor(url) {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+  const apiBase = resolveApiBase();
   return `${apiBase}/public/documents/download?url=${encodeURIComponent(url)}`;
 }

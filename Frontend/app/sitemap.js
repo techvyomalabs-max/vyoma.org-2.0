@@ -1,4 +1,4 @@
-import { DONATION_SCHEMES } from '@/lib/mockData/donate';
+import { getDonationSchemes } from '@/services/donationService';
 import { getBlogPosts } from '@/services/blogService';
 
 const BASE_URL = 'https://vyoma.org';
@@ -54,7 +54,17 @@ export default async function sitemap() {
     priority: path === '/' ? 1 : 0.7,
   }));
 
-  const schemeEntries = DONATION_SCHEMES.map((s) => ({
+  // Task 7L: this previously imported DONATION_SCHEMES directly and
+  // unconditionally from lib/mockData/donate -- always mock data, in every
+  // environment, regardless of NEXT_PUBLIC_API_BASE_URL -- unlike the blog
+  // entries below, which were already correctly migrated off static mock
+  // data onto the real, properly-gated getBlogPosts() service. Routing this
+  // through the same getDonationSchemes() service (already covered by
+  // shouldUseMockData(), see lib/apiConfig.js) means a production sitemap
+  // now reflects real, current donation schemes instead of a permanently
+  // frozen mock list.
+  const schemes = await getDonationSchemes();
+  const schemeEntries = schemes.map((s) => ({
     url: `${BASE_URL}/donate/${s.slug}`,
     lastModified: now,
     changeFrequency: 'monthly',

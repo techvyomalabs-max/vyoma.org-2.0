@@ -1,10 +1,13 @@
 import { draftMode } from 'next/headers';
-import { apiRequest, apiRequestWithMeta } from './apiClient';
+import { apiRequest, apiRequestWithMeta } from './apiClient.js';
+import { shouldUseMockData } from '../lib/apiConfig.js';
 
 // Phase E: Blog moved off the generic Content model onto its own dedicated
 // model/API (see Backend/src/modules/blog). This now calls /public/blog
 // directly instead of getPublicContent('blog', ...).
-const USE_MOCK = process.env.NEXT_PUBLIC_API_BASE_URL == null;
+//
+// Task 7L: see lib/apiConfig.js -- shouldUseMockData() is categorically
+// false in production, called fresh on every invocation.
 
 function mockPost(p) {
   return {
@@ -38,7 +41,7 @@ async function previewSecretParam() {
 }
 
 export async function getBlogPosts({ category, tag, page = 1, limit = 9 } = {}) {
-  if (USE_MOCK) {
+  if (shouldUseMockData()) {
     const mod = await import('@/lib/mockData/blog');
     let items = mod.BLOG_POSTS.map(mockPost).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
     if (category) items = items.filter((p) => p.categories.includes(category));
@@ -61,7 +64,7 @@ export async function getBlogPosts({ category, tag, page = 1, limit = 9 } = {}) 
 }
 
 export async function getBlogCategories() {
-  if (USE_MOCK) {
+  if (shouldUseMockData()) {
     const mod = await import('@/lib/mockData/blog');
     return [...new Set(mod.BLOG_POSTS.flatMap((p) => p.categories))].sort();
   }
@@ -69,7 +72,7 @@ export async function getBlogCategories() {
 }
 
 export async function getBlogPost(slug) {
-  if (USE_MOCK) {
+  if (shouldUseMockData()) {
     const mod = await import('@/lib/mockData/blog');
     const found = mod.BLOG_POSTS.find((p) => p.slug === slug);
     return found ? mockPost(found) : null;

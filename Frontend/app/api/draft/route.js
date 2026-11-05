@@ -1,6 +1,11 @@
 import { draftMode } from 'next/headers';
+import { resolveApiBase } from '../../../lib/apiConfig.js';
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+// Task 7L: see lib/adminAuthApi.js's identical fix for the rationale --
+// resolveApiBase() throws a clear configuration error in production if
+// NEXT_PUBLIC_API_BASE_URL is missing, instead of silently resolving to a
+// localhost URL that would fail confusingly in a real deployment.
+const BACKEND_BASE = resolveApiBase(process.env, 'http://localhost:4000/api/v1');
 
 // Enables Next.js Draft Mode. Redesigned (see security checkpoint): the
 // browser proves it's a logged-in admin by sending its OWN short-lived

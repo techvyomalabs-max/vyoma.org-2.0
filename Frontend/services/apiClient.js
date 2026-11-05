@@ -1,8 +1,16 @@
 // Shared fetch wrapper for the future Express API (LLD Section 13: API Conventions).
 // Base path /api/v1, JSON in/out, { success, data, meta? } / { success, code, message } shapes.
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+//
+// Task 7L: resolveApiBase() is called fresh inside each function below
+// (never cached at module-import time) so it always reflects the real,
+// current environment -- and, in production, throws a clear configuration
+// error instead of silently using mock data or a default URL when
+// NEXT_PUBLIC_API_BASE_URL is missing. See lib/apiConfig.js for the full
+// rationale.
+import { resolveApiBase } from '../lib/apiConfig.js';
 
 export async function apiRequest(path, { method = 'GET', body } = {}) {
+  const API_BASE = resolveApiBase();
   let res;
   try {
     res = await fetch(`${API_BASE}${path}`, {
@@ -38,6 +46,7 @@ export async function apiRequest(path, { method = 'GET', body } = {}) {
 // the first public reader that needs it. apiRequest itself is left
 // untouched so every existing caller is unaffected.
 export async function apiRequestWithMeta(path, { method = 'GET', body } = {}) {
+  const API_BASE = resolveApiBase();
   let res;
   try {
     res = await fetch(`${API_BASE}${path}`, {

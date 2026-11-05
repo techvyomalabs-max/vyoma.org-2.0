@@ -5,11 +5,18 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/credibility',
-  title: 'Credibility',
-  description: 'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
-});
+export async function generateMetadata() {
+  const { SEO } = await getCredibilityContent();
+  const meta = pageMetadata({
+    path: '/credibility',
+    title: SEO?.title || 'Credibility',
+    description:
+      SEO?.description ||
+      'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function CredibilityPage() {
   const { CREDIBILITY_SECTIONS: SECTIONS_ALL } = await getCredibilityContent();

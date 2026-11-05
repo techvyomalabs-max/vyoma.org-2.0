@@ -6,11 +6,18 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/about',
-  title: 'About',
-  description: "Founded in Bengaluru, Vyoma Linguistic Labs Foundation has grown into the organisation behind India's largest free Sanskrit e-learning ecosystem, serving over a lakh learners worldwide.",
-});
+export async function generateMetadata() {
+  const { SEO } = await getAboutContent();
+  const meta = pageMetadata({
+    path: '/about',
+    title: SEO?.title || 'About',
+    description:
+      SEO?.description ||
+      "Founded in Bengaluru, Vyoma Linguistic Labs Foundation has grown into the organisation behind India's largest free Sanskrit e-learning ecosystem, serving over a lakh learners worldwide.",
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function AboutPage() {
   const { EXPLORE_MORE_LINKS: LINKS_ALL } = await getAboutContent();

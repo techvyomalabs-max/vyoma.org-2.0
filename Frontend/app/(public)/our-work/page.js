@@ -5,11 +5,18 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/our-work',
-  title: 'Our Work',
-  description: "From phonetics to applied AI, from children's value education to advanced research — the Seven Schools of Vyoma, backed by scholarship and built to reach millions.",
-});
+export async function generateMetadata() {
+  const { SEO } = await getOurWorkContent();
+  const meta = pageMetadata({
+    path: '/our-work',
+    title: SEO?.title || 'Our Work',
+    description:
+      SEO?.description ||
+      "From phonetics to applied AI, from children's value education to advanced research — the Seven Schools of Vyoma, backed by scholarship and built to reach millions.",
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function OurWorkPage() {
   const { SCHOOLS } = await getOurWorkContent();

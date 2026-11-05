@@ -32,19 +32,28 @@ const { createRoot } = await import('react-dom/client');
 // one of the hook's own returned actions, e.g. `.publish()`) so React
 // batches and flushes the resulting state updates the same way a real
 // browser event handler would.
-export async function renderHook(useHookFn) {
+//
+// `initialArg` (optional) is passed through to `useHookFn(arg)` as its sole
+// argument and can be changed across renders via the returned `rerender()`
+// — for a hook like useMobileNav(pathname) whose own behavior specifically
+// depends on that argument CHANGING on an already-mounted instance (e.g. a
+// `useEffect` keyed on it), not just on its initial value. Existing callers
+// that pass a zero-arg closure (e.g. `() => useContentEditor(type)`) are
+// unaffected: `useHookFn(undefined)` behaves identically to `useHookFn()`
+// for a function that ignores its arguments.
+export async function renderHook(useHookFn, initialArg) {
   const container = document.createElement('div');
   document.body.appendChild(container);
   const root = createRoot(container);
   const state = { current: undefined };
 
-  function Host() {
-    state.current = useHookFn();
+  function Host({ arg }) {
+    state.current = useHookFn(arg);
     return null;
   }
 
   await React.act(async () => {
-    root.render(React.createElement(Host));
+    root.render(React.createElement(Host, { arg: initialArg }));
   });
 
   return {
@@ -57,6 +66,15 @@ export async function renderHook(useHookFn) {
     async act(fn) {
       await React.act(async () => {
         await fn(state.current);
+      });
+      return state.current;
+    },
+    // Re-renders the same hook instance with a new argument (e.g. a changed
+    // pathname), then returns its up-to-date return value once any
+    // resulting effect has flushed.
+    async rerender(newArg) {
+      await React.act(async () => {
+        root.render(React.createElement(Host, { arg: newArg }));
       });
       return state.current;
     },

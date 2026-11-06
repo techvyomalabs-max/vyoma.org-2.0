@@ -25,9 +25,22 @@ function ensureDir() {
 
 // Guards against ever being wired into a real deployment by accident --
 // callers (the processing service) check this before using the adapter at
-// all, and app.js only mounts the matching static route outside production.
+// all, and app.js only mounts the matching static route in development.
+//
+// Task 7T.3 (Fix 3): was `env.nodeEnv !== 'production'`, which permitted
+// this on STAGING too -- a real, confirmed Render incompatibility: Render's
+// filesystem is ephemeral (a redeploy/restart wipes anything
+// saveProcessedImage() wrote, contradicting this very feature's own "still
+// reachable after a backend restart" design intent below), and the returned
+// URL is unconditionally hardcoded to `http://localhost:${env.port}` (see
+// saveProcessedImage() below), which is meaningless to a real staging
+// visitor's browser. Requiring exactly 'development' closes both problems:
+// staging now gets the same clear "disabled outside development" refusal
+// production already had. Existing S3 behavior (s3.adapter.js,
+// isS3Configured()) is untouched by this change -- that adapter has its own,
+// separate, environment-independent configuration check.
 export function isLocalDevStorageAllowed() {
-  return env.nodeEnv !== 'production';
+  return env.nodeEnv === 'development';
 }
 
 export function saveProcessedImage(buffer) {

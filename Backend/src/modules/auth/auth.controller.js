@@ -34,10 +34,39 @@ const REFRESH_COOKIE_NAME = 'vyoma_refresh';
 // 4.x's clearCookie computes Expires from a passed maxAge instead of forcing
 // an immediate past expiry (it logs its own deprecation warning for this),
 // so logout must never receive maxAge here.
-function refreshCookieAttributes() {
+// Task 7T.3 (Fix 2): `secure` was `env.nodeEnv === 'production'` -- staging
+// is served over real HTTPS too (see Backend/STAGING.md), so a staging
+// cookie was being issued WITHOUT the Secure flag despite the connection
+// already being HTTPS, a real (if narrower) hardening gap. Excluding only
+// 'development' (where the app is typically served over plain HTTP)
+// closes this for staging with no change to production's existing
+// behavior. HttpOnly is unchanged -- still always true.
+//
+// SameSite is deliberately left at 'lax' here, not changed to 'none': this
+// project's current architecture (Vercel frontend + a planned Render
+// backend) has refreshCookieAttributes() working correctly today only when
+// both are placed under the same registrable parent domain (e.g. both under
+// *.vyoma.org) -- Lax cookies ARE sent on cross-subdomain requests, just not
+// on genuinely cross-SITE ones. If the frontend and backend ever end up on
+// different registrable domains instead (e.g. a Vercel-assigned domain
+// talking to a Render-assigned domain), SameSite=Lax will silently stop
+// attaching this cookie to cross-site fetch/XHR calls, breaking session
+// persistence with no visible error. Resolving that requires an explicit
+// decision -- either keep both services on custom subdomains of one parent
+// domain (no code change needed), or deliberately move to SameSite=None
+// (which also requires Secure=true, already satisfied here, AND a real
+// CSRF-protection mechanism to replace the cross-site request protection
+// SameSite=Lax currently provides for free -- confirmed by inspection that
+// this codebase has no separate CSRF token mechanism today. That decision is
+// out of scope for this fix.
+// Exported (Task 7T.3) so its environment-dependent attributes can be
+// regression-tested directly, without needing a full login/logout HTTP
+// round-trip (which would require a real or disposable database) just to
+// observe a pure, side-effect-free function of env.nodeEnv.
+export function refreshCookieAttributes() {
   return {
     httpOnly: true,
-    secure: env.nodeEnv === 'production',
+    secure: env.nodeEnv !== 'development',
     sameSite: 'lax',
     path: '/api/v1/auth',
   };

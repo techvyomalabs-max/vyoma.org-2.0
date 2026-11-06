@@ -16,9 +16,18 @@ import { createGracefulShutdown } from './shutdown.js';
 // MongoDB, without this module's own auto-run firing a second, real,
 // uncontrolled server startup as a side effect of merely importing it.
 export async function main() {
-  if (env.nodeEnv === 'production' && !isAuthSecretConfigured()) {
+  // Task 7T.3 (Fix 1): was `env.nodeEnv === 'production'` -- staging is a
+  // real, internet-reachable deployment target too (see Backend/STAGING.md),
+  // and the dev-insecure default JWT secrets ('dev-insecure-access-secret' /
+  // 'dev-insecure-refresh-secret', see config/env.js) being usable there was
+  // a genuine auth-bypass risk: anyone who reads this source could forge
+  // valid tokens against a staging deployment that forgot to set these.
+  // Excluding only 'development' (rather than requiring exactly
+  // 'production') closes that gap for staging too, with no change to
+  // production's existing behavior.
+  if (env.nodeEnv !== 'development' && !isAuthSecretConfigured()) {
     throw new Error(
-      'JWT_ACCESS_SECRET / JWT_REFRESH_SECRET must be set in production — refusing to boot with dev-insecure defaults.'
+      'JWT_ACCESS_SECRET / JWT_REFRESH_SECRET must be set outside local development — refusing to boot with dev-insecure defaults.'
     );
   }
 

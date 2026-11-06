@@ -68,9 +68,12 @@ export function createApp() {
   });
 
   // Local-development-only: serves background-removal results written by
-  // localDev.storageAdapter.js. Never mounted in production -- real
-  // deployments use S3 (see s3.adapter.js) once this feature is extended
-  // there, exactly as the comment in that adapter describes.
+  // localDev.storageAdapter.js. Never mounted outside development (Task
+  // 7T.3 Fix 3 tightened this from "never in production" to also exclude
+  // staging, since Render's ephemeral filesystem and this route's
+  // hardcoded localhost URL made it unsafe there too) -- real deployments
+  // use S3 (see s3.adapter.js) once this feature is extended there, exactly
+  // as the comment in that adapter describes.
   //
   // Mounted at /local-media/processed (not just /local-media): LOCAL_MEDIA_DIR
   // already resolves to the "processed" subdirectory, and saveProcessedImage()

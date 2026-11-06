@@ -201,14 +201,18 @@ test('the motivating compound scenario is now closed: production can no longer b
   assert.equal(resolveNodeEnv({ NODE_ENV: 'production' }), 'production');
 });
 
-test('server.js still refuses to boot in production without JWT secrets configured, and validates configuration before connecting to the database or listening', () => {
+test('server.js refuses to boot outside development without JWT secrets configured (Task 7T.3 Fix 1: staging is no longer exempt), and validates configuration before connecting to the database or listening', () => {
   const serverSource = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
-  assert.match(serverSource, /env\.nodeEnv === 'production' && !isAuthSecretConfigured\(\)/);
+  assert.match(serverSource, /env\.nodeEnv !== 'development' && !isAuthSecretConfigured\(\)/);
+  // The old, narrower 'production'-only check must be gone, not merely
+  // supplemented -- otherwise a stray leftover copy could reintroduce the
+  // exact staging blind spot this fix closes.
+  assert.ok(!/env\.nodeEnv === 'production' && !isAuthSecretConfigured\(\)/.test(serverSource));
 
   // Ordering: the JWT-secret check must appear before connectDb(), which
   // must appear before maybeAutoSeedMockContent()/seedRoles()/
   // bootstrapSuperAdmin(), which must appear before app.listen().
-  const jwtCheckIndex = serverSource.indexOf("env.nodeEnv === 'production'");
+  const jwtCheckIndex = serverSource.indexOf("env.nodeEnv !== 'development'");
   const connectDbIndex = serverSource.indexOf('await connectDb()');
   const seedIndex = serverSource.indexOf('maybeAutoSeedMockContent(');
   const bootstrapIndex = serverSource.indexOf('bootstrapSuperAdmin()');

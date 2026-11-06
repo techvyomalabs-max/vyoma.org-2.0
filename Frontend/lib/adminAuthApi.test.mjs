@@ -11,10 +11,15 @@
 // browser's own machine, not the real backend) instead of with a clear
 // configuration error.
 //
-// API_BASE is a module-level constant (computed once at import, matching
-// this file's pre-existing shape) -- each test below re-imports the module
-// with a cache-busting query string so a fresh `API_BASE` is resolved
-// against that test's own process.env.
+// Task 7V.2: API_BASE used to be a module-level constant, computed once at
+// import -- confirmed to crash the entire `next build` for any admin page
+// (even a 'use client' one, which still gets one server-side render pass)
+// that imports this file, since resolveApiBase()'s production-config-error
+// throw ran during Next's build-time module evaluation, not at request
+// time. Each exported function now calls getApiBase() itself, fresh, so
+// each test below re-imports the module with a cache-busting query string
+// and the resolved base URL still reflects that test's own process.env --
+// just computed per-call now, not once at import.
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -40,9 +45,19 @@ function freshImport() {
   return import(`./adminAuthApi.js?t=${importCounter}`);
 }
 
-test('production with missing API configuration: importing the module throws a clear configuration error, before any admin action can even be attempted', async () => {
+test('production with missing API configuration: importing the module succeeds (this must never crash the build)', async () => {
   setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: undefined });
-  await assert.rejects(() => freshImport(), /NEXT_PUBLIC_API_BASE_URL/);
+  const mod = await freshImport();
+  assert.equal(typeof mod.login, 'function', 'the module must import cleanly regardless of API configuration');
+});
+
+test('production with missing API configuration: an actual admin action still fails with a clear configuration error, before any network request', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: undefined });
+  const { login } = await freshImport();
+  global.fetch = async () => {
+    throw new Error('must not be called -- a missing API URL must be caught before any network request');
+  };
+  await assert.rejects(() => login('admin@vyoma.org', 'password'), /NEXT_PUBLIC_API_BASE_URL/);
 });
 
 test('development with no API URL configured: falls back to the local Backend default, preserved for local dev', async () => {

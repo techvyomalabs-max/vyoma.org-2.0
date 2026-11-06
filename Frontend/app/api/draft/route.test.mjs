@@ -39,9 +39,31 @@ function draftRequest(path = '/about') {
   });
 }
 
-test('production with missing API configuration: importing the route throws a clear configuration error', async () => {
+// Task 7V.2 — replaces a prior version of this test that asserted importing
+// the route itself threw when NEXT_PUBLIC_API_BASE_URL was missing. That was
+// exactly the bug this task fixed: resolveApiBase() used to be called at
+// module scope, so Next.js evaluating this route's module during `next
+// build`'s page-data-collection phase crashed the ENTIRE build, confirmed by
+// direct testing (Task 7V.1) -- not just this one route failing at request
+// time, which is the correct, intended behavior.
+test('production with missing API configuration: importing the route succeeds (this must never crash the build)', async () => {
   setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: undefined });
-  await assert.rejects(() => freshImport(), /NEXT_PUBLIC_API_BASE_URL/);
+  const mod = await freshImport();
+  assert.equal(typeof mod.POST, 'function', 'the module must import cleanly regardless of API configuration');
+});
+
+test('production with missing API configuration: POST still fails clearly, with no localhost or mock-data fallback, and never reaches fetch', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: undefined });
+  const { POST } = await freshImport();
+  global.fetch = async () => {
+    throw new Error('must not be called -- a missing API URL must be caught before any network request');
+  };
+
+  const res = await POST(draftRequest());
+  assert.equal(res.status, 500);
+  const body = await res.json();
+  assert.match(body.error, /NEXT_PUBLIC_API_BASE_URL/);
+  assert.doesNotMatch(body.error, /localhost/i, 'the error must never mention a localhost fallback');
 });
 
 test('valid production API configuration: verifies the session against the real configured backend, never localhost', async () => {

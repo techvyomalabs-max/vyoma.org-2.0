@@ -1,17 +1,22 @@
 import { getDonationSchemes } from '@/services/donationService';
 import { getBlogPosts } from '@/services/blogService';
 
-// Task 7S.1: without this, the sitemap is statically cached indefinitely
-// from build time (confirmed empirically in Task 7R.1's runtime
-// verification: it kept serving build-time entries even after the backend
-// went down). An hourly revalidation window is a deliberate, proportionate
-// choice for a crawler-facing artifact -- not full force-dynamic, since a
-// sitemap has no payment/CMS-correctness stakes the way the donation pages
-// do, and regenerating it on literally every crawl would be wasteful. This
-// is time-based: a newly published blog post or donation scheme becomes
-// ELIGIBLE for inclusion once this window elapses and the route is next
-// requested, not necessarily the instant it is published.
-export const revalidate = 3600;
+// Task 7S.1 originally set `revalidate = 3600` here instead of full
+// force-dynamic, since a sitemap has no payment/CMS-correctness stakes the
+// way the donation pages do. Task 7V.2 replaced it with force-dynamic:
+// `revalidate` alone still lets Next.js statically generate this route
+// during `next build`, and this file's own catch blocks below (by design,
+// Task 7S.1) deliberately RE-THROW a genuine misconfiguration error (e.g.
+// NEXT_PUBLIC_API_BASE_URL missing) rather than silently producing an
+// incomplete sitemap -- confirmed by direct testing that this combination
+// crashes the entire production build the moment that var is genuinely
+// unset, not just this one route. force-dynamic defers generation to
+// request time instead (consistent with every other page fixed in this
+// lineage, Task 7R.1's donate pages included): the build can never fail
+// because of this file, and a genuine misconfiguration is still loud --
+// just at request time, when a crawler/visitor actually hits /sitemap.xml,
+// instead of at build time for every deploy.
+export const dynamic = 'force-dynamic';
 
 const BASE_URL = 'https://vyoma.org';
 

@@ -23,17 +23,16 @@ test('no longer imports DONATION_SCHEMES directly from mock data, unconditionall
   assert.match(SOURCE, /import \{ getDonationSchemes \} from '@\/services\/donationService';/);
 });
 
-// Task 7S.1 — without this, the sitemap is cached indefinitely from build
-// time (confirmed empirically in Task 7R.1's runtime pass: it kept serving
-// build-time entries even with the backend down). This is a source check,
-// not a behavioral one: Next.js's time-based revalidation itself is runtime
-// infrastructure this plain node:test harness cannot simulate -- what a
-// newly published blog post or donation scheme actually becoming eligible
-// for inclusion after this window elapses depends on Next.js's own ISR
-// mechanism working correctly, not on anything sitemap.js's own code does
-// differently per call.
-test('declares export const revalidate = 3600 (hourly revalidation, not full force-dynamic)', () => {
-  assert.match(SOURCE, /export const revalidate = 3600;/, 'sitemap.js must revalidate periodically so newly published content becomes eligible for inclusion without a full rebuild');
+// Task 7V.2 — replaces Task 7S.1's `revalidate = 3600` with force-dynamic:
+// `revalidate` alone still let Next.js statically generate this route
+// during `next build`, and this file's own deliberate re-throw of a genuine
+// misconfiguration error (see below) then crashed the entire production
+// build the moment NEXT_PUBLIC_API_BASE_URL was genuinely unset -- confirmed
+// by direct testing. force-dynamic defers generation to request time, same
+// as every other page in this fix lineage, so the build can never fail
+// because of this file.
+test("declares export const dynamic = 'force-dynamic' (the build must never fail because of this file)", () => {
+  assert.match(SOURCE, /export const dynamic = ['"]force-dynamic['"];/, 'sitemap.js must defer generation to request time so a missing/unreachable backend cannot fail `next build`');
 });
 
 const ORIGINAL_ENV = { NODE_ENV: process.env.NODE_ENV, NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL };

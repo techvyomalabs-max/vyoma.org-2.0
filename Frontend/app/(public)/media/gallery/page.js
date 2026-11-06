@@ -1,9 +1,15 @@
-import { getGalleryAlbums } from '@/services/mediaService';
+import { getGalleryAlbums, getGalleryVideos } from '@/services/mediaService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { GalleryLightbox } from '@/components/sections/media/GalleryLightbox';
 import { pageMetadata } from '@/lib/seo';
+
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
 
 export const metadata = pageMetadata({
   path: '/media/gallery',
@@ -12,7 +18,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function GalleryPage() {
-  const albums = await getGalleryAlbums();
+  const [albums, videos] = await Promise.all([getGalleryAlbums(), getGalleryVideos()]);
 
   return (
     <div className="font-sans">
@@ -20,7 +26,7 @@ export default async function GalleryPage() {
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[1200px]">
-          <GalleryLightbox albums={albums} />
+          <GalleryLightbox albums={albums} videos={videos} />
         </div>
       </section>
 

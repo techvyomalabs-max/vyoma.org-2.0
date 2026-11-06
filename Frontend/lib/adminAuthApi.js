@@ -5,7 +5,33 @@
 // Frontend); the browser only attaches it when the request explicitly opts
 // in like this, and the Backend's CORS config already allows it
 // (Backend/src/app.js: `cors({ origin: env.corsOrigin, credentials: true })`).
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+//
+// Task 7L: this file never had a mock-data branch (every admin action
+// always made a real network call) -- but resolving a missing
+// NEXT_PUBLIC_API_BASE_URL to a hardcoded localhost:4000 URL would, in a
+// misconfigured production deployment, send a real visitor's browser
+// trying to reach ITS OWN localhost, failing in a confusing way rather than
+// with a clear configuration error. resolveApiBase() (lib/apiConfig.js)
+// throws a clear, non-sensitive error in that case instead; the
+// localhost:4000 fallback is preserved for local development only.
+import { resolveApiBase } from './apiConfig.js';
+
+// Task 7V.2: was a module-level `const API_BASE = resolveApiBase(...)`.
+// Next.js evaluates a module's top-level code during `next build`'s
+// page-data-collection/prerendering pass for ANY page that imports it,
+// including a `'use client'` page (which still gets one server-side render
+// pass to produce its initial HTML) -- confirmed directly: with
+// NEXT_PUBLIC_API_BASE_URL genuinely unset, `/admin/dashboard` and
+// `/admin/audit-logs` (both import this file, via useAdminAuth/
+// AdminAuthContext) crashed the entire build with resolveApiBase()'s
+// intentional production-config-error throw, the identical bug this task
+// fixed in app/api/draft/route.js. Calling it fresh inside each exported
+// function instead means that same clear error is thrown only when a real
+// request actually needs the backend, never at build/import time, and never
+// silently falling back to localhost or mock data.
+function getApiBase() {
+  return resolveApiBase(process.env, 'http://localhost:4000/api/v1');
+}
 
 // Wraps the raw `fetch` so a network-level failure (backend unreachable —
 // connection refused, DNS failure, etc.) surfaces as a clear, consistent
@@ -35,6 +61,7 @@ async function parseResponse(res) {
 }
 
 export async function login(email, password) {
+  const API_BASE = getApiBase();
   const res = await safeFetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     credentials: 'include',
@@ -45,6 +72,7 @@ export async function login(email, password) {
 }
 
 export async function verifyMfa(mfaToken, code) {
+  const API_BASE = getApiBase();
   const res = await safeFetch(`${API_BASE}/auth/login/mfa`, {
     method: 'POST',
     credentials: 'include',
@@ -54,7 +82,34 @@ export async function verifyMfa(mfaToken, code) {
   return parseResponse(res);
 }
 
+// Mandatory-MFA enrollment (e.g. a Super Admin logging in before ever
+// enabling MFA) — a separate pair of endpoints from mfa/setup|verify above,
+// authorized by the short-lived enrollmentToken login() returns instead of a
+// real session (see Backend/.../auth.service.js: signMfaEnrollmentToken).
+export async function enrollMfaSetup(enrollmentToken) {
+  const API_BASE = getApiBase();
+  const res = await safeFetch(`${API_BASE}/auth/mfa/enroll/setup`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enrollmentToken }),
+  });
+  return parseResponse(res);
+}
+
+export async function enrollMfaVerify(enrollmentToken, code) {
+  const API_BASE = getApiBase();
+  const res = await safeFetch(`${API_BASE}/auth/mfa/enroll/verify`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enrollmentToken, code }),
+  });
+  return parseResponse(res);
+}
+
 export async function refreshSession() {
+  const API_BASE = getApiBase();
   const res = await safeFetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
     credentials: 'include',
@@ -64,6 +119,7 @@ export async function refreshSession() {
 
 export async function logoutSession() {
   try {
+    const API_BASE = getApiBase();
     const res = await safeFetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
     return await parseResponse(res);
   } catch {
@@ -79,6 +135,7 @@ export async function logoutSession() {
 // its own multipart Content-Type with boundary, which JSON.stringify-ing it
 // (or forcing application/json) would break.
 export async function authedFetch(path, accessToken, options = {}) {
+  const API_BASE = getApiBase();
   const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const res = await safeFetch(`${API_BASE}${path}`, {
     ...options,
@@ -103,6 +160,7 @@ export async function authedFetch(path, accessToken, options = {}) {
 // admin page that needs it. authedFetch itself is left untouched so every
 // existing caller is unaffected.
 export async function authedFetchWithMeta(path, accessToken, options = {}) {
+  const API_BASE = getApiBase();
   const res = await safeFetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',

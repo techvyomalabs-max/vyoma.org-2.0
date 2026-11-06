@@ -1,6 +1,8 @@
-function KpiGauge() {
+import { getDashboardMetrics, toNumber } from './kpiDashboardData.mjs';
+
+function KpiGauge({ transformedIndividuals }) {
   const N = 40;
-  const current = 124193;
+  const current = toNumber(transformedIndividuals);
   const goal = 1000000;
   const progress = current / goal;
   const cx = 130;
@@ -26,7 +28,7 @@ function KpiGauge() {
           <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.color} strokeWidth="2.5" strokeLinecap="round" />
         ))}
         <text x="130" y="118" textAnchor="middle" className="fill-vyoma-blue font-sans text-[34px] font-bold">
-          124,193
+          {transformedIndividuals}
         </text>
       </svg>
       <div className="mt-0.5 font-sans text-xs text-charcoal/75">
@@ -36,15 +38,8 @@ function KpiGauge() {
   );
 }
 
-function KpiBars() {
-  const bars = [
-    { label: 'Teachers', v: 136 },
-    { label: 'Seva', v: 79 },
-    { label: 'Volunteers', v: 176 },
-    { label: 'Workshops', v: 24 },
-    { label: 'Camps', v: 14 },
-  ];
-  const max = 176;
+function KpiBars({ bars }) {
+  const max = Math.max(...bars.map((b) => b.v), 1);
   return (
     <div>
       <div className="mb-7 font-sans text-[17px] font-bold text-vyoma-blue">The people & work behind Vyoma</div>
@@ -78,7 +73,8 @@ function KpiStat({ value, label }) {
   );
 }
 
-export function KpiDashboard() {
+export function KpiDashboard({ input, impact }) {
+  const metrics = getDashboardMetrics(input, impact);
   return (
     <section className="bg-white px-8 pb-2 pt-10">
       <div
@@ -86,10 +82,10 @@ export function KpiDashboard() {
           sm:grid-cols-2
           lg:grid-cols-[minmax(260px,1.3fr)_minmax(220px,1fr)_minmax(160px,0.9fr)_minmax(160px,0.9fr)]"
       >
-        <KpiBars />
-        <KpiGauge />
-        <KpiStat value="485,680" label="E-Learning Man-Hours" />
-        <KpiStat value="17,841,742" label="Touch-Prints reached" />
+        <KpiBars bars={metrics.bars} />
+        <KpiGauge transformedIndividuals={metrics.transformedIndividuals} />
+        <KpiStat value={metrics.eLearningManHours} label="E-Learning Man-Hours" />
+        <KpiStat value={metrics.touchPrints} label="Touch-Prints reached" />
       </div>
     </section>
   );

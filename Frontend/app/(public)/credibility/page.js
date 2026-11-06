@@ -5,11 +5,24 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/credibility',
-  title: 'Credibility',
-  description: 'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
-});
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const { SEO } = await getCredibilityContent();
+  const meta = pageMetadata({
+    path: '/credibility',
+    title: SEO?.title || 'Credibility',
+    description:
+      SEO?.description ||
+      'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function CredibilityPage() {
   const { CREDIBILITY_SECTIONS: SECTIONS_ALL } = await getCredibilityContent();

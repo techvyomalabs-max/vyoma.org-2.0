@@ -9,6 +9,12 @@ import { pageMetadata } from '@/lib/seo';
 
 // PENDING ROUTE: not in the LLD route table (Phase 1 conflict). Preserved per
 // instruction until final route approval; see lib/navConfig.js.
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/our-work/all',
   title: 'Our Work — Seven Schools & Current Work',

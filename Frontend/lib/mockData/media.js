@@ -16,25 +16,17 @@ export const MEDIA_SECTIONS = [
 
 export const PRESS_PUBLICATIONS = ['The Hindu', 'Udayavani', 'Vijaya Karnataka', 'Kannada Prabha', 'Sudharma', 'Andhra Jyothi'];
 
-export const PRESS_FEATURED = [
-  { pub: 'The Hindu', date: '12 Aug 2026', note: 'A full-page feature on Vyoma’s decade of Sanskrit teaching.' },
-  { pub: 'Udayavani', date: '28 Jul 2026', note: 'Coverage of the rural Sanskrit camp initiative in Karnataka.' },
-  { pub: 'Vijaya Karnataka', date: '15 Jul 2026', note: 'Interview with Vyoma’s founders on preserving the language.' },
-];
-
-export const PRESS_CLIPPINGS = [
-  { pub: 'Kannada Prabha', date: '02 Jul 2026', note: 'Report on the annual scholars’ gathering.' },
-  { pub: 'Sudharma', date: '20 Jun 2026', note: 'Sanskrit-daily coverage of Vyoma’s online courses.' },
-  { pub: 'Andhra Jyothi', date: '08 Jun 2026', note: 'Feature on multimedia Sanskrit learning products.' },
-  { pub: 'The Hindu', date: '25 May 2026', note: 'Op-ed on the role of Sanskrit in modern education.' },
-  { pub: 'Udayavani', date: '11 May 2026', note: 'Photo story from a village teaching camp.' },
-  { pub: 'Vijaya Karnataka', date: '30 Apr 2026', note: 'Note on Vyoma’s volunteer network.' },
-];
+// Real newspaper clipping coverage, grouped exactly as the live WordPress
+// Media page groups them (same headings, same items, same order) — see
+// Backend/scripts/wordpress/import/press-media-migration.mjs for the source
+// mapping. Populated by that migration script; empty here only until it
+// has run against a given database.
+export const PRESS_CLIPPING_SECTIONS = [];
 
 export const PRESS_RADIO = [
-  { title: 'Benefits and Courses of Learning Sanskrit', duration: '3:07' },
-  { title: 'Introduction to Vyoma Labs', duration: '2:24' },
-  { title: 'Sanskrit: A Magic Medicine', duration: '3:10' },
+  { title: 'Benefits and Courses of Learning Sanskrit', duration: '3:07', url: '' },
+  { title: 'Introduction to Vyoma Labs', duration: '2:24', url: '' },
+  { title: 'Sanskrit: A Magic Medicine', duration: '3:10', url: '' },
 ];
 
 // --- Events -----------------------------------------------------------------
@@ -44,12 +36,64 @@ export const EVENT_CATEGORIES = ['All', 'Workshop', 'Talk', 'Meeting', 'Parayana
 export const UPCOMING_EVENTS = [];
 
 export const PAST_EVENTS = [
-  { type: 'Workshop', date: '16 Jul 2026', title: 'Faculty Training Program on Indian Knowledge Systems (MSFDA)', note: 'A training program for college faculty on integrating IKS into teaching.' },
-  { type: 'Talk', date: '28 Jun 2026', title: 'The Relevance of Sanskrit in the Digital Age', note: 'A public talk on why the language still matters for modern learners.' },
-  { type: 'Parayanam', date: '10 Jun 2026', title: 'Ramayana Parayanam and Discourse', note: 'A community recitation and discourse over the course of a weekend.' },
-  { type: 'Meeting', date: '22 May 2026', title: 'Annual Volunteers’ Meet', note: 'Vyoma volunteers gather to review the year and plan ahead.' },
-  { type: 'Vyoma Products', date: '05 May 2026', title: 'Launch of New Multimedia Sanskrit Kit', note: 'Introducing the latest learning product for young students.' },
-  { type: 'General', date: '18 Apr 2026', title: 'Open House at the Vyoma Center', note: 'A day for the public to visit, observe classes, and meet our scholars.' },
+  { type: "Parayanam", date: "23 May 2024 – 16 Jul 2024", title: "Rāma-Sevā-Yātrā in the USA, by ‘Vyoma Sanskrit Brothers’", note: "Dr. Venkatasubramanian and Vid. CA Viswanathan ('Vyoma Sanskrit Brothers') toured the USA (Texas, Bay Area, Boston/NJ/NY) with Rāmāyaṇa recitation, devotional discourses, and talks on Rāmarājya.", imageUrl: "http://vyoma.org/wp-content/uploads/2024/05/USA_MasterFlyer_1920x1080.png", active: true },
+  { type: "Parayanam", date: "21 Mar 2026 – 29 Mar 2026", title: "Śrīmad Vālmīki Rāmāyaṇa Navāha Pārāyaṇa Pravacana Yajñaḥ", note: "A 9-day online Rāmāyaṇa Pārāyaṇa and Pravacana by Dr. Venkatasubramanian P and Dr. Viswanathan P, preceded by a pūrvaṅga-pūjā on 20 March.", imageUrl: "http://vyoma.org/wp-content/uploads/2026/03/Rev-1.jpeg", link: "https://www.sanskritfromhome.org/course-details/SrimadValmikiRamayanaNavahaOnlineParayanaPravacana-49025", active: true },
+  { type: "General", date: "Feb 2026", title: "Swami Parmarthananda, Astika Bhakta Samaj", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/WhatsApp-Image-2026-04-05-at-3.14.10-PM-1.jpeg", active: true },
+  { type: "Vyoma Products", date: "", title: "Website release by Sringeri Jagadguru @ Sringeri", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/image-1-2.png", active: true },
+  { type: "Vyoma Products", date: "", title: "Samarpanam of Vyoma publications to Jagadguru", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/Samarpanam-of-Vyoma-publications-to-Jagadguru-3.jpeg", active: true },
+  { type: "General", date: "Sep 2023", title: "Sri Ramanacharanatirtha Nochur Venkataraman at Narayaneeyam Valedictory function", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/Screenshot-2024-02-06-125159.jpg", active: true },
+  { type: "Vyoma Products", date: "", title: "Release of Vocabulary 1 & 2 @ Udupi by Pejawar Mutt Swamiji", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/image-4.png", active: true },
+  { type: "General", date: "", title: "Sri Ranganji exploring the Bhagavad Gita book of Vyoma", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/bok-fair5.jpeg", active: true },
+  { type: "Meeting", date: "", title: "Meeting with Sri Sri Guruji @ Bangalore", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/image-1.png", active: true },
+  { type: "Meeting", date: "", title: "Fruitful meeting with Swami Baba Ramdev @ Haridwar", imageUrl: "https://vyoma.org/wp-content/uploads/2024/09/Fruitful-meeting-with-Swami-Baba-Ramdev-@-Haridwar.png", active: true },
+  { type: "Vyoma Products", date: "", title: "Bhagavad Gita product release by Swami Tejomayananda @ Pune", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/image-2.png", active: true },
+  { type: "General", date: "Jul 2019", title: "VSB with Swami Brahmananda of Chinmaya Mission", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/104eventimage.jpg", active: true },
+  { type: "General", date: "", title: "Prof. Mani Dravid Sastrigal visits Vyoma stall", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/IMG_20230628_134919-scaled.jpg", active: true },
+  { type: "General", date: "", title: "Sri. Srirama Ghanapati, Veda Bhavanam visits Vyoma stall", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/IMG_20230628_105833-scaled.jpg", active: true },
+  { type: "General", date: "Feb 2023", title: "World conference on Contribution of Indian Knowledge & Sanskrit as Humanity", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/puraskara1.jpeg", active: true },
+  { type: "General", date: "Jul 2022", title: "Surasaraswathi Sabha 50th Anniversary", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Surasaraswathi-Sabha-50th-Anniversary-2.jpeg", active: true },
+  { type: "Talk", date: "Sep 2025", title: "A talk at \"National Seminar on Indian Knowledge Systems – Leadership Lessons from Ancient Indian Wisdom\" in association with IQAC, NSB Academy", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/NSB-Seminar-1.jpg", active: true },
+  { type: "Talk", date: "Oct 2025", title: "Lecture on \"IKS concept – Management Priniciples from the Ramayana\" at Surana College", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Sir.-Vishwam-at-Surana-4.jpeg", active: true },
+  { type: "Talk", date: "Sep 2024", title: "Vedanta Shravana – Essential Vedanta", imageUrl: "https://vyoma.org/wp-content/uploads/2024/09/Vedanta-Shravana-Essential-Vedanta-22-Sep-2024.png", active: true },
+  { type: "General", date: "Jul 2024", title: "Conference about Gurukula shiksha", imageUrl: "https://vyoma.org/wp-content/uploads/2024/09/Conference-about-Gurukula-shiksha-on-6th-July-2024.png", active: true },
+  { type: "Talk", date: "Aug 2024", title: "Yogas in Bhagavad Gita at Yogavijnana", imageUrl: "https://vyoma.org/wp-content/uploads/2024/09/Yogas-in-Bhagavad-Gita-at-Yogavijnana-on-Jul-20th-Aug11th-2024.png", active: true },
+  { type: "Parayanam", date: "Feb 2024", title: "In-person Valmiki Ramayana Navaha Upanyasam at Agastya Gurukulam", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/image-10.png", active: true },
+  { type: "Talk", date: "Nov 2025", title: "Lecture – \"Indian Knowledge System – an Overview\" at MES Institute of Management, Bangalore", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/MES.png", active: true },
+  { type: "Talk", date: "Oct 2025", title: "Keynote speech at Sindhi College on \"Sanskrit Language Lab for University Students\"", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Sindhi-College-2.png", active: true },
+  { type: "Talk", date: "Jan 2024", title: "Online lecture on Unveiling Timeless Insights from Puranas through Indica", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/image-9.png", active: true },
+  { type: "Talk", date: "Sep 2023", title: "Talk on Timeless Gita Endless Bliss at JP Nagar, Bangalore", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/WhatsApp-Image-2023-10-31-at-3.27.53-PM-1.jpeg", active: true },
+  { type: "Talk", date: "2023", title: "Presentation by Viswanathan P during World Sanskrit Conference 2023", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/lectures2.jpeg", active: true },
+  { type: "Talk", date: "2023", title: "Smt. Maheswari presenting in World Sanskrit Conference 2023", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/lectures1.jpeg", active: true },
+  { type: "Talk", date: "", title: "Power of Sanskrit Lecture at Sheshadripuram College", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/Power-of-Sanskrit-Lecture-at-Sheshadripuram-College-2.jpeg", active: true },
+  { type: "General", date: "Dec 2025", title: "2nd Ayurveda World Summit", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/2ND-WORLD-AYURVEDA-SUMMIT.jpeg", active: true },
+  { type: "General", date: "Dec 2025", title: "INCOFYRA conference", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/INCOFYRA.png", active: true },
+  { type: "General", date: "Nov 2025", title: "Vyoma's Participation at Akhila Bharatiyam Adhiveshanam", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/AKHILA-BHARATIYA-ADHIVESHANAM.jpeg", active: true },
+  { type: "General", date: "Nov 2025", title: "Adani Global Indology Conclave", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/ADANI-GLOBAL-INDOLOGY-CONCLAVE.jpeg", active: true },
+  { type: "General", date: "Jun 2025", title: "Vyoma's offerings at 19th World Sanskrit Conference, Kathmandu, Nepal", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/WORLD-SANSKRIT-CONFERENCE-2025-NEPAL.png", active: true },
+  { type: "General", date: "Feb 2024", title: "Vyoma Labs participated in the New Delhi World Book Fair", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/image-12.png", active: true },
+  { type: "General", date: "Nov 2023", title: "Vyoma Stall at Namasmaran", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/image-13.png", active: true },
+  { type: "General", date: "Nov 2023", title: "Vyoma book stall in National seminar on Bharatiya 64 Arts organised by Samskriti Foundation", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/book-fairs.jpeg", active: true },
+  { type: "General", date: "Dec 2018", title: "Bangalore Book Fair", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Bangalore-Book-Fair-1.jpg", active: true },
+  { type: "General", date: "Jan 2018", title: "Vyoma Labs participated in Hindu Spiritual Service Fair", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Hindu-spiritual-service-fair-4.jpg", active: true },
+  { type: "General", date: "", title: "Rama Sivaraman, Chairperson of Vyoma visiting our book stall", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Hindu-spiritual-service-fair-1.jpg", active: true },
+  { type: "General", date: "", title: "Chamrajpete Pratibha Puraskara", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Chamrajpete-Pratibha-Puraskara-4.jpeg", active: true },
+  { type: "General", date: "30 Mar 2026", title: "Prof Ganti Murthy Visit", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Prof-Ganti-Murthy.png", active: true },
+  { type: "General", date: "Feb 2026", title: "Honorable Vice Chancellor Srinivas Varkhedi from CSU", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/HONORABLE-VICE-CHANCELLOR-SRINIVASA-VARKHEDI-of-CSU.jpeg", active: true },
+  { type: "General", date: "Nov 2025", title: "Padmashri Award 2020 recipient Sri Ramakrishnan S from Amar Seva Sangam", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Sri.-Ramakrishnan-from-Amar-Seva-Sangam.png", active: true },
+  { type: "General", date: "Nov 2025", title: "Sree Ram Iyer – COO and Head of Group Capability Centres, visited Vyoma", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Sree-Ram-Iyer-scaled.jpeg", active: true },
+  { type: "General", date: "", title: "Students of Dr. Sowmya Krishnapur visit office", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/visit1.jpeg", active: true },
+  { type: "General", date: "Dec 2023", title: "Visit of Chairman – BKM Sir", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Visit-of-Chairman-BKM-Sir-1.jpg", active: true },
+  { type: "General", date: "Feb 2024", title: "Shri. Yashodeep Deodhar, CEO of 21notes.com visited the Vyoma Office", imageUrl: "https://vyoma.org/wp-content/uploads/2024/03/image-14.png", active: true },
+  { type: "General", date: "Jul 2023", title: "MM Dorbala Prabhakara Sharma visit to office", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/visit3.jpeg", active: true },
+  { type: "General", date: "Dec 2022", title: "Sri Tirunarayanan's visit", imageUrl: "https://vyoma.org/wp-content/uploads/2022/12/Sri-Tirunarayanan_s-visit-1.jpeg", active: true },
+  { type: "General", date: "Jan 2026", title: "BBMP Bhartiya Vidya Bhavan School RTG inauguration", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/BBMP-Bhartiya-Vidya-Bhavan-school-RTG-school-students-enrichment-session-Inauguration.jpeg", active: true },
+  { type: "General", date: "", title: "Enrichment Session at BR hills (RTG-Launch)", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/RTG-Enrichment-Session-at-BR-HIlls-scaled.jpeg", active: true },
+  { type: "General", date: "", title: "Volunteering at Aapatsahaaya Foundation by teaching classes in Tyamagondlu", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/image1-5.png", active: true },
+  { type: "General", date: "", title: "Volunteering at Aapatsahaaya Foundation by teaching classes in Hoskote", imageUrl: "https://vyoma.org/wp-content/uploads/2024/02/image-5.png", active: true },
+  { type: "General", date: "Sep 2020", title: "Collaboration with Shankara Colony", imageUrl: "https://vyoma.org/wp-content/uploads/2023/07/12.jpg", active: true },
+  { type: "Parayanam", date: "Mar 2026", title: "Ramayana Parayana", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Ramayana-Parayana-2026.jpg", active: true },
+  { type: "General", date: "Mar 2026", title: "Holi celebration", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Holi-2026.jpg", active: true },
+  { type: "General", date: "Sep 2025", title: "Navratri Celebration", imageUrl: "https://vyoma.org/wp-content/uploads/2026/04/Navratri-Celebration-1.png", active: true },
 ];
 
 // --- Testimonials -----------------------------------------------------------

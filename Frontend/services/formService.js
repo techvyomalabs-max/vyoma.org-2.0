@@ -1,11 +1,13 @@
-import { apiRequest } from './apiClient';
+import { apiRequest } from './apiClient.js';
+import { shouldUseMockData } from '../lib/apiConfig.js';
 
 // LLD 8.1: POST /api/v1/forms/{formKey}/submissions
 // TODO: remove the mock branch once the Express forms module (LLD Section 8) is live.
-const USE_MOCK = process.env.NEXT_PUBLIC_API_BASE_URL == null;
+// Task 7L: see lib/apiConfig.js -- shouldUseMockData() is categorically
+// false in production.
 
 export async function submitForm(formKey, { values, consent, sourceUrl }) {
-  if (USE_MOCK) {
+  if (shouldUseMockData()) {
     await new Promise((resolve) => setTimeout(resolve, 400));
     return { success: true, submissionId: `mock-${formKey}-${Date.now()}` };
   }

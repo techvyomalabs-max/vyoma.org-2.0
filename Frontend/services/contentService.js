@@ -1,10 +1,14 @@
 import { draftMode } from 'next/headers';
-import { apiRequest } from './apiClient';
+import { apiRequest } from './apiClient.js';
+import { shouldUseMockData } from '../lib/apiConfig.js';
 
 // LLD 7.2: GET /api/v1/public/:type — generic published-content reader.
 // TODO: once the Content module (LLD Section 7) is live, every mock import
 // below is replaced by a call to getPublicContent(type).
-const USE_MOCK = process.env.NEXT_PUBLIC_API_BASE_URL == null;
+//
+// Task 7L: shouldUseMockData() is called fresh on every invocation (never
+// cached at module-import time) and is categorically false in production,
+// regardless of NEXT_PUBLIC_API_BASE_URL -- see lib/apiConfig.js.
 
 // This module only ever runs in a Server Component (confirmed: no 'use
 // client' file imports pageService/contentService) — safe to call
@@ -14,7 +18,7 @@ const USE_MOCK = process.env.NEXT_PUBLIC_API_BASE_URL == null;
 // content.controller.js's `previewSecret` handling) — otherwise identical
 // to a normal visitor's request.
 export async function getPublicContent(type, mockLoader) {
-  if (USE_MOCK) return mockLoader();
+  if (shouldUseMockData()) return mockLoader();
 
   // draftMode() throws when called outside a real request (e.g. from
   // generateStaticParams at build time, which every dynamic-route page using

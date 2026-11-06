@@ -3,15 +3,45 @@ import { getDonationSchemes, getDonationSchemeBySlug } from '@/services/donation
 import { PageHero } from '@/components/sections/PageHero';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { QuickDonate } from '@/components/sections/donate/QuickDonate';
+import { getPublicSchemeFields } from '@/components/sections/donate/donationSchemePublicFields.mjs';
+
+// Task 7S.1: donation schemes can be activated/deactivated at any time via
+// the CMS, and a stale static page would keep showing a since-deactivated
+// scheme as bookable until the next rebuild — force-dynamic makes every
+// scheme page render fresh per request instead. Confirmed empirically (not
+// just from docs) that this coexists cleanly with generateStaticParams
+// below: with force-dynamic set, `next build` still calls
+// generateStaticParams (harmless -- it's the same build-safety net
+// described below) but no longer pre-renders any of the returned slugs as
+// static HTML (confirmed via build output: no per-slug "●" entries are
+// listed, and the route is labeled "ƒ Dynamic"); a live request/response
+// check confirmed no caching headers are present either. No conflict,
+// nothing to resolve.
+export const dynamic = 'force-dynamic';
 
 // Phase D: only ACTIVE schemes are statically pre-rendered — an inactive
 // scheme's page still works (see below), it's just rendered on-demand at
 // request time (Next's default dynamicParams behavior) rather than at
 // build time, since the active-only list is the only one this build step
 // can safely call without auth.
+//
+// Never let a build-time backend hiccup (unreachable API, a transient 5xx,
+// a route briefly missing during a rolling deploy) take down the ENTIRE
+// site build — every other page would fail to deploy too, not just this
+// one. On any failure here, fall back to generating zero scheme pages at
+// build time; every scheme still renders correctly on-demand at request
+// time via Next's default dynamicParams, exactly like an inactive scheme
+// already does today. Retained even though force-dynamic above means its
+// return value no longer affects static generation -- it still serves as a
+// build-time connectivity/safety check consistent with every other page.
 export async function generateStaticParams() {
-  const schemes = await getDonationSchemes();
-  return schemes.map((s) => ({ schemeSlug: s.slug }));
+  try {
+    const schemes = await getDonationSchemes();
+    return schemes.map((s) => ({ schemeSlug: s.slug }));
+  } catch (err) {
+    console.error('[donate/[schemeSlug]] generateStaticParams failed, falling back to on-demand rendering for all schemes:', err.message);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }) {
@@ -31,30 +61,44 @@ export default async function DonationSchemePage({ params }) {
     scheme = await getDonationSchemeBySlug(schemeSlug);
   } catch (err) {
     if (err.status === 404) notFound();
-    throw err;
+    // A transient backend/API failure (not "this scheme doesn't exist")
+    // previously crashed the whole page with an unhandled exception —
+    // same class of bug as the generic /donate page. Render a clear,
+    // honest fallback instead.
+    console.error(`[donate/${schemeSlug}] failed to load scheme:`, err.message);
+    return (
+      <div className="flex flex-col items-center gap-4 bg-white px-8 py-20 text-center font-sans">
+        <h1 className="font-sans text-h2 font-bold text-vyoma-blue">This donation page is temporarily unavailable</h1>
+        <p className="max-w-[480px] font-sans text-[15px] text-charcoal">
+          We couldn&apos;t reach our server just now — this is usually temporary. Please refresh this page in a
+          moment, or contact our team if you&apos;d like help completing your donation another way.
+        </p>
+      </div>
+    );
   }
 
-  const isActive = scheme.status !== 'inactive';
+  const publicScheme = getPublicSchemeFields(scheme);
+  const isActive = publicScheme.status !== 'inactive';
 
   return (
     <div className="font-sans">
-      <PageHero eyebrow="Donate" title={scheme.name} body={scheme.body} />
+      <PageHero eyebrow="Donate" title={publicScheme.name} body={publicScheme.body} />
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[900px]">
           <div className="aspect-[2/1] w-full">
-            <ImagePlaceholder shape="rect" caption={`${scheme.name} — 2:1 image`} />
+            {publicScheme.image?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={publicScheme.image.url} alt={publicScheme.name} className="h-full w-full object-cover" />
+            ) : (
+              <ImagePlaceholder shape="rect" caption={`${publicScheme.name} — 2:1 image`} />
+            )}
           </div>
-          {scheme.note && (
-            <div className="mt-6 rounded-sm border border-dashed border-amber-gold bg-amber-gold/10 px-3 py-2.5 font-sans text-sm leading-normal text-[#9a6a00]">
-              <strong>Handoff note:</strong> {scheme.note}
-            </div>
-          )}
         </div>
       </section>
 
       {isActive ? (
-        <QuickDonate schemeSlug={scheme.slug} />
+        <QuickDonate schemeSlug={publicScheme.slug} />
       ) : (
         // Phase D decision: a distinct, donor-friendly unavailable state —
         // never a silent fallback to "not found" and never an active

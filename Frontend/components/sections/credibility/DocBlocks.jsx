@@ -1,7 +1,9 @@
 // Shared list layout for the Credibility sub-pages that present a flat list
 // of documents (Collaterals, Annual Reports, Social Impact Report,
-// Compliances & Registrations). Mirrors the DocBlocks pattern in
-// ui_kits/vyoma-org/Credibility.jsx.
+// Compliances & Registrations, Audit Reports). Mirrors the DocBlocks
+// pattern in ui_kits/vyoma-org/Credibility.jsx.
+import { isPdfUrl, downloadUrlFor } from '@/lib/documentLinks';
+
 export function DocBlocks({ items }) {
   const active = items.filter((item) => item.active !== false);
   return (
@@ -21,9 +23,11 @@ export function DocBlocks({ items }) {
                 <a href={item.document.url} target="_blank" rel="noreferrer" className="font-sans text-[15px] font-bold text-vyoma-blue">
                   View
                 </a>
-                <a href={item.document.url} download className="font-sans text-[15px] font-bold text-vyoma-blue">
-                  Download
-                </a>
+                {isPdfUrl(item.document.url) && (
+                  <a href={downloadUrlFor(item.document.url)} className="font-sans text-[15px] font-bold text-vyoma-blue">
+                    Download
+                  </a>
+                )}
               </div>
             ) : (
               <span className="font-sans text-[13px] italic text-charcoal/50">Not uploaded yet</span>

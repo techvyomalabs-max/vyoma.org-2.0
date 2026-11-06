@@ -5,11 +5,24 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/join-us',
-  title: 'Join Us',
-  description: "Whether you give your time, your skills, your company's support, or your career, there is a place for you in Vyoma's work.",
-});
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const { SEO } = await getJoinUsContent();
+  const meta = pageMetadata({
+    path: '/join-us',
+    title: SEO?.title || 'Join Us',
+    description:
+      SEO?.description ||
+      "Whether you give your time, your skills, your company's support, or your career, there is a place for you in Vyoma's work.",
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function JoinUsPage() {
   const { TRACKS: TRACKS_ALL } = await getJoinUsContent();

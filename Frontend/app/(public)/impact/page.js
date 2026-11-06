@@ -6,11 +6,24 @@ import { MetricCard } from '@/components/sections/impact/MetricCard';
 import { KpiDashboard } from '@/components/sections/impact/KpiDashboard';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/impact',
-  title: 'Impact',
-  description: "Every number here represents a step in making Sanskrit and India's knowledge systems accessible to all — reported openly, with full financial transparency.",
-});
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const { SEO } = await getImpactContent();
+  const meta = pageMetadata({
+    path: '/impact',
+    title: SEO?.title || 'Impact',
+    description:
+      SEO?.description ||
+      "Every number here represents a step in making Sanskrit and India's knowledge systems accessible to all — reported openly, with full financial transparency.",
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 function MetricSection({ eyebrow, title, items }) {
   return (
@@ -48,7 +61,7 @@ export default async function ImpactPage() {
         <DonateCta>Support this work</DonateCta>
       </section>
 
-      <KpiDashboard />
+      <KpiDashboard input={INPUT} impact={IMPACT} />
       <MetricSection eyebrow="Impact" title="Reach at scale" items={IMPACT} />
       <MetricSection eyebrow="Input" title="What we invest" items={INPUT} />
       <MetricSection eyebrow="Output achieved" title="What we've built" items={OUTPUT} />

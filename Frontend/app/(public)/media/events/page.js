@@ -10,6 +10,12 @@ import { pageMetadata } from '@/lib/seo';
 // EVENT_CATEGORIES is static filter-chip config, not fetched content —
 // mediaService.getEvents() only returns { upcoming, past } (LLD content
 // items), so this constant is imported directly.
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/media/events',
   title: 'Events',

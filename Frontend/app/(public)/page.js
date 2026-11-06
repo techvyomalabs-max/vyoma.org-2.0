@@ -10,6 +10,12 @@ import { pageMetadata } from '@/lib/seo';
 
 const active = (items) => items.filter((item) => item.active !== false);
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata() {
   const { SEO } = await getHomeContent();
   const meta = pageMetadata({ path: '/', title: SEO?.title || undefined, description: SEO?.description || undefined });

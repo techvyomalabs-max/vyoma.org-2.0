@@ -1,6 +1,5 @@
 import { draftMode } from 'next/headers';
-
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api/v1';
+import { resolveApiBase } from '../../../lib/apiConfig.js';
 
 // Enables Next.js Draft Mode. Redesigned (see security checkpoint): the
 // browser proves it's a logged-in admin by sending its OWN short-lived
@@ -27,9 +26,28 @@ export async function POST(request) {
     return Response.json({ error: 'path must be a site-relative path.' }, { status: 400 });
   }
 
+  // Task 7V.2: resolveApiBase() moved from module scope into this handler.
+  // Next.js evaluates a Route Handler's module body during `next build`'s
+  // page-data-collection phase regardless of any dynamic-rendering setting
+  // (unlike page components, which can defer via `export const dynamic =
+  // 'force-dynamic'`) -- so the module-level `const BACKEND_BASE =
+  // resolveApiBase(...)` this used to be made resolveApiBase()'s intentional
+  // production-config-error throw (Task 7L) crash the entire build the
+  // moment NEXT_PUBLIC_API_BASE_URL was genuinely unset, confirmed by direct
+  // testing in Task 7V.1. Calling it here instead means the exact same
+  // clear error is thrown only when a real request actually needs the
+  // backend -- never silently falling back to localhost or mock data,
+  // exactly as before, just no longer able to fail the build itself.
+  let backendBase;
+  try {
+    backendBase = resolveApiBase(process.env, 'http://localhost:4000/api/v1');
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+
   let verified;
   try {
-    verified = await fetch(`${BACKEND_BASE}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+    verified = await fetch(`${backendBase}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
   } catch {
     return Response.json({ error: 'Could not reach the backend to verify this session.' }, { status: 502 });
   }

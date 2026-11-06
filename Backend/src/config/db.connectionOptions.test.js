@@ -41,11 +41,15 @@ test('connectDb() passes the intended connection/server-selection timeouts for a
       return originalConnect(uri, options);
     });
 
-    await withEnv({ nodeEnv: 'production', mongodbUri: mem.getUri() }, async () => {
+    // Task 7T.1A: a real, named database -- `mem.getUri()` with no argument
+    // deliberately produces an empty database-name segment, which db.js's
+    // new protected-database guard now correctly refuses as an ambiguous
+    // target for a caller-supplied ("configured") URI.
+    await withEnv({ nodeEnv: 'production', mongodbUri: mem.getUri('db_connectionOptions_test') }, async () => {
       await connectDb();
       try {
         assert.equal(calls.length, 1);
-        assert.equal(calls[0].uri, mem.getUri());
+        assert.equal(calls[0].uri, mem.getUri('db_connectionOptions_test'));
         assert.deepEqual(calls[0].options, EXPECTED_OPTIONS);
         assert.equal(
           calls[0].options.socketTimeoutMS,
@@ -92,7 +96,7 @@ test('both connection paths use identical timeout values (no accidental divergen
       return originalConnect(uri, options);
     });
 
-    await withEnv({ nodeEnv: 'production', mongodbUri: mem.getUri() }, async () => {
+    await withEnv({ nodeEnv: 'production', mongodbUri: mem.getUri('db_connectionOptions_test2') }, async () => {
       await connectDb();
       await mongoose.disconnect();
     });

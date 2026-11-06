@@ -80,10 +80,50 @@ test('rejected startup does not initialize an in-memory MongoDB instance (discon
   });
 });
 
+// Task 7T.1A — regression coverage added after the Task 7T-SAFE incident:
+// connectDb() must refuse a configured URI resolving to the protected
+// database, in every NODE_ENV (proving the guard cannot be bypassed by
+// environment mode), and must do so WITHOUT ever calling mongoose.connect()
+// -- mocked here (same technique already used by
+// db.connectionOptions.test.js) specifically so this test is proof of "no
+// connection attempt occurred", not just proof of "an error was thrown".
+test('connectDb() rejects the protected database name before calling mongoose.connect(), regardless of NODE_ENV', async (t) => {
+  const originalConnect = mongoose.connect.bind(mongoose);
+  let connectCalls = 0;
+  t.mock.method(mongoose, 'connect', (...args) => {
+    connectCalls += 1;
+    return originalConnect(...args);
+  });
+
+  for (const nodeEnv of ['development', 'staging', 'production']) {
+    // eslint-disable-next-line no-await-in-loop
+    await withEnv({ nodeEnv, mongodbUri: 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun' }, async () => {
+      await assert.rejects(() => connectDb(), /vyoma_migration_dryrun/, `expected rejection under NODE_ENV=${nodeEnv}`);
+    });
+  }
+
+  assert.equal(connectCalls, 0, 'mongoose.connect() must never be called for a protected target, under any NODE_ENV');
+  assert.equal(mongoose.connection.readyState, 0, 'no connection should exist afterward');
+});
+
+test('connectDb() rejects an ambiguous configured URI (no database name) rather than assuming it is safe', async () => {
+  await withEnv({ nodeEnv: 'production', mongodbUri: 'mongodb://127.0.0.1:27017' }, async () => {
+    await assert.rejects(() => connectDb(), /does not specify a database name/i);
+    assert.equal(mongoose.connection.readyState, 0);
+  });
+});
+
 test('a configured URI follows the existing connection path, even outside development (real connect, not the in-memory fallback)', async () => {
   const mem = await MongoMemoryServer.create();
   try {
-    await withEnv({ nodeEnv: 'production', mongodbUri: mem.getUri() }, async () => {
+    // Task 7T.1A: a real, named database -- `mem.getUri()` with no argument
+    // deliberately produces an empty database-name segment (confirmed by
+    // reading mongodb-memory-server-core's own generateDbName()), which the
+    // new protected-database guard in db.js now correctly refuses as an
+    // ambiguous target for any caller-supplied ("configured") URI. A real
+    // production/staging MONGODB_URI always names a real database, so this
+    // test's stand-in URI should too.
+    await withEnv({ nodeEnv: 'production', mongodbUri: mem.getUri('db_test_configured_uri') }, async () => {
       await connectDb();
       try {
         assert.equal(mongoose.connection.readyState, 1, 'expected a live mongoose connection using the supplied URI');

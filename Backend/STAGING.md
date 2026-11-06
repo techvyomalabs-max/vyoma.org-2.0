@@ -242,23 +242,37 @@ Formula-Injection Review) for the full analysis.
 **Requires explicit security-owner acceptance of this risk before
 production launch.**
 
-## MongoDB backup/restore (documented only — not run as part of this task)
+## MongoDB backup/restore (Task 7P — tooling now exists)
 
-No backup/restore tooling currently exists in this repository. Until a
-scripted/automated solution exists, the standard MongoDB tools apply:
+**Update (Task 7P):** reusable wrapper scripts around the real `mongodump`/
+`mongorestore` CLI tools now exist at `Backend/scripts/backup/` —
+`backupDatabase.mjs` and `restoreDatabase.mjs`. See
+`Backend/scripts/backup/README.md` for the full runbook (usage, flags,
+safety guarantees, and the disposable-database test results proving they
+work end-to-end, including a real cross-database restore). Summary of what
+they add on top of the raw tools:
 
-- **Backup**: `mongodump --uri="<MONGODB_URI>" --out=<backup-directory>`
-  — run against the target staging/production URI, writing a timestamped
-  backup directory. For MongoDB Atlas specifically, Atlas's own built-in
-  continuous/scheduled backup feature is the recommended alternative to a
-  manual `mongodump`, where available on the cluster tier in use.
-- **Restore**: `mongorestore --uri="<MONGODB_URI>" <backup-directory>`
-  — restores into the target URI. Always restore into a *new or explicitly
-  confirmed-empty* database/cluster first to verify the backup is valid,
-  rather than restoring directly on top of a live database.
-- Before any restore, confirm the target `MONGODB_URI` as carefully as
-  before any destructive script run (see above) — a restore can overwrite
-  existing data in the target database.
+- Both refuse outright (before any connection is attempted) if the given
+  URI resolves to this project's one protected database name
+  (`vyoma_migration_dryrun`).
+- Both default to a dry-run/validation-only mode — nothing is spawned
+  without an explicit `--commit`.
+- Restore additionally requires `--confirm-restore` (on top of `--commit`),
+  and a third flag (`--i-understand-this-is-production`) whenever
+  `NODE_ENV=production` — a single flag or typo is never enough to trigger
+  a restore.
+- Neither script ever logs the real connection string, under any flag or
+  failure path.
+- Backups are timestamped per run, so a later run never overwrites an
+  earlier backup of the same database.
 
-This procedure is documented for reference only; no backup or restore was
-executed as part of producing this document.
+For MongoDB Atlas specifically, Atlas's own built-in continuous/scheduled
+backup feature remains the recommended complement to these scripts, where
+available on the cluster tier in use — these scripts are the documented
+fallback/on-demand path, not a replacement for Atlas's own backups.
+
+These scripts have been tested only against disposable
+`mongodb-memory-server` instances (see their own README) — never against
+`vyoma_migration_dryrun` or any other real/persistent database. Before any
+real staging/production use, confirm the target `MONGODB_URI` as carefully
+as before any destructive migration run (see above).

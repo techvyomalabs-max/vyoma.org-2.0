@@ -99,3 +99,24 @@ test('intended static fallback: a genuine API error response (reachable, but a r
     return true;
   });
 });
+
+// Task 7R.1 — draft content must never reach an ordinary public request.
+// lib/testSupport/mockNextHeaders.mjs's draftMode() always returns
+// { isEnabled: false } -- the exact outcome a normal visitor (and a
+// build-time render, since draftMode() throws outside a real request and
+// is caught as "not previewing") gets -- so the fetched URL for every real
+// public page load must never carry the previewSecret query param that
+// would ask the backend for unpublished draft data.
+test('ordinary (non-preview) request: never appends previewSecret, so draft content cannot be exposed publicly', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const calls = [];
+  global.fetch = async (url) => {
+    calls.push(url);
+    return { ok: true, status: 200, json: async () => ({ success: true, data: { SEO: { title: 'Published About' } } }) };
+  };
+
+  await getPublicContent('pages/about', aboutMockLoader);
+
+  assert.equal(calls[0], 'https://api.vyoma.org/api/v1/public/pages/about');
+  assert.ok(!calls[0].includes('previewSecret'), 'a normal public request must never ask the backend for draft/preview content');
+});

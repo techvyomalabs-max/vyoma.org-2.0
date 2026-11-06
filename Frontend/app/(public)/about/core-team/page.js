@@ -11,6 +11,12 @@ export const metadata = pageMetadata({
   description: 'Behind every course, tool, and initiative is a dedicated team of teachers, technologists, and coordinators who bring Sanskrit to learners across the world.',
 });
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 // Detects a background-removed photo purely from its URL (local-dev
 // processed-photo storage), never by name — so this automatically covers
 // every processed photo, present or future, and automatically excludes

@@ -63,23 +63,46 @@ export default async function sitemap() {
   // shouldUseMockData(), see lib/apiConfig.js) means a production sitemap
   // now reflects real, current donation schemes instead of a permanently
   // frozen mock list.
-  const schemes = await getDonationSchemes();
-  const schemeEntries = schemes.map((s) => ({
-    url: `${BASE_URL}/donate/${s.slug}`,
-    lastModified: now,
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }));
+  //
+  // Task 7R.1: a build-time-unreachable backend (DNS failure, transient
+  // outage -- apiClient.js's own err.networkError flag) must not fail the
+  // entire sitemap -- same reasoning as generateStaticParams in
+  // donate/[schemeSlug] and media/blog/[slug]: fall back to omitting just
+  // these dynamic entries, never to mock data, and log clearly so the gap
+  // is visible. Anything else -- in particular resolveApiBase()'s own
+  // thrown configuration error when NEXT_PUBLIC_API_BASE_URL is missing in
+  // production -- is a genuine misconfiguration Task 7L deliberately made
+  // loud, not a transient outage, so it is re-thrown unchanged rather than
+  // silently producing an incomplete sitemap.
+  let schemeEntries = [];
+  try {
+    const schemes = await getDonationSchemes();
+    schemeEntries = schemes.map((s) => ({
+      url: `${BASE_URL}/donate/${s.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    }));
+  } catch (err) {
+    if (!err.networkError) throw err;
+    console.error('[sitemap] failed to load donation schemes, omitting scheme entries:', err.message);
+  }
 
   // Phase E: Blog moved off static mock data onto its own live model — the
   // sitemap now reflects real published posts instead of a frozen list.
-  const { items: posts } = await getBlogPosts({ limit: 50 });
-  const blogEntries = posts.map((p) => ({
-    url: `${BASE_URL}/media/blog/${p.slug}`,
-    lastModified: p.publishedAt ? new Date(p.publishedAt) : now,
-    changeFrequency: 'monthly',
-    priority: 0.5,
-  }));
+  let blogEntries = [];
+  try {
+    const { items: posts } = await getBlogPosts({ limit: 50 });
+    blogEntries = posts.map((p) => ({
+      url: `${BASE_URL}/media/blog/${p.slug}`,
+      lastModified: p.publishedAt ? new Date(p.publishedAt) : now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    }));
+  } catch (err) {
+    if (!err.networkError) throw err;
+    console.error('[sitemap] failed to load blog posts, omitting blog entries:', err.message);
+  }
 
   return [...staticEntries, ...schemeEntries, ...blogEntries];
 }

@@ -69,3 +69,48 @@ test('production with missing API configuration: sitemap generation throws rathe
   const sitemap = (await import(`./sitemap.js?t=${t.name.length}-${Date.now()}`)).default;
   await assert.rejects(() => sitemap(), /NEXT_PUBLIC_API_BASE_URL/);
 });
+
+// Task 7R.1 — a build-time-unreachable backend (DNS failure, transient
+// outage) must not fail sitemap generation (and, by the same code path,
+// `next build`): the static routes are still returned and the dynamic
+// scheme/blog entries are simply omitted, never replaced by mock data.
+test('DNS failure (unresolvable staging hostname): sitemap still returns the static routes, omitting only the dynamic scheme/blog entries', async (t) => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://nonexistent-test-host-abcxyz.invalid/api/v1' });
+  global.fetch = async () => {
+    // Mirrors Node's real fetch() rejection for an unresolvable hostname
+    // (ENOTFOUND) -- apiClient.js's catch block treats any rejected fetch()
+    // identically, tagging it err.networkError = true regardless of the
+    // underlying cause (DNS failure, connection refused, offline).
+    const err = new Error('getaddrinfo ENOTFOUND nonexistent-test-host-abcxyz.invalid');
+    err.code = 'ENOTFOUND';
+    throw err;
+  };
+
+  const sitemap = (await import(`./sitemap.js?t=${t.name.length}-${Date.now()}`)).default;
+  const entries = await sitemap();
+
+  assert.ok(entries.some((e) => e.url === 'https://vyoma.org/'), 'static routes must still be present');
+  assert.equal(entries.filter((e) => e.url.startsWith('https://vyoma.org/donate/')).length, 0, 'scheme entries omitted, not fabricated');
+  assert.equal(entries.filter((e) => e.url.startsWith('https://vyoma.org/media/blog/')).length, 0, 'blog entries omitted, not fabricated');
+});
+
+// Task 7R.1 — the opposite case: a real, reachable backend that returns a
+// genuine server error (not a network-level failure) must still surface as
+// an error, exactly like the pre-existing "intended static fallback" test
+// for contentService.js -- a broad catch here must never hide a real
+// programming/backend error behind a silently-incomplete sitemap.
+test('unexpected programming error (reachable backend, real 500 response): re-thrown, never silently swallowed', async (t) => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  global.fetch = async () => ({
+    ok: false,
+    status: 500,
+    json: async () => ({ success: false, message: 'Internal Server Error' }),
+  });
+
+  const sitemap = (await import(`./sitemap.js?t=${t.name.length}-${Date.now()}`)).default;
+  await assert.rejects(() => sitemap(), (err) => {
+    assert.equal(err.status, 500);
+    assert.equal(err.networkError, undefined, 'a real HTTP error response must never be mistaken for a network failure');
+    return true;
+  });
+});

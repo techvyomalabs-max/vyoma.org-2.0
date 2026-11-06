@@ -5,6 +5,20 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { QuickDonate } from '@/components/sections/donate/QuickDonate';
 import { getPublicSchemeFields } from '@/components/sections/donate/donationSchemePublicFields.mjs';
 
+// Task 7S.1: donation schemes can be activated/deactivated at any time via
+// the CMS, and a stale static page would keep showing a since-deactivated
+// scheme as bookable until the next rebuild — force-dynamic makes every
+// scheme page render fresh per request instead. Confirmed empirically (not
+// just from docs) that this coexists cleanly with generateStaticParams
+// below: with force-dynamic set, `next build` still calls
+// generateStaticParams (harmless -- it's the same build-safety net
+// described below) but no longer pre-renders any of the returned slugs as
+// static HTML (confirmed via build output: no per-slug "●" entries are
+// listed, and the route is labeled "ƒ Dynamic"); a live request/response
+// check confirmed no caching headers are present either. No conflict,
+// nothing to resolve.
+export const dynamic = 'force-dynamic';
+
 // Phase D: only ACTIVE schemes are statically pre-rendered — an inactive
 // scheme's page still works (see below), it's just rendered on-demand at
 // request time (Next's default dynamicParams behavior) rather than at
@@ -17,7 +31,9 @@ import { getPublicSchemeFields } from '@/components/sections/donate/donationSche
 // one. On any failure here, fall back to generating zero scheme pages at
 // build time; every scheme still renders correctly on-demand at request
 // time via Next's default dynamicParams, exactly like an inactive scheme
-// already does today.
+// already does today. Retained even though force-dynamic above means its
+// return value no longer affects static generation -- it still serves as a
+// build-time connectivity/safety check consistent with every other page.
 export async function generateStaticParams() {
   try {
     const schemes = await getDonationSchemes();

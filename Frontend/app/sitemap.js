@@ -1,6 +1,18 @@
 import { getDonationSchemes } from '@/services/donationService';
 import { getBlogPosts } from '@/services/blogService';
 
+// Task 7S.1: without this, the sitemap is statically cached indefinitely
+// from build time (confirmed empirically in Task 7R.1's runtime
+// verification: it kept serving build-time entries even after the backend
+// went down). An hourly revalidation window is a deliberate, proportionate
+// choice for a crawler-facing artifact -- not full force-dynamic, since a
+// sitemap has no payment/CMS-correctness stakes the way the donation pages
+// do, and regenerating it on literally every crawl would be wasteful. This
+// is time-based: a newly published blog post or donation scheme becomes
+// ELIGIBLE for inclusion once this window elapses and the route is next
+// requested, not necessarily the instant it is published.
+export const revalidate = 3600;
+
 const BASE_URL = 'https://vyoma.org';
 
 // LLD Section 11: "Generate XML sitemap from published canonical routes /

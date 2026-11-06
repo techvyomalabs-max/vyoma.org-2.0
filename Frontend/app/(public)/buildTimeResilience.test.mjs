@@ -15,11 +15,19 @@
 // defers data fetching to request time (Next.js never invokes
 // generateMetadata/the page body for a force-dynamic route during
 // `next build`), so build success no longer depends on the backend being
-// reachable at all. donate/page.js, donate/[schemeSlug]/page.js, and
-// media/blog/[slug]/page.js are deliberately excluded here: each already had
-// its own working try/catch (or, for the dynamic-segment pages,
-// generateStaticParams returning [] on failure) before this task and needed
-// no change -- see each file's own pre-existing comments.
+// reachable at all. media/blog/[slug]/page.js is deliberately excluded
+// here: it already had its own working generateStaticParams-returns-[]
+// protection before this task and needed no change for build-safety.
+//
+// Task 7S.1: donate/page.js and donate/[schemeSlug]/page.js also now
+// declare force-dynamic (moved into FORCE_DYNAMIC_PAGES below) -- not for
+// build-safety (they already had that, via their own try/catch and
+// generateStaticParams respectively), but for CACHING correctness: without
+// it, a scheme activated/deactivated via the CMS after deployment would not
+// be reflected until the next rebuild. Confirmed empirically that
+// force-dynamic coexists cleanly with donate/[schemeSlug]/page.js's
+// generateStaticParams -- it still runs at build time (harmless) but no
+// longer results in static pre-rendering of any returned slug.
 //
 // This test reads source text only (no Next.js runtime involved) -- the
 // actual build-success claim is verified by running `next build` with an
@@ -73,6 +81,8 @@ const FORCE_DYNAMIC_PAGES = [
   'page.js',
   'privacy/page.js',
   'terms/page.js',
+  'donate/page.js',
+  'donate/[schemeSlug]/page.js',
 ];
 
 for (const relativePath of FORCE_DYNAMIC_PAGES) {
@@ -86,16 +96,22 @@ for (const relativePath of FORCE_DYNAMIC_PAGES) {
   });
 }
 
-// The three routes that already had their own working build-time-failure
-// protection before this task (and were deliberately left untouched) are
-// NOT required to use force-dynamic -- documenting that exclusion here so a
-// future reader doesn't mistake it for an oversight.
-test('donate/page.js, donate/[schemeSlug]/page.js, and media/blog/[slug]/page.js are intentionally excluded (pre-existing try/catch protection)', () => {
+// media/blog/[slug]/page.js is the one route that already had its own
+// working build-time-failure protection before this task and was
+// deliberately left untouched -- documenting that exclusion here so a
+// future reader doesn't mistake it for an oversight. (donate/page.js and
+// donate/[schemeSlug]/page.js are covered by FORCE_DYNAMIC_PAGES above as
+// of Task 7S.1, but retain their own try/catch and generateStaticParams
+// build-safety nets too -- verified separately below.)
+test('media/blog/[slug]/page.js is intentionally excluded (pre-existing generateStaticParams protection, no caching-correctness concern)', () => {
+  const blogSlugPage = fs.readFileSync(path.join(__dirname, 'media/blog/[slug]/page.js'), 'utf8');
+  assert.match(blogSlugPage, /generateStaticParams failed, falling back to on-demand rendering/);
+});
+
+test('donate/page.js and donate/[schemeSlug]/page.js retain their pre-existing build-safety nets alongside the new force-dynamic export', () => {
   const donatePage = fs.readFileSync(path.join(__dirname, 'donate/page.js'), 'utf8');
   const donateSchemePage = fs.readFileSync(path.join(__dirname, 'donate/[schemeSlug]/page.js'), 'utf8');
-  const blogSlugPage = fs.readFileSync(path.join(__dirname, 'media/blog/[slug]/page.js'), 'utf8');
 
-  assert.match(donatePage, /try \{/, 'donate/page.js already catches its own build-time fetch failure');
+  assert.match(donatePage, /try \{/, 'donate/page.js must still catch its own fetch failure');
   assert.match(donateSchemePage, /generateStaticParams failed, falling back to on-demand rendering/);
-  assert.match(blogSlugPage, /generateStaticParams failed, falling back to on-demand rendering/);
 });

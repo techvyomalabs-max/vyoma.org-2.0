@@ -8,6 +8,13 @@ import { QuickDonate } from '@/components/sections/donate/QuickDonate';
 import { SchemesGrid } from '@/components/sections/donate/SchemesGrid';
 import { pageMetadata } from '@/lib/seo';
 
+// Task 7S.1: the scheme grid below comes from getDonationSchemes() (active
+// schemes only) — without this, the page would be statically cached at
+// build time and keep showing a since-deactivated scheme as bookable, or
+// omit a newly-activated one, until the next rebuild. force-dynamic makes
+// every request reflect live backend state.
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata() {
   // Metadata must never crash the page over a transient backend hiccup —
   // fall back to sensible defaults, same as every other failure path on

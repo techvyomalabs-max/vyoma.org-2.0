@@ -88,3 +88,54 @@ test('valid production API configuration with an unreachable backend: throws the
     return true;
   });
 });
+
+// Task 7S.1 — regression coverage for the donate pages' new
+// `export const dynamic = 'force-dynamic'`. That export is what makes
+// Next.js call these service functions fresh on every request instead of
+// once at build time; what these tests confirm is the other half of the
+// guarantee -- that the functions themselves never cache a result across
+// calls, so a live admin activation/deactivation is reflected the very
+// next time the (now-dynamic) page re-fetches.
+test('CMS caching correctness: a scheme deactivated between two requests disappears from the very next getDonationSchemes() call', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  let active = [{ slug: 'guru-dakshina' }, { slug: 'vidya-danam' }];
+  global.fetch = async () => ({ ok: true, status: 200, json: async () => ({ success: true, data: active }) });
+
+  const before = await getDonationSchemes();
+  assert.deepEqual(before.map((s) => s.slug), ['guru-dakshina', 'vidya-danam']);
+
+  // Simulate an admin deactivating 'vidya-danam' between two requests --
+  // the backend's own active-only filter (donations.controller.js) would
+  // now omit it; this mock stands in for that.
+  active = [{ slug: 'guru-dakshina' }];
+  const after = await getDonationSchemes();
+  assert.deepEqual(after.map((s) => s.slug), ['guru-dakshina'], 'a deactivated scheme must disappear on the next fetch, not persist from a cached result');
+});
+
+test('CMS caching correctness: a newly activated scheme appears on the very next getDonationSchemes() call', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  let active = [{ slug: 'guru-dakshina' }];
+  global.fetch = async () => ({ ok: true, status: 200, json: async () => ({ success: true, data: active }) });
+
+  const before = await getDonationSchemes();
+  assert.deepEqual(before.map((s) => s.slug), ['guru-dakshina']);
+
+  active = [{ slug: 'guru-dakshina' }, { slug: 'new-scheme' }];
+  const after = await getDonationSchemes();
+  assert.deepEqual(after.map((s) => s.slug), ['guru-dakshina', 'new-scheme'], 'a newly activated scheme must appear on the next fetch, with no rebuild required');
+});
+
+test('CMS caching correctness: donate/[schemeSlug] respects a scheme\'s live status, not a stale one, across two getDonationSchemeBySlug() calls', async () => {
+  const { getDonationSchemeBySlug } = await import('./donationService.js');
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  let status = 'active';
+  global.fetch = async () => ({ ok: true, status: 200, json: async () => ({ success: true, data: { slug: 'guru-dakshina', status } }) });
+
+  const before = await getDonationSchemeBySlug('guru-dakshina');
+  assert.equal(before.status, 'active');
+
+  // Simulate the admin deactivating this exact scheme between two requests.
+  status = 'inactive';
+  const after = await getDonationSchemeBySlug('guru-dakshina');
+  assert.equal(after.status, 'inactive', 'the detail page must reflect the scheme\'s current status, not one cached from an earlier request');
+});

@@ -49,7 +49,10 @@ export function ImagePlaceholder({ src, alt = '', caption, shape = 'rounded', cl
 
   return (
     <div
-      className={`w-full h-full flex items-center justify-center bg-sky-mist text-charcoal/50 text-sm font-sans text-center px-3 ${radius} ${className}`}
+      // Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/50 measured 2.85:1
+      // against bg-sky-mist (axe-core, WCAG AA requires 4.5:1) -- /70
+      // clears it with margin.
+      className={`w-full h-full flex items-center justify-center bg-sky-mist text-charcoal/70 text-sm font-sans text-center px-3 ${radius} ${className}`}
     >
       {caption || 'Image coming soon'}
     </div>

@@ -345,7 +345,11 @@ function NavLink({ href, active, children }) {
     <Link
       href={href}
       className={`font-sans text-[17px] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-standard)] ${
-        active ? 'font-bold text-white' : 'font-normal text-white/70 hover:text-white'
+        // Task 7D.12 (A11Y-01/A11Y-02): text-white/70 measured 3.86:1 against
+        // the header's solid vyoma-blue background (axe-core, WCAG AA
+        // requires 4.5:1 for this font size/weight) -- /90 clears it with
+        // margin while staying visibly "muted" relative to the active link.
+        active ? 'font-bold text-white' : 'font-normal text-white/90 hover:text-white'
       }`}
     >
       {children}

@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { env, isSmtpConfigured, isMockContentSeedAllowed, resolveNodeEnv, isAuthSecretConfigured } from './env.js';
+import { env, isSmtpConfigured, isMockContentSeedAllowed, resolveNodeEnv, isAuthSecretConfigured, resolveTrustProxy } from './env.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -199,6 +199,28 @@ test('the motivating compound scenario is now closed: production can no longer b
   // And the only way to reach 'production' is to set it explicitly -- which
   // is exactly the value server.js's existing check compares against.
   assert.equal(resolveNodeEnv({ NODE_ENV: 'production' }), 'production');
+});
+
+// --- resolveTrustProxy() (Task 7D.5 fix for rate-limiter mis-keying behind
+// a reverse proxy) ---
+
+test('resolveTrustProxy defaults to false (trust nothing) when TRUST_PROXY is unset', () => {
+  assert.equal(resolveTrustProxy({}), false);
+});
+
+test('resolveTrustProxy defaults to false for a blank value', () => {
+  assert.equal(resolveTrustProxy({ TRUST_PROXY: '' }), false);
+});
+
+test('resolveTrustProxy defaults to false for a non-numeric or negative value, rather than assuming a proxy count', () => {
+  assert.equal(resolveTrustProxy({ TRUST_PROXY: 'not-a-number' }), false);
+  assert.equal(resolveTrustProxy({ TRUST_PROXY: '-1' }), false);
+});
+
+test('resolveTrustProxy accepts an explicit non-negative hop count', () => {
+  assert.equal(resolveTrustProxy({ TRUST_PROXY: '0' }), 0);
+  assert.equal(resolveTrustProxy({ TRUST_PROXY: '1' }), 1);
+  assert.equal(resolveTrustProxy({ TRUST_PROXY: '2' }), 2);
 });
 
 test('server.js refuses to boot outside development without JWT secrets configured (Task 7T.3 Fix 1: staging is no longer exempt), and validates configuration before connecting to the database or listening', () => {

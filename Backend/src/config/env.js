@@ -53,9 +53,34 @@ export function resolveNodeEnv(source = process.env) {
   return raw;
 }
 
+// Task 7D.5 — Express's `trust proxy` setting (unset by default, i.e. "do
+// not trust any proxy", exactly today's existing behavior) controls what
+// req.ip resolves to, which express-rate-limit's default keyGenerator (used
+// by every rate limiter in this app that doesn't pass its own, e.g. the
+// public forms/donations limiters and the auth login/forgot-password
+// limiters) relies on entirely. Deployed behind any reverse proxy (a load
+// balancer, nginx, a PaaS's own edge) with this left unset, req.ip resolves
+// to the PROXY's own address for every request, collapsing every distinct
+// visitor into one shared rate-limit bucket per endpoint -- once any single
+// user/bot trips a limiter, every OTHER visitor is blocked too, a
+// self-inflicted denial of service. Accepts a small non-negative integer
+// (the number of reverse-proxy hops in front of this app -- see Express's
+// own "trust proxy" docs) via TRUST_PROXY; left unset or invalid, this
+// resolves to `false` (trust nothing), identical to this app's behavior
+// before this setting existed, so no deployment's behavior changes until
+// its operator explicitly sets this to match their actual proxy topology.
+// A standalone, dependency-injectable function (same pattern as
+// resolveNodeEnv above) so it can be unit-tested directly with controlled
+// inputs.
+export function resolveTrustProxy(source = process.env) {
+  const parsed = Number.parseInt(source.TRUST_PROXY ?? '', 10);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : false;
+}
+
 export const env = {
   port: Number(process.env.PORT) || 4000,
   nodeEnv: resolveNodeEnv(),
+  trustProxy: resolveTrustProxy(),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   mongodbUri: process.env.MONGODB_URI || null,
   // 'true' | 'false' | null (unset) -- see isMockContentSeedAllowed() below.

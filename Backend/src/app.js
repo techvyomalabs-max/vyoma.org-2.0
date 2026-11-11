@@ -28,6 +28,15 @@ import { errorHandler } from './middleware/errorHandler.js';
 export function createApp() {
   const app = express();
 
+  // Task 7D.5 — see env.js's own comment on `trustProxy` for why this
+  // matters: without it, req.ip (and therefore every IP-keyed rate
+  // limiter's bucket) resolves to a reverse proxy's own address once this
+  // app is deployed behind one, not the real client. Defaults to `false`
+  // (trust nothing), identical to this app's behavior before this setting
+  // existed -- sets a real value only when TRUST_PROXY is explicitly
+  // configured for the deployment's actual proxy topology.
+  app.set('trust proxy', env.trustProxy);
+
   app.use(helmet());
   // credentials: true — the auth refresh token travels as an HTTP-only
   // cookie (see auth.controller.js), which requires an explicit origin

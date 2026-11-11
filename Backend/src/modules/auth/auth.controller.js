@@ -227,8 +227,33 @@ export async function refresh(req, res, next) {
 }
 
 // POST /api/v1/auth/logout
+//
+// Task 7D.5 fix: previously only cleared the refresh cookie client-side and
+// never invalidated the refresh token server-side (unlike resetPassword()/
+// changePassword()/mfaDisable() below, which all correctly bump
+// refreshTokenVersion). Since /auth/refresh accepts any token whose `v`
+// still matches the user's current refreshTokenVersion, the old refresh
+// token value remained fully valid to mint new sessions after "logout"
+// until its own multi-day TTL expired -- anyone who already held the raw
+// cookie value through a non-XSS channel (shared device, copied browser
+// profile, a proxy/log exposure) could keep using it. This route
+// deliberately has no requireAuth (a client whose access token already
+// expired must still be able to log out), so the refresh cookie itself --
+// not req.user -- is the only way to identify whose session to invalidate;
+// an absent, invalid, or already-expired refresh token is not an error
+// here, it just means there is nothing left to invalidate.
 export async function logout(req, res, next) {
   try {
+    const token = req.cookies?.[REFRESH_COOKIE_NAME];
+    if (token) {
+      try {
+        const payload = verifyRefreshToken(token);
+        await UserModel.updateOne({ _id: payload.sub, refreshTokenVersion: payload.v }, { $inc: { refreshTokenVersion: 1 } });
+      } catch {
+        // Already invalid/expired, or a concurrent logout/rotation already
+        // bumped the version -- nothing left to invalidate, not an error.
+      }
+    }
     res.clearCookie(REFRESH_COOKIE_NAME, refreshCookieAttributes());
     return sendSuccess(res, { loggedOut: true });
   } catch (err) {

@@ -120,6 +120,26 @@ test('the cleared cookie cannot be reused to refresh a session', async () => {
   assert.equal(rejectRes.res.status, 401, 'the emptied cookie must not be accepted by /refresh');
 });
 
+// Task 7D.5 — confirmed HIGH-severity gap: logout previously only cleared
+// the cookie client-side and never invalidated the refresh token
+// server-side, so the ORIGINAL token value (captured here before logout,
+// the way an attacker who obtained it through a non-XSS channel would still
+// hold it) remained fully valid to mint new sessions indefinitely after
+// "logout". This test replays that exact original value directly (not the
+// client's emptied cookie jar) to prove it is now rejected.
+test('FIXED: the original refresh token value (not just the emptied cookie) is invalidated by logout, and cannot be replayed to refresh a session afterward', async () => {
+  await createTestUser({ email: 'session-logout-invalidates-token@example.test' });
+  const { refreshCookie } = await login('session-logout-invalidates-token@example.test', TEST_PASSWORD);
+  assert.ok(refreshCookie);
+
+  const logoutRes = await fetch(`${envCtx.baseUrl}/api/v1/auth/logout`, { method: 'POST', headers: { cookie: refreshCookie } });
+  assert.equal(logoutRes.status, 200);
+
+  const { res, body } = await refresh(refreshCookie);
+  assert.equal(res.status, 401, 'the pre-logout refresh token value must no longer mint a new session, even if replayed directly');
+  assert.equal(body.code, 'UNAUTHENTICATED');
+});
+
 test('logout succeeds with no refresh cookie present at all (no valid session required to clear it)', async () => {
   const res = await fetch(`${envCtx.baseUrl}/api/v1/auth/logout`, { method: 'POST' });
   assert.equal(res.status, 200);

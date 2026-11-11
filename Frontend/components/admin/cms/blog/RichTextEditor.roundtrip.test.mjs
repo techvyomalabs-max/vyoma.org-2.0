@@ -13,6 +13,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { JSDOM } from 'jsdom';
 
@@ -48,13 +49,43 @@ const { sanitizeBlogBody } = await import(
   pathToFileURL(path.join(__dirname, '..', '..', '..', '..', '..', 'Backend', 'src', 'modules', 'blog', 'sanitizeBody.js')).href
 );
 
-const manifestPath = path.join(__dirname, '..', '..', '..', '..', '..', 'Backend', '.local-media', 'blog-image-manifest.json');
-const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-const inlineMap = new Map(manifest.rows.filter((r) => r.type === 'inline').map((r) => [r.originalUrl, r.localUrl]));
+// Task 7D.1: previously read Backend/.local-media/blog-image-manifest.json
+// -- a machine-local, gitignored artifact left over from an earlier,
+// one-time WordPress image-migration run -- to rewrite each real post's
+// <img src> to the processed local/S3 URL that migration produced. That
+// rewrite's only purpose was making every image survive
+// sanitizeBlogBody()'s own host allowlist (IMAGE_ALLOWED_HOSTS /
+// IMAGE_S3_HOST_RE in Backend/src/modules/blog/sanitizeBody.js -- private,
+// not exported, so replicated here only as much as needed to decide which
+// src values need rewriting) so images reach the editor and the round-trip
+// assertions below can meaningfully cover image handling too. The SPECIFIC
+// rewritten URL was never what any assertion here checks (tag counts,
+// hrefs, visible text, alignment) -- only that the rewritten host is one
+// the sanitizer already trusts. Confirmed directly against the real,
+// git-tracked realPostBodies.json fixture below: of its 50 distinct image
+// URLs, exactly 8 are on an untrusted host (Google Docs-embedded images);
+// every other URL is already on the real vyoma.org legacy site and needs
+// no rewrite at all. This synthetic, deterministic mapping (a stable hash
+// of each original URL, reused as a path segment under the already-trusted
+// vyoma.org host) achieves the identical effect with no dependency on any
+// machine-local file -- the same input always produces the same output, on
+// any machine, with nothing to generate or persist beforehand.
+const TRUSTED_IMAGE_HOSTS = new Set(['vyoma.org', 'www.vyoma.org']);
+const TRUSTED_S3_HOST_RE = /^[a-z0-9.-]+\.s3\.[a-z0-9-]+\.amazonaws\.com$/i;
+function isTrustedImageHost(src) {
+  try {
+    const { hostname } = new URL(src);
+    return TRUSTED_IMAGE_HOSTS.has(hostname) || TRUSTED_S3_HOST_RE.test(hostname);
+  } catch {
+    return false;
+  }
+}
+function syntheticTrustedUrl(originalSrc) {
+  const hash = crypto.createHash('sha1').update(originalSrc).digest('hex').slice(0, 16);
+  return `https://vyoma.org/wp-content/uploads/test-fixture/${hash}.jpg`;
+}
 function trustImages(html) {
-  let next = html;
-  for (const [originalUrl, localUrl] of inlineMap) next = next.split(`src="${originalUrl}"`).join(`src="${localUrl}"`);
-  return next;
+  return html.replace(/\bsrc="([^"]+)"/g, (match, src) => (isTrustedImageHost(src) ? match : `src="${syntheticTrustedUrl(src)}"`));
 }
 
 function editorRoundTrip(html) {

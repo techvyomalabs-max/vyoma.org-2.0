@@ -117,6 +117,37 @@ export async function refreshSession() {
   return parseResponse(res);
 }
 
+// Task 7D.6 — POST /api/v1/auth/password/change (requireAuth). Deliberately
+// a standalone raw endpoint wrapper (same shape as login()/verifyMfa() etc.
+// above), NOT routed through authedFetch()/apiFetch's shared 401-handling
+// below: that machinery treats EVERY 401 response as "the access token is
+// stale, silently refresh and retry" (see AdminAuthContext.apiFetch) -- but
+// this endpoint's own legitimate business-logic response for a WRONG
+// CURRENT PASSWORD is also a 401 (code: INVALID_CREDENTIALS), confirmed
+// directly in auth.controller.js. Routing this call through authedFetch
+// would discard that real error entirely (authedFetch collapses any 401 to
+// a bare "Unauthenticated" with no `code`), trigger a pointless
+// refresh-and-retry, and -- on the retry's second 401 -- end up clearing the
+// admin's entire session over a single password typo. parseResponse()
+// preserves the real `code`/`message`/`fieldErrors` straight from the
+// Backend so the caller (AdminAuthContext.changePassword) can tell a wrong
+// current password (INVALID_CREDENTIALS) apart from a genuinely expired
+// access token (UNAUTHENTICATED, from requireAuth itself) and handle each
+// correctly.
+export async function changePassword(accessToken, currentPassword, newPassword) {
+  const API_BASE = getApiBase();
+  const res = await safeFetch(`${API_BASE}/auth/password/change`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return parseResponse(res);
+}
+
 export async function logoutSession() {
   try {
     const API_BASE = getApiBase();

@@ -10,6 +10,7 @@ import {
   logoutSession,
   authedFetch,
   authedFetchWithMeta,
+  changePassword as apiChangePassword,
 } from './adminAuthApi';
 
 // Week 3 Decision W3-1: the access token lives ONLY in this ref (in-memory,
@@ -79,12 +80,57 @@ export function AdminAuthProvider({ children }) {
     return result; // includes recoveryCodes — the caller must show these exactly once
   }, []);
 
-  const logout = useCallback(async () => {
-    await logoutSession();
+  // Task 7D.6 — extracted so changePassword() below can clear local session
+  // state the same way logout() does, WITHOUT also calling logoutSession()
+  // (POST /auth/logout): a successful password change already invalidates
+  // the refresh token server-side (Backend/.../auth.controller.js
+  // changePassword(): refreshTokenVersion += 1), so sending that
+  // now-already-invalidated refresh token again would be a pointless extra
+  // round trip, not a real second invalidation.
+  const clearLocalSession = useCallback(() => {
     accessTokenRef.current = null;
     setUser(null);
     setStatus('unauthenticated');
   }, []);
+
+  const logout = useCallback(async () => {
+    await logoutSession();
+    clearLocalSession();
+  }, [clearLocalSession]);
+
+  // Task 7D.6 — POST /api/v1/auth/password/change. On success, the Backend
+  // has already invalidated this session server-side (refreshTokenVersion
+  // bumped), but this deliberately does NOT clear local state itself: the
+  // Change Password form needs to show a confirmation message first, then
+  // call clearLocalSession() (exposed below) itself once the admin has had
+  // a moment to read it. Clearing immediately here would flip `status` to
+  // 'unauthenticated' before the form could render anything, and
+  // RequireAdminAuth's existing redirect effect would navigate away almost
+  // instantly -- the user would never see a confirmation at all.
+  //
+  // On a genuinely expired/invalid access token (code: UNAUTHENTICATED, from
+  // requireAuth itself -- NOT the same as a wrong current password, which is
+  // INVALID_CREDENTIALS and is simply rethrown for the form to display), this
+  // attempts exactly one silent refresh-and-retry, matching apiFetch's own
+  // existing contract elsewhere in this file. If that retry also fails,
+  // there really is no session left to show a confirmation for, so it's
+  // cleared immediately and the retry's own error is thrown.
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    try {
+      return await apiChangePassword(accessTokenRef.current, currentPassword, newPassword);
+    } catch (err) {
+      if (err.code !== 'UNAUTHENTICATED') throw err;
+      try {
+        const session = await refreshSession();
+        accessTokenRef.current = session.accessToken;
+        setUser(session.user);
+        return await apiChangePassword(accessTokenRef.current, currentPassword, newPassword);
+      } catch (retryErr) {
+        clearLocalSession();
+        throw retryErr;
+      }
+    }
+  }, [clearLocalSession]);
 
   // Authenticated fetch with one silent-refresh-and-retry on a 401. The
   // access token is short-lived (~15min per auth.service.js) by design; this
@@ -146,7 +192,20 @@ export function AdminAuthProvider({ children }) {
 
   return (
     <AdminAuthContext.Provider
-      value={{ status, user, login, verifyMfa, enrollMfaSetup, enrollMfaVerify, logout, apiFetch, apiFetchWithMeta, enablePreview }}
+      value={{
+        status,
+        user,
+        login,
+        verifyMfa,
+        enrollMfaSetup,
+        enrollMfaVerify,
+        logout,
+        changePassword,
+        clearLocalSession,
+        apiFetch,
+        apiFetchWithMeta,
+        enablePreview,
+      }}
     >
       {children}
     </AdminAuthContext.Provider>

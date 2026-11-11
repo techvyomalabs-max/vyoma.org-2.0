@@ -96,3 +96,90 @@ test('valid production API configuration with an unreachable backend: admin logi
     return true;
   });
 });
+
+// --- Task 7D.6: changePassword() -------------------------------------------
+
+test('changePassword sends the exact Backend contract: POST /auth/password/change, Bearer token, {currentPassword, newPassword} body', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const { changePassword } = await freshImport();
+  let capturedUrl;
+  let capturedOptions;
+  global.fetch = async (url, options) => {
+    capturedUrl = url;
+    capturedOptions = options;
+    return { ok: true, status: 200, json: async () => ({ success: true, data: { message: 'Password changed. Please log in again.' } }) };
+  };
+  await changePassword('the-access-token', 'OldPassword123!', 'NewPassword456!');
+  assert.equal(capturedUrl, 'https://api.vyoma.org/api/v1/auth/password/change');
+  assert.equal(capturedOptions.method, 'POST');
+  assert.equal(capturedOptions.credentials, 'include');
+  assert.equal(capturedOptions.headers.Authorization, 'Bearer the-access-token');
+  assert.deepEqual(JSON.parse(capturedOptions.body), { currentPassword: 'OldPassword123!', newPassword: 'NewPassword456!' });
+});
+
+test('changePassword resolves with the Backend\'s success message on a successful change', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const { changePassword } = await freshImport();
+  global.fetch = async () => ({ ok: true, status: 200, json: async () => ({ success: true, data: { message: 'Password changed. Please log in again.' } }) });
+  const result = await changePassword('token', 'OldPassword123!', 'NewPassword456!');
+  assert.equal(result.message, 'Password changed. Please log in again.');
+});
+
+test('changePassword rejects with the real INVALID_CREDENTIALS code and message on a wrong current password (a 401 that is NOT treated as a stale-token "Unauthenticated")', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const { changePassword } = await freshImport();
+  global.fetch = async () => ({
+    ok: false,
+    status: 401,
+    json: async () => ({ success: false, code: 'INVALID_CREDENTIALS', message: 'Current password is incorrect.' }),
+  });
+  await assert.rejects(() => changePassword('token', 'WrongPassword!', 'NewPassword456!'), (err) => {
+    assert.equal(err.status, 401);
+    assert.equal(err.code, 'INVALID_CREDENTIALS');
+    assert.equal(err.message, 'Current password is incorrect.');
+    return true;
+  });
+});
+
+test('changePassword rejects with UNAUTHENTICATED and the real message when the access token itself is expired/invalid (distinguishable from INVALID_CREDENTIALS by code, not status alone)', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const { changePassword } = await freshImport();
+  global.fetch = async () => ({
+    ok: false,
+    status: 401,
+    json: async () => ({ success: false, code: 'UNAUTHENTICATED', message: 'Access token is invalid or expired.' }),
+  });
+  await assert.rejects(() => changePassword('stale-token', 'OldPassword123!', 'NewPassword456!'), (err) => {
+    assert.equal(err.status, 401);
+    assert.equal(err.code, 'UNAUTHENTICATED');
+    return true;
+  });
+});
+
+test('changePassword rejects with the real VALIDATION_ERROR code and fieldErrors on a Backend validation failure', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const { changePassword } = await freshImport();
+  global.fetch = async () => ({
+    ok: false,
+    status: 422,
+    json: async () => ({ success: false, code: 'VALIDATION_ERROR', message: 'Password must be at least 10 characters.' }),
+  });
+  await assert.rejects(() => changePassword('token', 'OldPassword123!', 'short'), (err) => {
+    assert.equal(err.code, 'VALIDATION_ERROR');
+    assert.equal(err.message, 'Password must be at least 10 characters.');
+    return true;
+  });
+});
+
+test('changePassword surfaces a network failure as a clear, consistent error, never a fabricated success', async () => {
+  setEnv({ NODE_ENV: 'production', NEXT_PUBLIC_API_BASE_URL: 'https://api.vyoma.org/api/v1' });
+  const { changePassword } = await freshImport();
+  global.fetch = async () => {
+    throw new Error('connection refused');
+  };
+  await assert.rejects(() => changePassword('token', 'OldPassword123!', 'NewPassword456!'), (err) => {
+    assert.equal(err.message, 'Unable to reach the server. Please try again.');
+    assert.equal(err.networkError, true);
+    return true;
+  });
+});

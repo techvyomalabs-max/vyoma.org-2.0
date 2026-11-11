@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/lib/AdminAuthContext';
 
@@ -21,14 +21,36 @@ export default function AdminLoginPage() {
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
 
+  // Bug fix (Task 7D.11, confirmed via real browser testing): enrollMfaVerify()
+  // (AdminAuthContext) sets the shared `status` to 'authenticated', which
+  // used to make AdminShell (the /admin layout's shared chrome) switch from
+  // rendering this page bare to wrapping it in a brand new header/sidebar
+  // tree -- a root-element-type change that made React tear down and
+  // remount this whole page, wiping its `recoveryCodes` state before it
+  // ever rendered. That remount is what's fixed, in AdminShell itself (see
+  // its comment). This ref is kept as defense-in-depth: `status` and this
+  // page's own `recoveryCodes` state are still two separate state updates
+  // that are not guaranteed to land in the same React commit, so without
+  // it a render could still observe "authenticated, no recovery codes yet"
+  // and redirect to the dashboard before the recovery-codes screen has a
+  // chance to show. Set the instant enrollment verification starts, and
+  // only cleared once a render has actually observed recoveryCodes set
+  // (i.e. once the recovery-codes screen itself is already showing, so
+  // clearing it then is always safe).
+  const suppressAutoRedirectRef = useRef(false);
+
   // Recovery codes are shown exactly once, right after enrollment -- the
   // user must see and save them before this redirects to the dashboard, so
   // the auto-redirect is held off while they're on screen.
   useEffect(() => {
-    if (status === 'authenticated' && !recoveryCodes) router.replace('/admin/dashboard');
+    if (status === 'authenticated' && !recoveryCodes && !suppressAutoRedirectRef.current) router.replace('/admin/dashboard');
   }, [status, router, recoveryCodes]);
 
-  if (status === 'loading' || (status === 'authenticated' && !recoveryCodes)) return null;
+  useEffect(() => {
+    if (recoveryCodes) suppressAutoRedirectRef.current = false;
+  }, [recoveryCodes]);
+
+  if (status === 'loading' || (status === 'authenticated' && !recoveryCodes && !suppressAutoRedirectRef.current)) return null;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -70,10 +92,17 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setError(null);
     setPending(true);
+    // Set synchronously, before the async call below -- a ref mutation
+    // takes effect immediately, with no render/commit delay, so it is
+    // already true by the time ANY resulting re-render happens, regardless
+    // of whether `status` and `recoveryCodes` end up updating in the same
+    // commit or not.
+    suppressAutoRedirectRef.current = true;
     try {
       const result = await enrollMfaVerify(enrollmentToken, code);
       setRecoveryCodes(result.recoveryCodes);
     } catch (err) {
+      suppressAutoRedirectRef.current = false;
       setError(err.message || 'Invalid code.');
     } finally {
       setPending(false);

@@ -40,14 +40,25 @@ import { ContentModel } from '../../../src/modules/content/content.model.js';
 
 const BACKUP_DIR = 'C:\\Users\\Dell\\vyoma-migration-backups';
 const ABOUT_TYPE = 'pages/about';
-
-const IMAGE_MAP = JSON.parse(
-  fs.readFileSync('C:/Users/Dell/vyoma-image-poc/apply_image_map.json', 'utf8')
-).reduce((acc, p) => {
-  acc[p.name] = { url: p.url };
-  return acc;
-}, {});
 const EXPECTED_COUNT = 80;
+
+// Task 7D.19 — this used to be a module-scope computation, meaning merely
+// IMPORTING this file (e.g. this project's own wordpressMigrationScriptsDbSafety
+// test, or any other tooling that just needs a named export from this
+// module) read this hardcoded, single-machine-only path as a side effect,
+// unconditionally -- confirmed as the exact cause of a GitHub Actions CI
+// failure on any machine other than the one this was authored on. Moved
+// into a lazily-invoked function, called only from inside main() itself
+// (see below), so importing this module now touches no filesystem at all;
+// direct CLI execution (node leadership-coreteam-bg-removal-apply.mjs
+// [--commit]) is completely unchanged -- same file, same path, same data,
+// same validation, same behavior.
+function loadImageMap() {
+  return JSON.parse(fs.readFileSync('C:/Users/Dell/vyoma-image-poc/apply_image_map.json', 'utf8')).reduce((acc, p) => {
+    acc[p.name] = { url: p.url };
+    return acc;
+  }, {});
+}
 
 const EXCLUDED_NAMES = new Set([
   'Sudhir Patavardhan', // already live, excluded on purpose
@@ -66,6 +77,7 @@ function applyImages(list, imageMap) {
 
 async function main() {
   const commit = process.argv.includes('--commit');
+  const IMAGE_MAP = loadImageMap();
 
   console.log('='.repeat(72));
   console.log(`Leadership/Core Team background-removal DRAFT apply -- mode: ${commit ? 'COMMIT (will write draftData)' : 'DRY-RUN (no writes)'}`);

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { SmartImage } from '@/components/common/SmartImage';
+import { extractYouTubeId } from '@/lib/youtube';
 
 // The album grid on /media/gallery plus its click-to-open lightbox modal.
 // Kept as a single client component (rather than splitting the grid out as
@@ -21,16 +22,21 @@ function albumPhotoCount(album) {
   return Array.isArray(album.images) ? album.images.length : album.count;
 }
 
-// Extracts the 11-char YouTube video ID from either a youtu.be/ID or
-// youtube.com/watch?v=ID URL — enough to build a thumbnail with no new
-// dependency or embed player.
-function extractYouTubeId(url) {
-  const m = String(url || '').match(/(?:youtu\.be\/|v=)([A-Za-z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
-
 export function GalleryLightbox({ albums, videos = [] }) {
   const [openAlbum, setOpenAlbum] = useState(null);
+
+  // Accessibility fix (Task 7D.11, confirmed via real browser testing):
+  // this modal had no way to dismiss it from the keyboard at all besides
+  // tabbing to the × button -- Escape is the standard, expected way to
+  // close any modal/dialog.
+  useEffect(() => {
+    if (!openAlbum) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setOpenAlbum(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [openAlbum]);
 
   return (
     <>

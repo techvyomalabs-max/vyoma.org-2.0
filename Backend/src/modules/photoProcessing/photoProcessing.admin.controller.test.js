@@ -132,17 +132,70 @@ test('POST /admin/photo-processing is rejected with 403 for a role without media
   assert.equal(body.code, 'FORBIDDEN');
 });
 
-// --- Local-dev-only gate ---
+// --- Storage-availability gate (Task 7D.2: dev OR S3-configured, not dev-only) ---
 
-test('POST /admin/photo-processing returns 503 BACKGROUND_REMOVAL_NOT_CONFIGURED outside local development', async () => {
+function withS3Config(overrides, fn) {
+  const backup = { ...env.s3 };
+  Object.assign(env.s3, overrides);
+  return fn().finally(() => {
+    Object.assign(env.s3, backup);
+  });
+}
+
+test('POST /admin/photo-processing returns 503 BACKGROUND_REMOVAL_NOT_CONFIGURED outside local development when S3 is also not configured', async () => {
   const user = await createTestUser({ email: 'photoproc-post-prod@example.test', roleKey: 'admin' });
   const token = signAccessToken(user, adminRole);
 
   await withNodeEnv('production', async () => {
-    const { res, body } = await enqueue(token, { sourceUrl: 'https://vyoma.org/x.png' });
-    assert.equal(res.status, 503);
-    assert.equal(body.code, 'BACKGROUND_REMOVAL_NOT_CONFIGURED');
+    await withS3Config({ region: null, bucket: null, accessKeyId: null, secretAccessKey: null }, async () => {
+      const { res, body } = await enqueue(token, { sourceUrl: 'https://vyoma.org/x.png' });
+      assert.equal(res.status, 503);
+      assert.equal(body.code, 'BACKGROUND_REMOVAL_NOT_CONFIGURED');
+    });
   });
+});
+
+// Task 7D.2: the gate itself must let the request through once S3 looks
+// configured, even in production -- proven here WITHOUT ever attempting a
+// real S3 upload, AWS network call, or any other real external network
+// call. `sourceUrl` deliberately uses the exact same safe pattern the
+// full-lifecycle success test further below relies on: localhost + this
+// test's own already-running disposable server's port +
+// "/local-media/..." (assertSafeSourceUrl's explicit dev-host allowance,
+// which skips its DNS-rebinding lookup entirely) pointed at a file that
+// does not exist. The async worker therefore fails deterministically at
+// the "fetch source image" step (a 404 from our own test server) --
+// never reaching persistProcessedImage()'s S3 upload at all -- so this
+// proves only the gate's behavior, not a real upload, with zero risk of
+// any real AWS or external network access.
+test('POST /admin/photo-processing is allowed past the gate in production once S3 looks configured (no real AWS or external network access)', async () => {
+  const user = await createTestUser({ email: 'photoproc-post-prod-s3@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+
+  const testPort = new URL(env_.baseUrl).port;
+  const portBackup = env.port;
+  env.port = Number(testPort);
+
+  try {
+    await withNodeEnv('production', async () => {
+      await withS3Config({ region: 'ap-south-1', bucket: 'fake-test-bucket', accessKeyId: 'fake', secretAccessKey: 'fake' }, async () => {
+        const sourceUrl = `http://localhost:${testPort}/local-media/processed/does-not-exist-7d2.png`;
+        const { res, body } = await enqueue(token, { sourceUrl });
+        assert.equal(res.status, 202, 'the gate must allow this through once S3 looks configured, even in production');
+        assert.equal(body.success, true);
+        assert.equal(body.data.status, 'queued');
+
+        // Let the background worker settle (deterministic 404 against our
+        // own test server, no real external request) before this test (and
+        // the eventual env.port/env.nodeEnv/env.s3 restoration) proceeds.
+        const settled = await waitForJobSettled(body.data.id);
+        assert.equal(settled.status, 'failed');
+        assert.match(settled.errorMessage, /Could not fetch the source image/);
+      });
+    });
+  } finally {
+    env.port = portBackup;
+  }
 });
 
 // --- sourceUrl validation ---

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { enqueueJob, getJob } from './backgroundRemoval.service.js';
 import { isLocalDevStorageAllowed } from './localDev.storageAdapter.js';
+import { isS3Configured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
 
@@ -22,13 +23,17 @@ function jobView(job) {
 
 // POST /api/v1/admin/photo-processing — { sourceUrl }. Returns immediately
 // with a queued job; the actual removal runs asynchronously (see
-// backgroundRemoval.service.js's sequential worker). Local-development
-// only for now -- same "no fake success" rule as every other
-// not-yet-configured integration in this app (Razorpay, S3, SMTP).
+// backgroundRemoval.service.js's sequential worker). Task 7D.2: previously
+// development-only; now also available in staging/production once S3 is
+// configured (persistProcessedImage() in backgroundRemoval.service.js
+// stores the result there instead of local disk) -- same "no fake
+// success" rule as every other not-yet-configured integration in this app
+// (Razorpay, S3, SMTP): rejected upfront, before a job is even created, if
+// neither storage path is available.
 export async function enqueuePhotoProcessing(req, res, next) {
   try {
-    if (!isLocalDevStorageAllowed()) {
-      throw new ApiError(503, 'BACKGROUND_REMOVAL_NOT_CONFIGURED', 'Background removal is only available in local development right now.');
+    if (!isLocalDevStorageAllowed() && !isS3Configured()) {
+      throw new ApiError(503, 'BACKGROUND_REMOVAL_NOT_CONFIGURED', 'Background removal storage is not configured on this server yet.');
     }
     const sourceUrl = (req.body?.sourceUrl || '').trim();
     if (!sourceUrl) {

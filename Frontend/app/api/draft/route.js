@@ -40,7 +40,11 @@ export async function POST(request) {
   // exactly as before, just no longer able to fail the build itself.
   let backendBase;
   try {
-    backendBase = resolveApiBase(process.env, 'http://localhost:4000/api/v1');
+    // Task 7D.11 fix: no longer passes `process.env` explicitly (see
+    // lib/apiConfig.js's header comment) -- this Route Handler only ever
+    // runs server-side, so it was never actually broken in practice, but
+    // the pattern itself was misleading and is fixed here for consistency.
+    backendBase = resolveApiBase(undefined, 'http://localhost:4000/api/v1');
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
   }

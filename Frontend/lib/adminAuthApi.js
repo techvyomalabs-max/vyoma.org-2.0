@@ -30,7 +30,14 @@ import { resolveApiBase } from './apiConfig.js';
 // request actually needs the backend, never at build/import time, and never
 // silently falling back to localhost or mock data.
 function getApiBase() {
-  return resolveApiBase(process.env, 'http://localhost:4000/api/v1');
+  // Task 7D.11 fix: no longer passes `process.env` explicitly -- see
+  // lib/apiConfig.js's own header comment for why that broke client-side
+  // (the real root cause this task's browser testing found: every admin
+  // login/session/API call was silently targeting this hardcoded fallback
+  // in a real browser, regardless of NEXT_PUBLIC_API_BASE_URL). Omitting
+  // the argument lets resolveApiBase()'s own default parameter -- now
+  // correctly inlined for the client bundle -- take over.
+  return resolveApiBase(undefined, 'http://localhost:4000/api/v1');
 }
 
 // Wraps the raw `fetch` so a network-level failure (backend unreachable —

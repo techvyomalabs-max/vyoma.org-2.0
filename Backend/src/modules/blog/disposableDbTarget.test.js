@@ -60,10 +60,15 @@ test('rejects when the env var is set but blank', () => {
   );
 });
 
+// Task 7D.3: requireDisposableDbTarget() now delegates the protected-name
+// and malformed-URI checks to the shared, central
+// assertSafeMongoConnectionUri() (src/config/protectedDbGuard.js) instead
+// of this file's own, previously independent copy -- the exact wording
+// below matches that shared guard's own error messages.
 test('rejects the exact protected database name', () => {
   assert.throws(
     () => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun' }),
-    /Refusing to proceed.*vyoma_migration_dryrun.*protected list/s
+    /vyoma_migration_dryrun.*protected list/s
   );
 });
 
@@ -77,8 +82,37 @@ test('rejects the protected database name even with extra host/query noise', () 
   );
 });
 
+// Task 7D.3 — the exact bug found and fixed by reusing the central guard:
+// this file's own previous, independent database-name parser never
+// stripped a trailing slash, so this exact variant silently passed through
+// as "not the protected name". Confirmed directly (by calling the
+// unfixed function) before this fix was applied.
+test('rejects a trailing-slash variant of the protected database name (the exact bypass this task found and fixed)', () => {
+  assert.throws(
+    () => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun/' }),
+    /vyoma_migration_dryrun.*protected list/s
+  );
+});
+
+// Task 7D.5 — the central guard now decodes percent-encoding and compares
+// case-insensitively before this check runs; re-verified at this call site
+// too, since disposableDbTarget.mjs delegates entirely to it.
+test('rejects a percent-encoded variant of the protected database name (the exact bypass Task 7D.5 found and fixed)', () => {
+  assert.throws(
+    () => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://127.0.0.1:27017/%76yoma_migration_dryrun' }),
+    /vyoma_migration_dryrun.*protected list/s
+  );
+});
+
 test('rejects a malformed connection string before attempting to connect', () => {
-  assert.throws(() => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'not a valid uri' }), /not a valid MongoDB connection string/);
+  assert.throws(() => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'not a valid uri' }), /could not be parsed as a valid URI/);
+});
+
+test('rejects an ambiguous URI with no database name at all, even on a loopback host (fails closed, does not silently pass through to the host check)', () => {
+  assert.throws(
+    () => requireDisposableDbTarget({ WP_AUDIT_MONGODB_URI: 'mongodb://127.0.0.1:27017' }),
+    /does not specify a database name/i
+  );
 });
 
 test('accepts a syntactically valid, non-protected database target', () => {

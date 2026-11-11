@@ -49,6 +49,20 @@ export { PROTECTED_DB_NAMES };
 // Trailing slash(es) are stripped before comparison (Task 7P's own
 // pre-commit fix for this exact same class of guard) so "<protected>/"
 // cannot slip past the check.
+//
+// Task 7D.5 fix: the raw path segment is also percent-decoded before being
+// returned. `URL`'s own `.pathname` is never percent-decoded (WHATWG URL
+// spec), but the real MongoDB driver DOES decode this segment before using
+// it as the actual database name -- confirmed directly by connecting a
+// disposable mongodb-memory-server instance with a percent-encoded
+// database-name segment and observing mongoose.connection.name resolve to
+// the decoded value. Without this, "mongodb://host/%76yoma_migration_dryrun"
+// would have returned the literal, still-encoded string
+// "%76yoma_migration_dryrun" -- which assertSafeMongoConnectionUri() below
+// would not have matched against PROTECTED_DB_NAMES, silently letting a
+// connection through to the real protected database. A malformed
+// percent-sequence (e.g. "%zz") is treated the same as "no database name at
+// all" -- fail closed, never assumed safe.
 export function extractDatabaseNameStrict(uri) {
   if (typeof uri !== 'string' || uri.trim() === '') {
     throw new Error('Refusing to connect: no MongoDB connection string was provided.');
@@ -61,7 +75,16 @@ export function extractDatabaseNameStrict(uri) {
     throw new Error('Refusing to connect: the configured MongoDB connection string could not be parsed as a valid URI.');
   }
 
-  const dbName = parsed.pathname.replace(/^\//, '').split('?')[0].replace(/\/+$/, '');
+  const rawDbName = parsed.pathname.replace(/^\//, '').split('?')[0].replace(/\/+$/, '');
+  let dbName;
+  try {
+    dbName = rawDbName ? decodeURIComponent(rawDbName) : '';
+  } catch {
+    throw new Error(
+      'Refusing to connect: the configured MongoDB connection string has a malformed percent-encoded database name segment. ' +
+        'An ambiguous connection target is treated as unsafe, not assumed to be harmless.'
+    );
+  }
   if (!dbName) {
     throw new Error(
       'Refusing to connect: the configured MongoDB connection string does not specify a database name. ' +
@@ -78,7 +101,13 @@ export function extractDatabaseNameStrict(uri) {
 // it takes no environment-mode input at all, only the URI string itself.
 export function assertSafeMongoConnectionUri(uri, { label = 'target' } = {}) {
   const dbName = extractDatabaseNameStrict(uri);
-  if (PROTECTED_DB_NAMES.has(dbName)) {
+  // Task 7D.5 fix: case-insensitive comparison. MongoDB itself disallows two
+  // databases on one deployment whose names differ only by case (to avoid
+  // case-insensitive-filesystem collisions), so a differently-cased target
+  // (e.g. "Vyoma_Migration_Dryrun") can resolve to the same protected
+  // database this guard exists to block -- an exact-case Set lookup alone
+  // would have missed that.
+  if (PROTECTED_DB_NAMES.has(dbName.toLowerCase())) {
     throw new Error(
       `Refusing to connect: the ${label} database ("${dbName}") is on this project's protected list and must never be accessed -- including for reads -- by this application.`
     );

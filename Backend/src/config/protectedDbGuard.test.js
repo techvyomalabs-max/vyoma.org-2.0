@@ -49,6 +49,44 @@ test('rejects a trailing-slash variant of the protected name (the exact Task 7P 
   assert.throws(() => assertSafeMongoConnectionUri('mongodb://127.0.0.1:27017/vyoma_migration_dryrun/'), /vyoma_migration_dryrun/);
 });
 
+// Task 7D.5 — confirmed directly (by connecting a disposable
+// mongodb-memory-server instance with a percent-encoded database-name
+// segment and observing mongoose.connection.name resolve to the decoded
+// value) that the real MongoDB driver decodes this segment before using it
+// as the database name, while this guard previously compared the raw,
+// still-encoded string and would have let a connection through.
+test('rejects a percent-encoded variant of the protected name (the exact bypass this task found and fixed)', () => {
+  assert.throws(
+    () => assertSafeMongoConnectionUri('mongodb://127.0.0.1:27017/%76yoma_migration_dryrun'),
+    /vyoma_migration_dryrun/
+  );
+  // fully percent-encoded, still decodes to the same protected name
+  assert.throws(
+    () =>
+      assertSafeMongoConnectionUri(
+        'mongodb://127.0.0.1:27017/%76%79%6f%6d%61_%6d%69%67%72%61%74%69%6f%6e_%64%72%79%72%75%6e'
+      ),
+    /vyoma_migration_dryrun/
+  );
+});
+
+test('rejects a malformed percent-encoding in the database name segment, rather than assuming it is safe', () => {
+  assert.throws(
+    () => assertSafeMongoConnectionUri('mongodb://127.0.0.1:27017/%zz'),
+    /malformed percent-encoded database name/i
+  );
+});
+
+// Task 7D.5 — MongoDB itself disallows two databases on one deployment
+// whose names differ only by case (to avoid case-insensitive-filesystem
+// collisions), so a differently-cased target can resolve to the same
+// protected database. The previous exact-case Set lookup would have missed
+// this.
+test('rejects differently-cased variants of the protected name (case-insensitive match)', () => {
+  assert.throws(() => assertSafeMongoConnectionUri('mongodb://127.0.0.1:27017/VYOMA_MIGRATION_DRYRUN'), /protected list/i);
+  assert.throws(() => assertSafeMongoConnectionUri('mongodb://127.0.0.1:27017/Vyoma_Migration_Dryrun'), /protected list/i);
+});
+
 test('rejects a malformed/unparseable connection string, rather than assuming it is safe', () => {
   assert.throws(() => assertSafeMongoConnectionUri('not a uri at all'), /could not be parsed/i);
 });

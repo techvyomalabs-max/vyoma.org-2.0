@@ -27,8 +27,18 @@
 import mongoose from 'mongoose';
 import { connectDb } from '../../../src/config/db.js';
 import { env } from '../../../src/config/env.js';
+// Task 7D.3: PROTECTED_DB_NAMES re-exported from the shared, central guard
+// (src/config/protectedDbGuard.js) instead of this file independently
+// declaring its own copy of the same literal Set -- a third, previously
+// undiscovered duplicate of the exact same list already existed here
+// (alongside scripts/backup/protectedDbGuard.mjs and
+// scripts/wordpress/inventory/disposableDbTarget.mjs before Task 7D.3 fixed
+// it too). Existing callers/tests that import PROTECTED_DB_NAMES from this
+// module are unaffected -- it is still exported from here, just no longer
+// an independent literal.
+import { assertSafeMongoConnectionUri, PROTECTED_DB_NAMES } from '../../../src/config/protectedDbGuard.js';
 
-export const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
+export { PROTECTED_DB_NAMES };
 
 // Aborts (throws) if the active mongoose connection's database name is on
 // the protected list. Takes a mongoose connection object (not a URI string)
@@ -52,6 +62,10 @@ export function assertSafeDatabaseTarget(connection) {
 // that is connectDb()'s/the driver's own error to raise, not this
 // function's. Exported so it can be unit-tested directly against synthetic
 // URIs, with no dependency on this process's own ambient MONGODB_URI.
+//
+// Task 7D.3: kept exactly as-is (still exported, still pinned by its own
+// tests) for backward compatibility, but connectToMigrationDb() below no
+// longer uses it for its own safety check -- see that function's comment.
 export function extractConfiguredDatabaseName(uri) {
   if (typeof uri !== 'string' || !uri.trim()) return null;
   try {
@@ -68,32 +82,42 @@ export function extractConfiguredDatabaseName(uri) {
 // own try/finally (as every fixed script here does) so that disconnectDb()
 // still runs if the post-connection guard below ever throws.
 //
-// Task 7H.2A fix: this now validates env.mongodbUri -- the exact string
+// Task 7H.2A fix: this validates env.mongodbUri -- the exact string
 // connectDb() is about to use -- BEFORE calling connectDb() at all, so a
 // configured target that is already known to be the protected database is
-// rejected without ever opening a connection to it. Previously this check
-// ran only *after* connectDb() had already connected, meaning a protected
-// configured target would be connected to (with no query or write ever
-// issued against it, since every fixed caller's own guard sits before its
-// first query) before being rejected -- a real gap: the standing rule is to
-// never even connect to this database, not merely never query it. The
-// post-connection assertSafeDatabaseTarget() call is kept as defense in
-// depth (e.g. for a configured URI whose path-segment parsing differs from
-// the driver's own database-name resolution, or a database selected via
-// dbName option rather than the URI path).
+// rejected without ever opening a connection to it. The post-connection
+// assertSafeDatabaseTarget() call is kept as defense in depth (e.g. for a
+// configured URI whose path-segment parsing differs from the driver's own
+// database-name resolution, or a database selected via dbName option rather
+// than the URI path).
+//
+// Task 7D.3: the pre-check now delegates to the shared, central
+// assertSafeMongoConnectionUri() (src/config/protectedDbGuard.js) instead of
+// this file's own independent extractConfiguredDatabaseName() +
+// PROTECTED_DB_NAMES.has() check. That independent check (confirmed
+// directly, by calling it) had the identical unstripped-trailing-slash gap
+// already found and fixed in disposableDbTarget.mjs:
+// "mongodb://host/vyoma_migration_dryrun/" was NOT recognized as the
+// protected name and would have passed this pre-check through to
+// connectDb() -- not end-to-end exploitable on its own, since connectDb()'s
+// own central guard (Task 7T.1A) would still have refused that exact URI one
+// line below, but a real gap in this file's own, independently-maintained
+// copy. Reusing the one shared, authoritative guard instead closes that
+// drift here too.
 //
 // A null/unset env.mongodbUri (the local-development in-memory-fallback
 // path in connectDb()) is never a protected target by construction, so the
-// pre-check simply does nothing in that case.
+// pre-check simply does nothing in that case -- preserving the one
+// legitimate difference between this script's design and
+// disposableDbTarget.mjs's (which requires an explicit target and rejects a
+// missing one outright).
 //
 // Returns the connected database's name (or null if unknown), exactly like
 // assertSafeDatabaseTarget() -- never the URI, never credentials.
 export async function connectToMigrationDb() {
-  const configuredDbName = extractConfiguredDatabaseName(env.mongodbUri);
-  if (configuredDbName && PROTECTED_DB_NAMES.has(configuredDbName)) {
-    throw new Error(
-      `Refusing to connect: the configured database ("${configuredDbName}") is on this script's protected list and must never be read, written, reset, or reseeded by this importer.`
-    );
+  const configuredUri = env.mongodbUri;
+  if (typeof configuredUri === 'string' && configuredUri.trim()) {
+    assertSafeMongoConnectionUri(configuredUri, { label: 'configured' });
   }
 
   await connectDb();

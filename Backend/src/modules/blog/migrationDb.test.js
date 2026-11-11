@@ -119,10 +119,16 @@ test('extractConfiguredDatabaseName parses a MongoDB URI string without connecti
 // process's configured value be the protected name, on demand, without
 // either mutating this process's real environment or modifying connectDb()
 // itself, both out of scope for this task.
+//
+// Task 7D.3: updated to look for assertSafeMongoConnectionUri(...) instead
+// of the file's old, independent extractConfiguredDatabaseName(env.mongodbUri)
+// + PROTECTED_DB_NAMES.has() pair -- the pre-check now delegates to the
+// shared, central guard (src/config/protectedDbGuard.js) instead of
+// re-implementing its own, independently-maintained copy of the same check.
 test('connectToMigrationDb() checks the configured target for the protected name BEFORE calling connectDb()', () => {
-  const precheckIdx = MIGRATION_DB_SOURCE.indexOf('extractConfiguredDatabaseName(env.mongodbUri)');
+  const precheckIdx = MIGRATION_DB_SOURCE.indexOf('assertSafeMongoConnectionUri(configuredUri');
   const connectIdx = MIGRATION_DB_SOURCE.indexOf('await connectDb();', precheckIdx);
-  assert.ok(precheckIdx !== -1, 'expected the pre-check to call extractConfiguredDatabaseName(env.mongodbUri)');
+  assert.ok(precheckIdx !== -1, 'expected the pre-check to call assertSafeMongoConnectionUri(configuredUri, ...)');
   assert.ok(connectIdx !== -1, 'expected a connectDb() call after the pre-check');
   assert.ok(precheckIdx < connectIdx, 'the configured-target check must run before connectDb() is ever called');
 });
@@ -146,6 +152,39 @@ test('connectToMigrationDb() rejects an explicitly-configured protected target b
         0,
         'the pre-check must reject before connectDb() is ever called -- no connection of any kind should exist'
       );
+    }
+  );
+});
+
+// Task 7D.3 — the exact bug found and fixed by reusing the central guard:
+// this file's own previous, independent extractConfiguredDatabaseName()
+// never stripped a trailing slash, so this exact variant would have
+// silently passed the pre-check through to connectDb() as "not the
+// protected name". Confirmed directly (by calling the unfixed function)
+// before this fix was applied.
+test('connectToMigrationDb() rejects a trailing-slash variant of the protected database name (the exact bypass this task found and fixed), and opens no connection at all', async () => {
+  await withEnv(
+    { nodeEnv: 'development', mongodbUri: 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun/' },
+    async () => {
+      await assert.rejects(() => connectToMigrationDb(), /vyoma_migration_dryrun.*protected list/s);
+      assert.equal(
+        mongoose.connection.readyState,
+        0,
+        'the pre-check must reject before connectDb() is ever called -- no connection of any kind should exist'
+      );
+    }
+  );
+});
+
+// Task 7D.5 — the central guard now decodes percent-encoding before this
+// check runs; re-verified at this call site too, since connectToMigrationDb()
+// delegates entirely to it.
+test('connectToMigrationDb() rejects a percent-encoded variant of the protected database (the exact bypass Task 7D.5 found and fixed)', async () => {
+  await withEnv(
+    { nodeEnv: 'development', mongodbUri: 'mongodb://127.0.0.1:27017/%76yoma_migration_dryrun' },
+    async () => {
+      await assert.rejects(() => connectToMigrationDb(), /vyoma_migration_dryrun.*protected list/s);
+      assert.equal(mongoose.connection.readyState, 0, 'the pre-check must reject before connectDb() is ever called');
     }
   );
 });

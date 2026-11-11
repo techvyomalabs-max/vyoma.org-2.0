@@ -15,10 +15,20 @@
 //      scripts is always a deliberate, separate act, never an accidental
 //      side effect of however the Backend's own .env happens to be
 //      configured for the server or test suite.
-//   2. Parsing the configured URI's database name and refusing to proceed
-//      if it matches the protected list -- entirely from the URI string,
-//      BEFORE any connection is attempted. mongoose.connect() is never
-//      called with an unvalidated URI.
+//   2. (Task 7D.3) Reusing the central, already-tested
+//      assertSafeMongoConnectionUri() from src/config/protectedDbGuard.js
+//      for the protected-name and malformed/ambiguous-target checks --
+//      entirely from the URI string, BEFORE any connection is attempted.
+//      mongoose.connect() is never called with an unvalidated URI. This
+//      replaces a SEPARATE, independently-maintained PROTECTED_DB_NAMES
+//      list and database-name parser this file used to carry on its own,
+//      which (confirmed directly, by calling it) had a real, exploitable
+//      gap the central guard had already fixed elsewhere: it never
+//      stripped a trailing slash, so
+//      "mongodb://host/vyoma_migration_dryrun/" was NOT recognized as the
+//      protected name and would have been silently accepted. Reusing one
+//      shared, authoritative guard instead of two independent copies is
+//      exactly what closes that class of drift for good.
 //   3. (Task 7H.1) Requiring the target host to be a loopback address. This
 //      does NOT prove the target is genuinely disposable -- a persistent
 //      database can run on localhost too, and this guard cannot inspect
@@ -36,7 +46,8 @@
 // Never inspects or logs anything beyond the database name and host,
 // consistent with this project's existing never-log-the-connection-string
 // convention (see batch1-import.mjs's assertSafeDatabaseTarget()).
-const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
+import { assertSafeMongoConnectionUri } from '../../../src/config/protectedDbGuard.js';
+
 // Node's URL parser reports an IPv6 literal's hostname WITH its brackets
 // (e.g. "[::1]", not "::1") -- both forms are listed so a URI written either
 // way is still recognized correctly.
@@ -90,12 +101,14 @@ export function requireDisposableDbTarget(envObject = process.env) {
   }
 
   const uri = String(rawUri).trim();
-  const dbName = extractDatabaseName(uri);
-  if (dbName && PROTECTED_DB_NAMES.has(dbName)) {
-    throw new Error(
-      `Refusing to proceed: ${WP_AUDIT_ENV_VAR} resolves to the database "${dbName}", which is on this project's protected list and must never be read, written, reset, or reseeded by this script.`
-    );
-  }
+
+  // Task 7D.3: the protected-name AND malformed/ambiguous-target checks are
+  // now entirely delegated to the shared, central guard instead of this
+  // file's own independent copy -- its error message already names only
+  // the database name, never the URI, and already fails closed on an
+  // unparseable or no-database-name URI. No network connection is
+  // attempted here or inside that guard.
+  assertSafeMongoConnectionUri(uri, { label: WP_AUDIT_ENV_VAR });
 
   const { hostname } = new URL(uri);
   if (!LOOPBACK_HOSTS.has(hostname)) {

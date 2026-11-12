@@ -33,8 +33,18 @@ export async function listAuditLogs(req, res, next) {
       }
     }
 
+    // createdAt alone is not a safe sort key: it is millisecond-resolution and
+    // two rows written in the same tick of the event loop (or just fast
+    // consecutive writes) can share an identical value, leaving MongoDB free
+    // to return them in either order and making pagination non-deterministic
+    // (a row can appear on both pages, or neither, depending on the tie).
+    // _id breaks ties deterministically: bson's ObjectId allocates its
+    // trailing counter from a single per-process, monotonically-incrementing
+    // static (see bson's `ObjectId.getInc()`), so within this app's own
+    // process, newer documents always sort after older ones even when their
+    // createdAt values are identical.
     const [items, total] = await Promise.all([
-      AuditLogModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      AuditLogModel.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       AuditLogModel.countDocuments(filter),
     ]);
 

@@ -16,7 +16,11 @@ const auditLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-auditLogSchema.index({ createdAt: -1 });
+// Compound to match the controller's { createdAt: -1, _id: -1 } sort exactly
+// (the deterministic tiebreak on _id -- see audit.controller.js) so the list
+// query can satisfy that sort directly from the index instead of falling
+// back to an in-memory sort stage as the collection grows.
+auditLogSchema.index({ createdAt: -1, _id: -1 });
 auditLogSchema.index({ actorId: 1, createdAt: -1 });
 
 export const AuditLogModel = mongoose.model('AuditLog', auditLogSchema);

@@ -73,11 +73,18 @@ test('GET /admin/audit-logs succeeds for the super_admin role', async () => {
   assert.ok('page' in body.meta && 'limit' in body.meta && 'total' in body.meta);
 });
 
-test('results are sorted newest first and paginated with the documented defaults/caps', async () => {
+test('results are sorted newest first and paginated with the documented defaults/caps, deterministically even when timestamps tie', async () => {
   await AuditLogModel.deleteMany({ action: 'audit-pagination-test.event' });
+  // All 5 rows share one identical createdAt -- forcing the real-world tie
+  // scenario deterministically on every run, rather than depending on
+  // incidental millisecond timing. Pre-fix, MongoDB's order among these ties
+  // was unspecified (observed in CI: an intermittent off-by-one row swap at
+  // a page boundary); the only thing that can now distinguish them is the
+  // _id secondary sort key, in creation order.
+  const tiedCreatedAt = new Date('2026-01-01T00:00:00.000Z');
   for (let i = 0; i < 5; i += 1) {
     // eslint-disable-next-line no-await-in-loop
-    await seedLog({ action: 'audit-pagination-test.event', actorEmail: `page-${i}@example.test` });
+    await seedLog({ action: 'audit-pagination-test.event', actorEmail: `page-${i}@example.test`, createdAt: tiedCreatedAt });
   }
   const user = await createTestUser({ email: 'audit-pagination@example.test', roleKey: 'super_admin' });
   const token = signAccessToken(user, superAdminRole);
@@ -88,12 +95,21 @@ test('results are sorted newest first and paginated with the documented defaults
   assert.equal(body.meta.page, 1);
   assert.equal(body.meta.limit, 2);
   assert.equal(body.meta.total, 5);
-  // Newest first: the last-seeded row (page-4) must come before page-0.
+  // Newest first: the last-seeded row (page-4) must come before page-3, even
+  // though both share the exact same createdAt.
   assert.equal(body.data[0].actorEmail, 'page-4@example.test');
+  assert.equal(body.data[1].actorEmail, 'page-3@example.test');
 
   const second = await listAuditLogs(token, '?action=audit-pagination-test.event&limit=2&page=2');
   assert.equal(second.body.data.length, 2);
   assert.equal(second.body.data[0].actorEmail, 'page-2@example.test');
+  assert.equal(second.body.data[1].actorEmail, 'page-1@example.test');
+
+  // The full reverse-insertion order, confirmed across every page: no row is
+  // duplicated onto two pages or omitted from all of them.
+  const third = await listAuditLogs(token, '?action=audit-pagination-test.event&limit=2&page=3');
+  assert.equal(third.body.data.length, 1);
+  assert.equal(third.body.data[0].actorEmail, 'page-0@example.test');
 });
 
 test('limit is capped at 100 even when a larger value is requested', async () => {

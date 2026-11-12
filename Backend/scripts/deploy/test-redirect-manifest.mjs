@@ -128,8 +128,18 @@ function main() {
   // Completely unmatched path -> passthrough (request returned unchanged).
   check('/this-path-does-not-exist/ passthrough', passthroughCase('/this-path-does-not-exist/'), mockEvent('/this-path-does-not-exist/').request);
 
-  // /team (no trailing slash) is distinct from /team/ — must NOT match.
-  check('/team (no trailing slash) does not match /team/\'s rule', passthroughCase('/team'), mockEvent('/team').request);
+  // /team (no trailing slash) matches /team/'s rule via the documented
+  // trailing-slash toggle (resolveRedirect.js; see also
+  // resolveRedirect.test.js's own "matches in both slash forms" case and
+  // infra/cloudfront/README.md's "Matching semantics" section) — this
+  // check previously asserted the opposite (a passthrough), which
+  // contradicted that approved, separately-tested design. Corrected here
+  // (Task 7F.4C) to match the real, intended behavior, not to change it.
+  check('/team (no trailing slash) redirects to /about/core-team via the trailing-slash toggle', handler(mockEvent('/team')), {
+    statusCode: 301,
+    statusDescription: 'Moved Permanently',
+    headers: { location: { value: '/about/core-team' } },
+  });
 
   // Case-sensitivity: an uppercase variant of a real rule must NOT match.
   check('/TEAM/ (uppercase) does not match /team/\'s rule (case-sensitive)', passthroughCase('/TEAM/'), mockEvent('/TEAM/').request);

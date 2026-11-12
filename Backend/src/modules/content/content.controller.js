@@ -2,6 +2,7 @@ import { ContentModel } from './content.model.js';
 import { sendSuccess } from '../../utils/apiResponse.js';
 import { ApiError } from '../../utils/apiResponse.js';
 import { env } from '../../config/env.js';
+import { sanitizePublicContent } from './sanitizePublicContent.js';
 
 // GET /api/v1/public/:type — LLD 7.2. `:type` can contain a slash (e.g.
 // "pages/home"), so the route is registered on a wildcard and the full
@@ -30,7 +31,7 @@ export async function getPublicContentByType(req, res, next) {
     if (!doc || data == null) {
       throw new ApiError(404, 'CONTENT_NOT_FOUND', `No published content for type "${type}"`);
     }
-    return sendSuccess(res, data);
+    return sendSuccess(res, sanitizePublicContent(type, data));
   } catch (err) {
     next(err);
   }

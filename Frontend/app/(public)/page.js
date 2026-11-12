@@ -10,6 +10,12 @@ import { pageMetadata } from '@/lib/seo';
 
 const active = (items) => items.filter((item) => item.active !== false);
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata() {
   const { SEO } = await getHomeContent();
   const meta = pageMetadata({ path: '/', title: SEO?.title || undefined, description: SEO?.description || undefined });
@@ -168,7 +174,10 @@ function ActivityCard({ a, i }) {
           {word[0]}
         </span>
       )}
-      <span className="font-sans text-[13px] font-bold tracking-[1.5px] text-white/55">{String(i + 1).padStart(2, '0')}</span>
+      {/* Task 7D.12 (A11Y-01): text-white/55 measured 2.96:1 against the
+          card's solid vyoma-blue background (axe-core, WCAG AA requires
+          4.5:1 even for bold text at this size) -- /90 clears it. */}
+      <span className="font-sans text-[13px] font-bold tracking-[1.5px] text-white/90">{String(i + 1).padStart(2, '0')}</span>
       <h3 className="m-0 font-sans text-2xl font-bold text-white">{a.title}</h3>
       {a.description && <p className="m-0 font-sans text-sm text-white/75">{a.description}</p>}
       <span className="inline-flex items-center gap-2 font-sans text-[15px] font-semibold text-white">

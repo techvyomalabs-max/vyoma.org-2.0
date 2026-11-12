@@ -74,6 +74,18 @@ export function useBlogPostEditor(id) {
     return runAction(
       'publish',
       async () => {
+        // Always persist exactly what's currently on screen *first* — same
+        // fix as lib/useContentEditor.js's publish(). The publish endpoint
+        // only promotes whatever draftData is already stored server-side; it
+        // is never sent the in-memory draftValue. "Save draft" and "Publish"
+        // are two independent buttons with no enforced order, so clicking
+        // Publish without an immediately-preceding successful Save silently
+        // re-published stale, previously-saved data — discarding any newer
+        // edit with no warning, while still showing a "Published" success
+        // toast. Mirroring saveDraft's own PUT here closes that gap: publish
+        // now always reflects the current draftValue, regardless of whether
+        // "Save draft" was clicked beforehand.
+        await apiFetch(`/admin/blog/${id}`, { method: 'PUT', body: draftValue });
         await apiFetch(`/admin/blog/${id}/publish`, { method: 'POST' });
         await load();
       },

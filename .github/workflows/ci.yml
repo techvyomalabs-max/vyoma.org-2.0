@@ -1,0 +1,121 @@
+name: CI
+
+# Task 7N: no existing CI configuration was found anywhere in this repo
+# (confirmed: no .github directory at all) -- this is the first workflow.
+# Runs on PRs targeting main and on pushes to main/bug-fixing (this
+# engagement's active working branch). Every job uses only disposable,
+# in-process resources (mongodb-memory-server for the Backend,
+# node:test's own jsdom-based harness for the Frontend) and never requires
+# AWS credentials, a real payment gateway, or a persistent/protected
+# database -- see each job's own comments for exactly why none of that
+# setup is needed for its tests to pass.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, bug-fixing]
+
+jobs:
+  backend-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+      - run: npm ci
+      # Deliberately NO environment variables are set here (NODE_ENV,
+      # MONGODB_URI, AWS_*, RAZORPAY_*, SMTP_*, JWT_*, BOOTSTRAP_ADMIN_* are
+      # all left unset). Backend/scripts/testEnvDefaults.mjs -- already
+      # preloaded by the "test" script itself via `node --import` -- sets
+      # ALLOW_LOCAL_DEV_DEFAULTS=true only when NODE_ENV is unset, letting
+      # resolveNodeEnv() resolve to 'development' exactly as it already does
+      # for every local test run. With MONGODB_URI unset, connectDb()
+      # (src/config/db.js) automatically falls back to its own disposable,
+      # in-process mongodb-memory-server -- the real, persistent/protected
+      # database is never reachable from this job and is never configured
+      # here. Every third-party integration (S3, Razorpay, SMTP) already
+      # returns its own "not configured" response with zero setup, by
+      # design (see Backend/.env.example) -- no fake success is ever
+      # possible, so none of those need placeholder values either.
+      # Concurrency is limited to 4 by the "test" script itself
+      # (package.json), not by a flag here -- see Task 7M's own finding
+      # that unlimited parallel mongodb-memory-server instances cause
+      # environment-dependent timeouts on a resource-constrained runner.
+      - run: npm test
+
+  frontend-tests:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            Frontend/package-lock.json
+            Backend/package-lock.json
+      - run: npm ci
+      # Task 7D.21 — RichTextEditor.roundtrip.test.mjs is a deliberate, real
+      # cross-package integration test: it imports Backend's own
+      # sanitizeBlogBody() directly (not a Frontend copy/mock of it), so
+      # Node resolves ITS `sanitize-html` dependency starting from that
+      # file's own location (Backend/src/modules/blog/), walking up through
+      # Backend's own node_modules -- which this job never installed until
+      # now, since every other step here is scoped to Frontend/. Installing
+      # Backend's dependencies too (read-only, test-time only -- nothing in
+      # Frontend's own package.json changes) is the minimal fix that
+      # preserves the real integration rather than mocking it away.
+      - run: npm ci
+        working-directory: Backend
+      # No NEXT_PUBLIC_API_BASE_URL is set for the test run itself: plain
+      # `node --test` never sets NODE_ENV to 'production' (confirmed
+      # throughout Task 7L/7M), so shouldUseMockData() (lib/apiConfig.js)
+      # correctly stays in its local-dev-equivalent mock-data path for any
+      # test that exercises it -- no network call, no real backend, no
+      # secret needed.
+      - run: npm test
+
+  frontend-build:
+    name: Frontend production build
+    runs-on: ubuntu-latest
+    needs: frontend-tests
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          # Task 7L: `next build` always forces NODE_ENV=production
+          # internally, and that mode now REQUIRES this variable -- a
+          # missing value fails the build immediately and loudly (see
+          # lib/apiConfig.js's resolveApiBase()) instead of silently
+          # falling back to mock content, which is exactly the behavior
+          # this job exists to prove still holds. The value below is a
+          # safe, non-real placeholder (loopback, matching the Backend's
+          # own default local port) -- it never needs to be reachable for
+          # the build to succeed: every page that fetches data at build
+          # time already handles a genuinely unreachable configured
+          # backend by logging a clear warning and falling back to
+          # on-demand rendering (see the Frontend's own existing,
+          # pre-existing build warnings for a few such pages), never by
+          # silently serving mock data. No real backend, secret, or
+          # production service is ever contacted by this job.
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:4000/api/v1

@@ -1,5 +1,6 @@
 import { AuditLogModel } from './auditLog.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 
 // GET /api/v1/admin/audit-logs — Super Admin only (LLD Section 21: "Minimum
 // Admin Screens" lists audit-logs as Super Admin only). Read-only by design;
@@ -15,10 +16,12 @@ export async function listAuditLogs(req, res, next) {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
 
+    const action = expectScalarQueryParam(req.query.action, 'action');
+    const targetType = expectScalarQueryParam(req.query.targetType, 'targetType');
     const filter = {};
-    if (req.query.action) filter.action = req.query.action;
+    if (action) filter.action = action;
     if (req.query.actorEmail) filter.actorEmail = String(req.query.actorEmail).toLowerCase().trim();
-    if (req.query.targetType) filter.targetType = req.query.targetType;
+    if (targetType) filter.targetType = targetType;
     if (req.query.dateFrom || req.query.dateTo) {
       filter.createdAt = {};
       if (req.query.dateFrom) {
@@ -33,8 +36,18 @@ export async function listAuditLogs(req, res, next) {
       }
     }
 
+    // createdAt alone is not a safe sort key: it is millisecond-resolution and
+    // two rows written in the same tick of the event loop (or just fast
+    // consecutive writes) can share an identical value, leaving MongoDB free
+    // to return them in either order and making pagination non-deterministic
+    // (a row can appear on both pages, or neither, depending on the tie).
+    // _id breaks ties deterministically: bson's ObjectId allocates its
+    // trailing counter from a single per-process, monotonically-incrementing
+    // static (see bson's `ObjectId.getInc()`), so within this app's own
+    // process, newer documents always sort after older ones even when their
+    // createdAt values are identical.
     const [items, total] = await Promise.all([
-      AuditLogModel.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      AuditLogModel.find(filter).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       AuditLogModel.countDocuments(filter),
     ]);
 

@@ -1,10 +1,11 @@
 import multer from 'multer';
 import mongoose from 'mongoose';
 import { MediaModel } from './media.model.js';
-import { uploadObject, deleteObject, buildStorageKey } from './s3.adapter.js';
+import { uploadObject, deleteObject, buildStorageKey, buildContentDisposition } from './s3.adapter.js';
 import { isS3Configured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
+import { matchesDeclaredFileType } from './fileSignature.js';
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15MB
 // Extended for the CMS redesign's Document/Excel-resource field types
@@ -15,7 +16,11 @@ const ALLOWED_MIME = new Set([
   'image/png',
   'image/webp',
   'image/gif',
-  'image/svg+xml',
+  // image/svg+xml intentionally excluded: an SVG can embed <script>/event
+  // handlers that execute when the file is navigated to directly (not when
+  // rendered via <img>, which browsers already treat as an inert image
+  // context) -- nothing in this upload path sanitizes SVG content, and
+  // this feature has no confirmed need for SVG support today.
   'application/pdf',
   'text/plain',
   'text/csv',
@@ -67,12 +72,24 @@ export async function listMedia(req, res, next) {
 // "not configured" error until AWS_* env vars are set — no fake success,
 // same rule as Razorpay order creation.
 export async function createMedia(req, res, next) {
+  // Takes ownership of the concurrency slot mediaUploadConcurrencyGuard
+  // acquired (see concurrencyLimit.js) -- called synchronously, before any
+  // `await` below, so there is no window in which a client disconnect could
+  // race this handoff. From this point on, only the `finally` block's
+  // req.releaseUploadSlot() may release the slot; the guard's own
+  // 'close'-based safety net stands down once ownership transfers, so a
+  // disconnect during the S3/Mongo work below no longer frees the slot
+  // while that work is still genuinely running.
+  req.takeUploadSlotOwnership?.();
   try {
     if (!req.file) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'A file is required.', { file: 'Required.' });
     }
     if (!ALLOWED_MIME.has(req.file.mimetype)) {
       throw new ApiError(422, 'UNSUPPORTED_FILE_TYPE', `Unsupported file type "${req.file.mimetype}".`);
+    }
+    if (!matchesDeclaredFileType(req.file.mimetype, req.file.buffer)) {
+      throw new ApiError(422, 'FILE_CONTENT_MISMATCH', `File content does not match the declared type "${req.file.mimetype}".`);
     }
     if (!isS3Configured()) {
       throw new ApiError(
@@ -83,7 +100,8 @@ export async function createMedia(req, res, next) {
     }
 
     const key = buildStorageKey(req.file.originalname);
-    const result = await uploadObject({ key, buffer: req.file.buffer, mimeType: req.file.mimetype });
+    const contentDisposition = buildContentDisposition(req.file.mimetype, req.file.originalname);
+    const result = await uploadObject({ key, buffer: req.file.buffer, mimeType: req.file.mimetype, contentDisposition });
     if (!result) {
       throw new ApiError(503, 'MEDIA_NOT_CONFIGURED', 'File storage is not configured on this server yet.');
     }
@@ -111,6 +129,13 @@ export async function createMedia(req, res, next) {
     return sendSuccess(res, doc, { status: 201 });
   } catch (err) {
     next(err);
+  } finally {
+    // Runs once this function's own work has genuinely settled -- success,
+    // a thrown ApiError, or an unexpected downstream exception -- regardless
+    // of whether the client is still connected to receive the result. This
+    // is what keeps the slot correctly occupied for the full duration of a
+    // real S3/Mongo operation even if the client disconnects mid-request.
+    req.releaseUploadSlot?.();
   }
 }
 

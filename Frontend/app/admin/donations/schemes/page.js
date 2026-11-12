@@ -5,6 +5,7 @@ import { useAdminAuth } from '@/lib/AdminAuthContext';
 import { RequireAdminAuth } from '@/components/admin/RequireAdminAuth';
 import { useToast } from '@/components/admin/ui/Toast';
 import { ConfirmDialog } from '@/components/admin/ui/ConfirmDialog';
+import { ImageField } from '@/components/admin/ui/ImageField';
 
 const inputClass = 'w-full rounded-md border border-[var(--border-subtle)] px-2.5 py-1.5 font-sans text-sm text-charcoal';
 
@@ -140,6 +141,7 @@ function SchemesAdminContent() {
               </div>
             </div>
             <div className="space-y-2">
+              <ImageField label="Photo" value={s.image} onChange={(v) => saveField(s.slug, 'image', v)} />
               <input
                 type="text"
                 defaultValue={s.name}

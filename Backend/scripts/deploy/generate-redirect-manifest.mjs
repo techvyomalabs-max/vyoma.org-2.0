@@ -12,16 +12,32 @@
 // Redirect CRUD screen, unchanged) — this script is a one-way export run
 // whenever that collection changes and a fresh deploy is needed.
 //
+// Matching tolerates either trailing-slash form of a request path (e.g. a
+// rule authored as "/blog-post/rathasaptami/" also matches a request for
+// "/blog-post/rathasaptami") via resolveRedirect() — the same function the
+// generated artifact embeds, so both runtimes stay byte-for-byte identical.
+// No new Redirect documents or duplicate records are needed for this; it's
+// handled entirely in the matching function, not the stored data.
+//
 // Usage: node scripts/deploy/generate-redirect-manifest.mjs
 // (no --commit/--dry-run distinction — this script never writes to Mongo
 // at all, in either mode; it only ever reads Mongo and writes a local file)
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../src/config/db.js';
+import { disconnectDb } from '../../src/config/db.js';
+// Task 7H.2: this script is READ-ONLY against MongoDB (see the file header),
+// but the standing protection on vyoma_migration_dryrun covers reads too --
+// "must never be read, written, reset, or reseeded" -- so it needs the same
+// guard every write-capable WordPress migration script now uses, via the
+// same shared, independently-owned module (this file lives under
+// scripts/deploy/, not scripts/wordpress/import/, hence the different
+// relative path to the same module).
+import { connectToMigrationDb } from '../wordpress/import/migrationDb.mjs';
 import { RedirectModel } from '../../src/modules/redirects/redirect.model.js';
+import { resolveRedirect } from '../../src/modules/redirects/resolveRedirect.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = path.resolve(__dirname, '../../../infra/cloudfront');
@@ -83,10 +99,9 @@ async function main() {
   console.log('Redirect manifest generator — READ-ONLY against MongoDB, writes local files only');
   console.log('='.repeat(72));
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const redirects = await RedirectModel.find({}).lean();
     console.log(`[OK] Read ${redirects.length} Redirect document(s).`);
 
@@ -152,9 +167,14 @@ function buildCloudFrontFunctionSource(map, ruleCount) {
     '//\n' +
     '// Matching semantics (must not be "improved" without re-approving the\n' +
     '// underlying decision — see infra/cloudfront/README.md):\n' +
-    '//   - Exact pathname match only, case-sensitive, no trailing-slash\n' +
-    '//     normalization — identical semantics to the existing Express\n' +
-    '//     redirectMiddleware (Backend/src/middleware/redirectMiddleware.js).\n' +
+    '//   - Case-sensitive exact pathname match, with one normalization: if\n' +
+    '//     the exact path misses, the other trailing-slash form is tried\n' +
+    '//     (slash added if absent, stripped if present) — identical\n' +
+    '//     semantics to the existing Express redirectMiddleware\n' +
+    '//     (Backend/src/middleware/redirectMiddleware.js), since both\n' +
+    '//     embed/call the exact same resolveRedirect() function (see\n' +
+    '//     Backend/src/modules/redirects/resolveRedirect.js — its source is\n' +
+    '//     copied verbatim below via .toString(), not reimplemented).\n' +
     '//   - Percent-encoded legacy paths are matched literally (CloudFront\n' +
     '//     delivers event.request.uri already percent-encoded as received;\n' +
     '//     this function does not decode or re-encode it).\n' +
@@ -165,10 +185,12 @@ function buildCloudFrontFunctionSource(map, ruleCount) {
     '\n' +
     'var REDIRECT_MAP = ' + mapJson + ';\n' +
     '\n' +
+    resolveRedirect.toString() + '\n' +
+    '\n' +
     'function handler(event) {\n' +
     '  var request = event.request;\n' +
     '  var uri = request.uri;\n' +
-    '  var rule = REDIRECT_MAP[uri];\n' +
+    '  var rule = resolveRedirect(uri, REDIRECT_MAP);\n' +
     '  if (!rule) {\n' +
     '    return request;\n' +
     '  }\n' +
@@ -183,7 +205,10 @@ function buildCloudFrontFunctionSource(map, ruleCount) {
   );
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

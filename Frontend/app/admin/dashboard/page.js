@@ -7,7 +7,15 @@ import { RequireAdminAuth } from '@/components/admin/RequireAdminAuth';
 function MetricTile({ label, value, loading }) {
   return (
     <div className="rounded-md border border-[var(--border-subtle)] p-4">
-      <div className="font-sans text-xs font-bold uppercase tracking-wide text-charcoal/60">{label}</div>
+      {/* Task 7D.12: text-charcoal/60 measured 3.95:1 against this card's
+          white background (axe-core, WCAG AA requires 4.5:1) -- /70 clears
+          it. Discovered incidentally while re-verifying admin-login's own
+          accessibility scan (the full suite's browser session is still
+          authenticated at that point, so /admin/login redirects here
+          before axe runs -- a test-script labeling quirk, not a login-page
+          regression; see the final report). Fixed as a trivial, same-
+          pattern extension of the two originally-scoped findings. */}
+      <div className="font-sans text-xs font-bold uppercase tracking-wide text-charcoal/70">{label}</div>
       <div className="mt-1 font-sans text-3xl font-bold text-vyoma-blue">{loading ? '…' : value}</div>
     </div>
   );
@@ -74,7 +82,8 @@ function DashboardContent() {
           <ul className="flex flex-col gap-2">
             {recentAudit?.map((entry) => (
               <li key={entry._id} className="font-sans text-sm text-charcoal">
-                <span className="text-charcoal/60">{new Date(entry.createdAt).toLocaleString()}</span> · {entry.actorEmail || 'system'} ·{' '}
+                {/* Task 7D.12: same text-charcoal/60-on-white fix as MetricTile above. */}
+                <span className="text-charcoal/70">{new Date(entry.createdAt).toLocaleString()}</span> · {entry.actorEmail || 'system'} ·{' '}
                 <strong>{entry.action}</strong>
               </li>
             ))}

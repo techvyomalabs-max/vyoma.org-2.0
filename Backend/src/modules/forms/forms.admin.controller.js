@@ -1,5 +1,6 @@
 import { FormSubmissionModel } from './formSubmission.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 import { recordAudit } from '../audit/audit.service.js';
 
 const VALID_STATUSES = ['new', 'handled'];
@@ -16,7 +17,8 @@ export async function listSubmissions(req, res, next) {
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
 
     const filter = {};
-    if (req.query.formKey) filter.formKey = req.query.formKey;
+    const formKey = expectScalarQueryParam(req.query.formKey, 'formKey');
+    if (formKey) filter.formKey = formKey;
     if (req.query.status) {
       if (!VALID_STATUSES.includes(req.query.status)) {
         throw new ApiError(422, 'VALIDATION_ERROR', `status must be one of: ${VALID_STATUSES.join(', ')}.`);

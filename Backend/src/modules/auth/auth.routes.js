@@ -8,6 +8,8 @@ import {
   mfaSetup,
   mfaVerify,
   mfaDisable,
+  mfaEnrollSetup,
+  mfaEnrollVerify,
   forgotPassword,
   resetPassword,
   changePassword,
@@ -21,11 +23,21 @@ export const authRouter = Router();
 // per-account lockout in auth.controller.login.
 const loginLimiter = makeRateLimiter({ windowMs: 15 * 60 * 1000, max: 20 });
 const forgotLimiter = makeRateLimiter({ windowMs: 60 * 60 * 1000, max: 5 });
+// Separate instances (not shared with login/forgot) so refresh's higher,
+// automatic-retry-friendly quota and logout's lower, deliberate-action
+// quota can't starve each other under the same IP.
+const refreshLimiter = makeRateLimiter({ windowMs: 15 * 60 * 1000, max: 60 });
+const logoutLimiter = makeRateLimiter({ windowMs: 15 * 60 * 1000, max: 30 });
 
 authRouter.post('/login', loginLimiter, login);
 authRouter.post('/login/mfa', loginLimiter, loginMfa);
-authRouter.post('/refresh', refresh);
-authRouter.post('/logout', logout);
+// Same bucket as login/login-mfa -- both are part of the same login funnel,
+// gated by a short-lived enrollment token verified inside the controller
+// (not requireAuth; see signMfaEnrollmentToken's comment for why).
+authRouter.post('/mfa/enroll/setup', loginLimiter, mfaEnrollSetup);
+authRouter.post('/mfa/enroll/verify', loginLimiter, mfaEnrollVerify);
+authRouter.post('/refresh', refreshLimiter, refresh);
+authRouter.post('/logout', logoutLimiter, logout);
 authRouter.get('/me', requireAuth, me);
 
 authRouter.post('/mfa/setup', requireAuth, mfaSetup);

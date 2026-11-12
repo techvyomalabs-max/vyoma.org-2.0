@@ -20,7 +20,15 @@ const blogPostSchema = new mongoose.Schema(
     status: { type: String, enum: ['draft', 'published'], default: 'draft', index: true },
     publishedAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  // minimize: false — Mongoose's default (true) strips any key whose value
+  // is a plain empty object ({}) out of a Mixed field on every save. `seo`
+  // legitimately has no fields set on most posts, so the default silently
+  // dropped it from `data`/`draftData` on every draft save and publish,
+  // changing their shape (not their meaning) each time. See the
+  // investigation this fix came out of for the reproduction and the exact
+  // two call sites affected (blog.admin.controller.js's updateDraftAdmin
+  // and publishPostAdmin, both of which call doc.save() on this model).
+  { timestamps: true, minimize: false }
 );
 
 // Cheap at this scale (a few dozen posts) and correctness-preserving for the

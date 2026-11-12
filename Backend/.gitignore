@@ -8,3 +8,7 @@ node_modules
 # possibly sensitive data) — local-only, never committed. See
 # scripts/wordpress/README.md.
 .migration-data/
+
+# Local-development-only background-removal output (localDev.storageAdapter.js)
+# — never committed, never used in production.
+.local-media/

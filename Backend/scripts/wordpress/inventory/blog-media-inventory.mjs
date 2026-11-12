@@ -18,15 +18,20 @@
 // Output: Backend/scripts/wordpress/reports/blog-media-inventory.json
 // (machine-readable) plus a console summary.
 
+// Task 7H.1: requires an explicit WP_AUDIT_MONGODB_URI (see
+// ./disposableDbTarget.mjs) instead of a hardcoded database target -- this
+// script used to connect directly to the standing-rules-protected
+// vyoma_migration_dryrun database with no guard at all.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import mongoose from 'mongoose';
+import { requireDisposableDbTarget } from './disposableDbTarget.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WXR_PATH = path.resolve(__dirname, '../../../.migration-data/vyomalinguisticlabsfoundation.WordPress.2026-09-29.xml');
-const MONGO_URI = 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun';
+const MONGO_URI = requireDisposableDbTarget();
 const OUT_PATH = path.resolve(__dirname, '../reports/blog-media-inventory.json');
 
 // --- Media model's own MIME allowlist (Backend/src/modules/media/media.admin.controller.js)

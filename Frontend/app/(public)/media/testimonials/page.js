@@ -5,6 +5,12 @@ import { ContactCta } from '@/components/sections/CtaButtons';
 import { TestimonialCard } from '@/components/sections/media/TestimonialCard';
 import { pageMetadata } from '@/lib/seo';
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/media/testimonials',
   title: 'Testimonials',
@@ -41,14 +47,12 @@ export default async function TestimonialsPage() {
               <TestimonialCard key={item.name} item={item} />
             ))}
           </div>
-          <div className="mt-8 text-center">
-            <button
-              type="button"
-              className="rounded-md border border-vyoma-blue px-[22px] py-[11px] font-sans text-base font-semibold text-vyoma-blue"
-            >
-              Load more
-            </button>
-          </div>
+          {/* "Load more" removed — it had no onClick/pagination logic, and
+              `all.map()` above already renders every available testimonial
+              unconditionally; the button was decorative and hid nothing.
+              If a future batch adds enough testimonials that pagination is
+              genuinely needed, implement real slicing + an onClick handler
+              here rather than restoring a non-functional button. */}
         </div>
       </section>
 

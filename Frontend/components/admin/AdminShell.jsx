@@ -104,6 +104,15 @@ function RedirectIcon(props) {
   );
 }
 
+function ProfileIcon(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M4 16.5c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function SettingsIcon(props) {
   return (
     <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -175,6 +184,10 @@ const NAV = [
   { type: 'link', href: '/admin/media', label: 'Media', Icon: MediaIcon },
   { type: 'link', href: '/admin/forms', label: 'Forms', Icon: FormsIcon },
   { type: 'link', href: '/admin/settings', label: 'Settings', Icon: SettingsIcon },
+  // Task 7D.6 — visible to every authenticated role (no `roles` restriction):
+  // changing one's own password is not a privileged action, unlike Users/
+  // Audit Logs above.
+  { type: 'link', href: '/admin/profile', label: 'My Profile', Icon: ProfileIcon },
 ];
 
 function isActive(pathname, href) {
@@ -248,44 +261,69 @@ export function AdminShell({ children }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // No shell on the login page or during the loading/unauthenticated states —
-  // this naturally covers /admin/login with no path-based special-casing.
-  if (status !== 'authenticated') return children;
+  // No chrome on the login page or during the loading/unauthenticated states
+  // -- this naturally covers /admin/login with no path-based special-casing.
+  //
+  // Bug fix (Task 7D.11, confirmed via real browser testing): this used to
+  // `return children` directly whenever not authenticated, and only return
+  // the wrapper <div>/<header>/<aside>/<main> tree once authenticated. The
+  // instant `status` flips to 'authenticated' (e.g. mid-MFA-enrollment,
+  // before the login page has shown the user their one-time recovery
+  // codes), AdminShell's own returned element tree changes shape at the
+  // exact position `children` sits in -- from "children's own root
+  // element" directly to "a brand new wrapper div with children nested
+  // inside <main>". React reconciles by element type at each tree
+  // position, and a root-type change like that is treated as a totally
+  // different subtree: it unmounts the old one -- destroying every hook's
+  // state in it, including the login page's own `recoveryCodes` state and
+  // the ref meant to guard its auto-redirect -- and mounts a fresh
+  // instance from scratch. That fresh instance has no recovery codes and
+  // no guard, so it immediately redirects to the dashboard: a real Super
+  // Admin never saw their recovery codes at all. The fix keeps the exact
+  // same wrapper tree shape on every render regardless of `status`, with
+  // only the chrome itself (header/sidebar/drawer) conditionally included
+  // as siblings -- `<main>{children}</main>` always sits at the same,
+  // stable position, so `children` is never torn down by a status change.
+  const authed = status === 'authenticated';
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex h-11 shrink-0 items-center justify-between bg-charcoal px-4">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open navigation"
-            className="rounded p-1 text-white md:hidden"
-          >
-            <MenuIcon className="h-5 w-5" />
-          </button>
-          <span className="font-sans text-sm font-semibold text-white">Vyoma Admin</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="hidden font-sans text-xs text-white/80 sm:inline">
-            {user?.name} <span className="text-white/50">({user?.roleKey})</span>
-          </span>
-          <button
-            onClick={logout}
-            className="rounded border border-white/30 px-2.5 py-1 font-sans text-xs font-semibold text-white hover:bg-white/10"
-          >
-            Log out
-          </button>
-        </div>
-      </header>
+      {authed && (
+        <header className="flex h-11 shrink-0 items-center justify-between bg-charcoal px-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation"
+              className="rounded p-1 text-white md:hidden"
+            >
+              <MenuIcon className="h-5 w-5" />
+            </button>
+            <span className="font-sans text-sm font-semibold text-white">Vyoma Admin</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="hidden font-sans text-xs text-white/80 sm:inline">
+              {user?.name} <span className="text-white/50">({user?.roleKey})</span>
+            </span>
+            <button
+              onClick={logout}
+              className="rounded border border-white/30 px-2.5 py-1 font-sans text-xs font-semibold text-white hover:bg-white/10"
+            >
+              Log out
+            </button>
+          </div>
+        </header>
+      )}
       <div className="flex flex-1">
         {/* Desktop sidebar */}
-        <aside className="hidden w-56 shrink-0 overflow-y-auto bg-charcoal py-3 md:block">
-          <SidebarNav pathname={pathname} user={user} />
-        </aside>
+        {authed && (
+          <aside className="hidden w-56 shrink-0 overflow-y-auto bg-charcoal py-3 md:block">
+            <SidebarNav pathname={pathname} user={user} />
+          </aside>
+        )}
 
         {/* Mobile drawer */}
-        {mobileOpen && (
+        {authed && mobileOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
             <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
             <aside className="absolute inset-y-0 left-0 w-64 overflow-y-auto bg-charcoal py-3 shadow-xl">

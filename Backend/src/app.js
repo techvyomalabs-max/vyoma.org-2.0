@@ -1,10 +1,13 @@
+import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 
 import { env } from './config/env.js';
+import { sendSuccess, sendError } from './utils/apiResponse.js';
 import { contentRouter } from './modules/content/content.routes.js';
 import { formsRouter } from './modules/forms/forms.routes.js';
 import {
@@ -14,14 +17,25 @@ import {
 } from './modules/donations/donations.routes.js';
 import { settingsPublicRouter } from './modules/settings/settings.routes.js';
 import { blogPublicRouter } from './modules/blog/blog.routes.js';
+import { documentsPublicRouter } from './modules/documents/documents.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
+import { LOCAL_MEDIA_DIR, isLocalDevStorageAllowed } from './modules/photoProcessing/localDev.storageAdapter.js';
 import { redirectMiddleware } from './middleware/redirectMiddleware.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export function createApp() {
   const app = express();
+
+  // Task 7D.5 — see env.js's own comment on `trustProxy` for why this
+  // matters: without it, req.ip (and therefore every IP-keyed rate
+  // limiter's bucket) resolves to a reverse proxy's own address once this
+  // app is deployed behind one, not the real client. Defaults to `false`
+  // (trust nothing), identical to this app's behavior before this setting
+  // existed -- sets a real value only when TRUST_PROXY is explicitly
+  // configured for the deployment's actual proxy topology.
+  app.set('trust proxy', env.trustProxy);
 
   app.use(helmet());
   // credentials: true — the auth refresh token travels as an HTTP-only
@@ -31,16 +45,88 @@ export function createApp() {
   app.use(morgan(env.nodeEnv === 'development' ? 'dev' : 'combined'));
   // `verify` stashes the raw bytes on req.rawBody, needed for Razorpay
   // webhook signature verification (LLD 9.3) without a second body parser.
-  app.use(express.json({ verify: (req, _res, buf) => { req.rawBody = buf; } }));
+  // `limit`: raised from Express's 100kb default (Batch 8) — the
+  // pages/about Content document alone now exceeds 100kb once it holds the
+  // full, real 1,375-row patron dataset (Batch 5), which made every save
+  // from /admin/content/about fail with a 500, for any section, not just
+  // Patrons. 5mb leaves comfortable headroom for this and any other
+  // Content document's future growth.
+  app.use(express.json({ limit: '5mb', verify: (req, _res, buf) => { req.rawBody = buf; } }));
   app.use(cookieParser());
 
   app.get('/api/v1/health', (req, res) => res.json({ success: true, data: { status: 'ok' } }));
+
+  // GET /api/v1/ready — a database-aware readiness probe, deliberately
+  // separate from /health above: /health is an unconditional liveness ping
+  // (is the process itself responding at all), left completely unchanged
+  // here; /ready additionally reports whether MongoDB is actually reachable,
+  // so a deployment platform's readiness check can stop routing traffic to
+  // an instance whose DB connection is down instead of treating it as
+  // healthy just because the HTTP server is still up.
+  //
+  // Reads mongoose.connection's already-established readyState only -- never
+  // opens a new connection, issues a query, or touches connectDb()/
+  // disconnectDb() -- so this stays cheap even when MongoDB itself is slow
+  // or unreachable, and never exposes the connection string, hostname, or
+  // any credential.
+  app.get('/api/v1/ready', (req, res) => {
+    if (mongoose.connection.readyState !== 1) {
+      return sendError(res, { status: 503, code: 'NOT_READY', message: 'Database connection is not ready.' });
+    }
+    return sendSuccess(res, { status: 'ready' });
+  });
+
+  // Local-development-only: serves background-removal results written by
+  // localDev.storageAdapter.js. Never mounted outside development (Task
+  // 7T.3 Fix 3 tightened this from "never in production" to also exclude
+  // staging, since Render's ephemeral filesystem and this route's
+  // hardcoded localhost URL made it unsafe there too) -- real deployments
+  // use S3 (see s3.adapter.js) once this feature is extended there, exactly
+  // as the comment in that adapter describes.
+  //
+  // Mounted at /local-media/processed (not just /local-media): LOCAL_MEDIA_DIR
+  // already resolves to the "processed" subdirectory, and saveProcessedImage()
+  // returns URLs shaped like /local-media/processed/<file>.png — mounting at
+  // the shallower /local-media would make Express look for a nested
+  // ".../processed/processed/<file>.png" that never exists, a 404 every time.
+  //
+  // helmet()'s default Cross-Origin-Resource-Policy: same-origin would make
+  // the browser silently refuse to render this in an <img> tag on the
+  // Frontend's own origin (localhost:3000 vs this server's localhost:4000) —
+  // a 200 response that still shows as a broken image. Relaxed to
+  // cross-origin on this one dev-only static route only; every other
+  // response on this server keeps Helmet's default.
+  if (isLocalDevStorageAllowed()) {
+    app.use(
+      '/local-media/processed',
+      (req, res, next) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        next();
+      },
+      express.static(LOCAL_MEDIA_DIR)
+    );
+
+    // Same local-dev-only, dev-only CORP-relaxed pattern as above, for
+    // staged original WordPress blog images (separate directory from the
+    // Leadership/Core Team processed photos above -- .local-media/blog/,
+    // untouched by and independent of that feature).
+    const LOCAL_BLOG_MEDIA_DIR = path.resolve(process.cwd(), '.local-media', 'blog');
+    app.use(
+      '/local-media/blog',
+      (req, res, next) => {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        next();
+      },
+      express.static(LOCAL_BLOG_MEDIA_DIR)
+    );
+  }
 
   // Order matters: every specific /public/* route must be registered
   // before the generic /public/* content wildcard.
   app.use('/api/v1/public', donationSchemesPublicRouter);
   app.use('/api/v1/public', settingsPublicRouter);
   app.use('/api/v1/public', blogPublicRouter);
+  app.use('/api/v1/public', documentsPublicRouter);
   app.use('/api/v1/public', contentRouter);
   app.use('/api/v1/forms', formsRouter);
   app.use('/api/v1/donations', donationsRouter);

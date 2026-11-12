@@ -59,13 +59,18 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { RedirectModel } from '../../../src/modules/redirects/redirect.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { sanitizeLegalBody } from '../../../src/modules/content/sanitizeLegalBody.js';
+// Task 7H.1 first reused batch1-import.mjs's own exported guard here. Task
+// 7H.2 moved that guard into a shared, independently-owned module
+// (migrationDb.mjs, now used by every write-capable migration script, not
+// just this one and batch1-import.mjs) and imports it from there directly.
+import { connectToMigrationDb } from './migrationDb.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -301,10 +306,10 @@ async function main() {
     return;
   }
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+
     // ---- Baseline: Content -------------------------------------------------
     const existingPrivacy = await ContentModel.findOne({ type: 'pages/privacy' }).lean();
     const existingTerms = await ContentModel.findOne({ type: 'pages/terms' }).lean();
@@ -388,7 +393,17 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+// Task 7H.1: same import-guard convention as batch1-import.mjs and
+// panchatantra-redirect-migration.mjs -- main() only runs on direct CLI
+// invocation, never as a side effect of importing this module. Previously
+// missing here, which meant this script's exported helpers (and the
+// assertSafeDatabaseTarget reuse above) could never be safely imported by a
+// test file -- importing it would have attempted a real connectDb() and,
+// under --commit-equivalent conditions, real writes, immediately.
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

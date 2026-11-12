@@ -86,8 +86,7 @@ export function ResourcesTable({ categories, rows }) {
       </div>
 
       <p className="mt-4 font-sans text-[13px] text-charcoal/70">
-        Showing sample entries — the &quot;{tab}&quot; category carries{' '}
-        {tab === 'Repositories of Sanskrit Texts' ? '36' : 'more'} entries on the live site.
+        Showing {visible.length} of {filtered.length} entries.
       </p>
     </div>
   );

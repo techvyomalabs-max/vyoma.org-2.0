@@ -46,15 +46,27 @@ function FooterLink({ label, href, external }) {
 
 // Server Component — reads socialLinks from Settings (same source of truth
 // the Contact page already uses) rather than any hardcoded/duplicated URL.
+// Rendered on every public page, so a fetch failure here must not take down
+// the whole page/build — falls back to showing no social icons rather than
+// erroring, same as root layout's identical Settings fetch.
 export async function Footer() {
-  const settings = await getPublicSettings();
-  const socialLinks = settings.socialLinks || {};
+  let socialLinks = {};
+  try {
+    const settings = await getPublicSettings();
+    socialLinks = settings.socialLinks || {};
+  } catch (err) {
+    console.error('[Footer] getPublicSettings failed, rendering without social links:', err.message);
+  }
 
   return (
     <footer className="flex flex-col items-end gap-5 bg-sky-mist px-8 py-7">
       <div className="flex w-full flex-wrap items-start justify-between gap-6">
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          <span className="mr-1 font-sans text-xs font-bold uppercase tracking-wide text-charcoal/60">Our Platforms</span>
+          {/* Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/60 measured 3.7:1
+              against this footer's bg-sky-mist (axe-core, WCAG AA requires
+              4.5:1) -- /70 clears it with margin. This footer is shared
+              across every page, so this one change covers both findings. */}
+          <span className="mr-1 font-sans text-xs font-bold uppercase tracking-wide text-charcoal/70">Our Platforms</span>
           {PLATFORM_LINKS.map((l) => (
             <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
           ))}

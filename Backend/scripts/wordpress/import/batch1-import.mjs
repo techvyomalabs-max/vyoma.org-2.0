@@ -63,12 +63,29 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { env } from '../../../src/config/env.js';
+// Task 7H.2: assertSafeDatabaseTarget now lives in the shared migrationDb.mjs
+// (used by every write-capable migration script, not just this one) --
+// imported here for this file's own internal use and re-exported below so
+// every existing import of it from THIS file (tests, batch2-import.mjs)
+// keeps working unchanged. connectToMigrationDb() wraps connectDb() itself,
+// so this file no longer imports connectDb() directly.
+import { connectToMigrationDb, assertSafeDatabaseTarget } from './migrationDb.mjs';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 import { BlogPostModel } from '../../../src/modules/blog/blogPost.model.js';
 import { BlogCategoryModel } from '../../../src/modules/blog/blogCategory.model.js';
+import { sanitizeBlogBody } from '../../../src/modules/blog/sanitizeBody.js';
+import {
+  isAlreadySafeImageHost,
+  loadBlogImageManifest,
+  buildImageUrlMap,
+  resolveLocalMediaUrl,
+  loadProductionImageUrlMap,
+  buildProductionImageUrlMap,
+} from './blogImageManifest.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -76,7 +93,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Frozen decisions (from the approved review — not invented here)
 // ---------------------------------------------------------------------------
 
-const DEFAULT_WXR_PATH = path.resolve(
+export const DEFAULT_WXR_PATH = path.resolve(
   __dirname,
   '../../../.migration-data/vyomalinguisticlabsfoundation.WordPress.2026-09-29.xml'
 );
@@ -87,7 +104,7 @@ const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // oldSlug -> approved final ASCII slug (the 5-slug freeze table, plus
 // yoga_day — found to fail SLUG_RE only when the dry-run actually ran;
 // approved separately, underscore -> hyphen, title unchanged).
-const SLUG_OVERRIDES = new Map([
+export const SLUG_OVERRIDES = new Map([
   ['unveiling-the-mysteries-of-ga%e1%b9%87apati', 'unveiling-the-mysteries-of-ganapati'],
   [
     'edicinal-value-of-21-kinds-of-leaves-that-are-offered-in-ga%e1%b9%87esa-puja',
@@ -103,7 +120,7 @@ const SLUG_OVERRIDES = new Map([
 // already be gone from a prior partial run). Any BlogPost slug or
 // BlogCategory name found that is NOT in one of these known sets (demo or
 // real) aborts the run — see classifyBaselineState().
-const EXPECTED_DEMO_BLOG_SLUGS = [
+export const EXPECTED_DEMO_BLOG_SLUGS = [
   'how-the-pancatantra-teaches-without-teaching',
   'what-a-decade-of-sanskrit-camps-taught-us-about-retention',
   'grammar-as-play-rethinking-the-first-lesson',
@@ -126,6 +143,82 @@ const HOME_CURATED_NAMES = new Set(['Prof. Shrinivasa Varakhedi Ph.D', 'Ms. Rita
 // after the first Batch 1 commit; fixed here so every future run (full or
 // the narrow --fix-media-sync correction) keeps both in step.
 const MEDIA_CONTENT_TYPES = ['pages/media', 'media'];
+
+// Blocker C (Task 7C): this script must never run, read, or write against
+// the standing-rules-protected dry-run database, regardless of what
+// MONGODB_URI happens to be configured to at invocation time. Checked by
+// database NAME only (never the full connection string, which could carry
+// credentials) — see assertSafeDatabaseTarget() (./migrationDb.mjs), called
+// immediately after every connectDb() in this file, before any query or
+// write. (Task 7H.2: moved to migrationDb.mjs; re-exported just below.)
+export { assertSafeDatabaseTarget };
+
+// Task 7C.1: a STRONGER, allow-list-style guard for automated integration
+// tests specifically -- unlike assertSafeDatabaseTarget() above (a
+// blocklist that only rejects one specific protected name, and would say
+// nothing about any OTHER real/persistent database), this requires the
+// caller to explicitly supply the exact MongoMemoryServer instance that is
+// supposed to be backing the current connection, and verifies the live
+// connection's host/port actually resolve to that same instance -- not
+// merely "isn't named something bad". Never inspects or logs credentials;
+// host/port only, same convention as assertSafeDatabaseTarget().
+//
+// This is deliberately NOT wired into the CLI path (main()/runFixMediaSync):
+// a real, operator-run migration legitimately targets a real, ambiently-
+// configured database once explicitly authorized via --commit, and that
+// path is unaffected by this function. It exists so a test file's own
+// setup can assert, before any write, that it is unquestionably talking to
+// the disposable instance it just created -- not whatever `mongoose`'s
+// default connection happens to be at that moment.
+export function assertDisposableTestDatabase(connection, memoryServer) {
+  if (!memoryServer || typeof memoryServer.getUri !== 'function') {
+    throw new Error(
+      'Refusing to run test write operations: an explicit, disposable mongodb-memory-server instance must be supplied (none was given).'
+    );
+  }
+  const expected = new URL(memoryServer.getUri());
+  const actualHost = connection?.host ?? null;
+  const actualPort = connection?.port != null ? String(connection.port) : null;
+  if (actualHost !== expected.hostname || actualPort !== expected.port) {
+    throw new Error(
+      'Refusing to run test write operations: the active connection does not match the explicitly supplied disposable mongodb-memory-server instance.'
+    );
+  }
+  return true;
+}
+
+// Task 7F.2A: fail-closed, unconditional guard against the one combination
+// that can persist a localhost image URL into a real, persistent database
+// --commit always means "write to whatever database is configured right
+// now"; --dev-image-preview exists ONLY to preview locally-staged images
+// and must never write to any database at all. Combining them would let a
+// real, persistent database whose name isn't the one protected name
+// assertSafeDatabaseTarget() knows about, and whose NODE_ENV isn't
+// literally "production" (e.g. a real staging cluster), end up holding
+// BlogPost documents with http://localhost:<port>/... image URLs.
+//
+// Deliberately independent of both of this file's other safety checks:
+// - Does NOT consult env.nodeEnv at all (unlike the separate
+//   devImagePreview-in-production check below, which this does not
+//   replace) -- a persistent database can exist under any NODE_ENV value.
+// - Does NOT consult the database name or connection (unlike
+//   assertSafeDatabaseTarget()) -- this must reject before any connection
+//   is even attempted, for ANY database, not just the one named protected
+//   one.
+// - Takes plain booleans, not `process.argv`, so flag ORDER on the command
+//   line can never matter (process.argv.includes() is already
+//   order-independent, and this function doesn't touch argv at all).
+// Exported so it is directly unit-testable without spawning a real CLI
+// process or any database connection.
+export function assertCommitDevPreviewNotCombined(commit, devImagePreview) {
+  if (commit && devImagePreview) {
+    throw new Error(
+      '--commit and --dev-image-preview must never be combined. --dev-image-preview exists only for a local/' +
+        'staging preview that writes to no database at all; --commit always means "write to whatever database ' +
+        'is currently configured". No database connection was made.'
+    );
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Minimal WXR reader (mirrors the read-only helpers used throughout the
@@ -163,8 +256,9 @@ function postmetaOf(block) {
 // Blog post bodies are stored as Gutenberg blocks (`<!-- wp:paragraph -->`
 // etc.), not Divi shortcodes — confirmed during the review (Section D). This
 // strips only the block-editor HTML comments, leaving the real markup
-// (<p>, <h2>, <a>, ...) untouched for sanitizeBody() to allowlist-filter at
-// publish time, same as any other admin-authored post.
+// (<p>, <h2>, <a>, ...) for sanitizeBlogBody() to allowlist-filter next, in
+// toBlogPostRecord() below — the same single sanitization boundary every
+// other admin-authored post's body goes through.
 function stripGutenbergComments(html) {
   return (html || '').replace(/<!--\s*\/?wp:[\s\S]*?-->/g, '').trim();
 }
@@ -178,7 +272,7 @@ function plainTextExcerpt(html, maxLen = 200) {
   return text.length > maxLen ? text.slice(0, maxLen).replace(/\s+\S*$/, '') + '…' : text;
 }
 
-function parseWxr(wxrPath) {
+export function parseWxr(wxrPath) {
   const xml = fs.readFileSync(wxrPath, 'utf8');
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => m[1]);
 
@@ -219,13 +313,148 @@ function parseWxr(wxrPath) {
 }
 
 // ---------------------------------------------------------------------------
+// Task 7F.2 — image preservation (inline + featured)
+//
+// Decision 1 (content owner, approved): preserve all original blog images.
+// Most of this is already true today with zero code change: every inline
+// <img> already hosted on vyoma.org/www.vyoma.org passes straight through
+// sanitizeBlogBody()'s existing, UNMODIFIED allowlist in every environment,
+// including production — confirmed in Task 7D's validation. This section
+// only ever intervenes for the narrow remainder that does NOT already work:
+//   (a) the 8 Google-hosted inline images across 5 posts (dropped today by
+//       the sanitizer's host allowlist, which is correct and unchanged —
+//       googleusercontent.com is not, and must not become, an allowed
+//       host), and
+//   (b) all 12 posts with a real, post-specific featured/OG image (always
+//       null today, regardless of host, because no featured-image wiring
+//       existed at all before this task).
+// Nothing here ever changes sanitizeBody.js or its allowlist.
+// ---------------------------------------------------------------------------
+
+// Rewrites exactly one attribute — an <img> tag's `src` value — leaving
+// every other attribute (alt, width, height, class, the self-closing `/`,
+// attribute order) and all surrounding markup/text completely untouched.
+// Only ever touches an <img> whose current `src` is NOT already on an
+// always-safe host (vyoma.org images are left byte-for-byte alone, on
+// purpose — rewriting them would add risk for zero benefit, since they
+// already work everywhere). Returns the body unchanged plus a collected
+// `issues` list — it never throws and never silently drops an image itself
+// (sanitizeBlogBody(), called afterward and unmodified, is still the only
+// thing that can ultimately remove an unmapped/unsafe <img>, exactly as it
+// always has).
+export function rewriteInlineImages(bodyHtml, postSlug, inlineMap, { devImagePreview, devImagePreviewPort, productionUrlMap } = {}) {
+  const issues = [];
+  if (!bodyHtml) return { html: bodyHtml, issues };
+
+  const html = bodyHtml.replace(/<img([^>]*?)\ssrc="([^"]+)"([^>]*)>/gi, (full, before, src, after) => {
+    if (isAlreadySafeImageHost(src)) return full; // already safe everywhere — never touched
+
+    // Task 7F.7: a verified production URL (e.g. a real S3 object URL) is
+    // resolved BEFORE the dev-preview path below, and used regardless of
+    // --dev-image-preview — a real https production URL is safe to persist
+    // in every environment, exactly like an already-safe-host URL above.
+    const productionUrl = productionUrlMap ? productionUrlMap.get(`${postSlug}|${src}`) : null;
+    if (productionUrl) {
+      return `<img${before} src="${productionUrl}"${after}>`;
+    }
+
+    const row = inlineMap ? inlineMap.get(`${postSlug}|${src}`) : null;
+    if (!row) {
+      issues.push(`No manifest mapping found for a non-allowlisted-host image in "${postSlug}": ${src}`);
+      return full; // left as-is; the unmodified sanitizer will drop it, same as before this task
+    }
+    if (!devImagePreview) {
+      issues.push(`Production-safe mapping unavailable (requires S3; --dev-image-preview not enabled) for "${postSlug}": ${src}`);
+      return full;
+    }
+    const localUrl = resolveLocalMediaUrl(row, devImagePreviewPort);
+    if (!localUrl) {
+      issues.push(`Manifest entry for "${postSlug}" resolved to an unsafe local path — refusing to use it: ${row.localFilename}`);
+      return full;
+    }
+    return `<img${before} src="${localUrl}"${after}>`;
+  });
+
+  return { html, issues };
+}
+
+// Resolves a post's featured image, if the manifest has one for it. Every
+// real featured-image row in the current manifest already points at a
+// vyoma.org-hosted URL (confirmed by Task 7F.1's regression tests), so the
+// ORIGINAL url is used directly — genuinely production-safe today, in
+// every environment, requiring neither S3 nor --dev-image-preview. `alt` is
+// deliberately left null rather than invented: the frontend's own existing
+// render path (Frontend/app/(public)/media/blog/[slug]/page.js) already
+// falls back to the post's title when featuredImage.alt is absent.
+// yoga_day is correctly never resolved here: its only OG-worthy image
+// (01_Yoga_Bundle.jpg) is classified "inline" in the manifest, not
+// "featured" — it has no distinct featured-image attachment of its own,
+// and this function must not invent one (see Task 7F's resolved finding).
+export function resolveFeaturedImage(postSlug, featuredByPostSlug, productionUrlMap) {
+  const row = featuredByPostSlug ? featuredByPostSlug.get(postSlug) : null;
+  if (!row) return { featuredImage: null, issues: [] };
+  if (isAlreadySafeImageHost(row.originalUrl)) {
+    return { featuredImage: { url: row.originalUrl, alt: null }, issues: [] };
+  }
+  // Task 7F.7: not expected with the current, reviewed manifest (every
+  // known featured row today is vyoma.org-hosted), but handled explicitly
+  // for the same reason the inline path is: a verified production URL
+  // (e.g. a real S3 object URL) is checked before giving up, and used
+  // regardless of --dev-image-preview.
+  const productionUrl = productionUrlMap ? productionUrlMap.get(`${postSlug}|${row.originalUrl}`) : null;
+  if (productionUrl) {
+    return { featuredImage: { url: productionUrl, alt: null }, issues: [] };
+  }
+  // Per "do not silently strip images or fall back to localhost URLs" for
+  // anything destined to be treated as production-safe.
+  return { featuredImage: null, issues: [`Featured image for "${postSlug}" is not from an already-safe host and has no verified production mapping: ${row.originalUrl}`] };
+}
+
+// ---------------------------------------------------------------------------
 // Transform: WXR record -> BlogPost.data shape
 // {title, excerpt, body, featuredImage, author, categories, tags, seo}
 // (Backend/src/modules/blog/blogPost.model.js)
 // ---------------------------------------------------------------------------
 
-function toBlogPostRecord(post) {
+// `imageContext` is entirely optional — every existing caller that omits it
+// (including every pre-7F.2 regression test) gets EXACTLY the pre-7F.2
+// behavior: no inline image is ever rewritten, featuredImage is always
+// null. It is only ever populated by main() below, from a loaded manifest.
+export function toBlogPostRecord(post, imageContext = {}) {
+  const { inlineMap = null, featuredByPostSlug = null, devImagePreview = false, devImagePreviewPort = null, productionUrlMap = null } = imageContext;
   const finalSlug = SLUG_OVERRIDES.get(post.oldSlug) || post.oldSlug;
+
+  // Keyed by the FINAL slug, not post.oldSlug: the real, reviewed manifest
+  // (Backend/.local-media/blog-image-manifest.json) stores postSlug as the
+  // already-overridden slug (e.g. "what-is-samskrtam", never the
+  // percent-encoded "what-is-sa%e1%b9%83sk%e1%b9%9btam") for every row —
+  // confirmed directly against the manifest's own content. Using oldSlug
+  // here would silently fail to match any of the 3 posts whose slug
+  // changes under SLUG_OVERRIDES, exactly the kind of silent-drop this
+  // whole feature exists to prevent.
+  const { html: imageMappedBody, issues: inlineImageIssues } = rewriteInlineImages(post.bodyHtml, finalSlug, inlineMap, {
+    devImagePreview,
+    devImagePreviewPort,
+    productionUrlMap,
+  });
+
+  // Blocker B (Task 7C): every body passes through the app's own, already
+  // WordPress-content-audited sanitizer (Backend/src/modules/blog/
+  // sanitizeBody.js) right here, at transform time — not left for a later
+  // "publish time" step that, for this script, never actually existed (see
+  // the Task 7B investigation this fix came out of). The excerpt is derived
+  // from this same sanitized HTML, not the raw WXR markup, so a disallowed
+  // tag's inner text (e.g. a hypothetical <script>) can never leak into the
+  // plain-text excerpt either. Image-URL rewriting above happens BEFORE
+  // this call, never after — sanitizeBlogBody() is always the last word on
+  // which <img> tags actually survive.
+  const sanitizedBody = sanitizeBlogBody(imageMappedBody);
+
+  // Same FINAL-slug key as above — the manifest's "featured" rows for
+  // what-is-samskrtam/why-samskrtam/how-samskrtam are also keyed by the
+  // final, not the percent-encoded, slug.
+  const { featuredImage, issues: featuredImageIssues } = resolveFeaturedImage(finalSlug, featuredByPostSlug, productionUrlMap);
+
   return {
     slug: finalSlug,
     oldSlug: post.oldSlug, // kept only for the report; not written to Mongo
@@ -234,12 +463,9 @@ function toBlogPostRecord(post) {
       title: post.title,
       // Real content, mechanically derived (truncated plain text) — not
       // invented. WordPress's own excerpt field was empty for all 19 posts.
-      excerpt: plainTextExcerpt(post.bodyHtml, 200),
-      body: post.bodyHtml,
-      // Media/S3 migration is explicitly out of scope for Batch 1 — no
-      // featured image is wired here even where a WordPress thumbnail
-      // existed; that is real, deferred work, not an oversight.
-      featuredImage: null,
+      excerpt: plainTextExcerpt(sanitizedBody, 200),
+      body: sanitizedBody,
+      featuredImage,
       author: post.author || null,
       categories: post.categories,
       tags: post.tags,
@@ -248,7 +474,47 @@ function toBlogPostRecord(post) {
         ...(post.rankMathDescription ? { description: post.rankMathDescription } : {}),
       },
     },
+    // Not written to Mongo — consulted by main() (pre-connect) to decide
+    // whether this run is safe to proceed with at all. Always [] for any
+    // caller that omits imageContext, i.e. every pre-7F.2 call site.
+    imageIssues: [...inlineImageIssues, ...featuredImageIssues],
   };
+}
+
+// Blocker A (Task 7C): insert-only, via $setOnInsert — never a bare
+// replacement document. The prior shape (`{ slug, data, status,
+// publishedAt }` with no operator) told MongoDB to REPLACE the whole
+// existing document on every match, which would have silently discarded an
+// admin's edited `data`, their in-progress `draftData` (replaced away
+// entirely, since it isn't listed), and any `status`/`publishedAt` change,
+// on every rerun — exactly the bug class already fixed for runSeed.js in
+// Phase 1 Task 6I-B/6I-B3, which never covered this independently-written
+// importer. `slug` is deliberately NOT repeated inside $setOnInsert: the
+// upsert filter already applies it to a newly-inserted document on its own
+// (verified for this exact pattern elsewhere in this codebase — see
+// runSeed.js's own comment on the same point). `draftData: null` is set
+// explicitly on insert so a freshly-created post has the same shape as one
+// created through the normal admin flow; once a post exists, this
+// importer never touches draftData again, on this call or any rerun.
+export async function upsertBlogPosts(blogRecords) {
+  const results = [];
+  for (const r of blogRecords) {
+    // eslint-disable-next-line no-await-in-loop
+    const doc = await BlogPostModel.findOneAndUpdate(
+      { slug: r.slug },
+      {
+        $setOnInsert: {
+          data: r.data,
+          status: 'published',
+          publishedAt: r.publishedAt,
+          draftData: null,
+        },
+      },
+      { upsert: true, new: true }
+    );
+    results.push(doc);
+  }
+  return results;
 }
 
 function toHomeTestimonialRecord(t) {
@@ -265,7 +531,7 @@ function toMediaAllTestimonialRecord(t) {
 // Validation of parsed WXR content (no DB connection needed for this part)
 // ---------------------------------------------------------------------------
 
-function validateParsedContent(parsed) {
+export function validateParsedContent(parsed) {
   const errors = [];
 
   if (parsed.blogPosts.length !== 19) {
@@ -308,7 +574,7 @@ function setIntersect(a, b) {
   return a.filter((x) => bSet.has(x));
 }
 
-async function classifyBaselineState(realSlugs, realCategoryNames) {
+export async function classifyBaselineState(realSlugs, realCategoryNames) {
   const errors = [];
 
   const existingPosts = await BlogPostModel.find({}, { slug: 1 }).lean();
@@ -416,7 +682,7 @@ async function writeMediaTestimonials(featuredRecords, allRecords) {
 // draft data. If this ever finds a hit, the run aborts and deletes nothing
 // — this is what keeps the hard-delete decision safe rather than just
 // assumed safe.
-async function assertNoOtherReferences() {
+export async function assertNoOtherReferences() {
   const offenders = await BlogPostModel.find(
     {
       slug: { $nin: EXPECTED_DEMO_BLOG_SLUGS },
@@ -472,10 +738,10 @@ async function runFixMediaSync(wxrPath, commit) {
   const featuredRecords = homeSlider.map(toMediaTestimonialRecord);
   const allRecords = old.map(toMediaAllTestimonialRecord);
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+
     const mediaErrors = await assertMediaBaseline();
     if (mediaErrors.length) {
       console.error('\nVALIDATION FAILED (database baseline):');
@@ -514,16 +780,45 @@ async function runFixMediaSync(wxrPath, commit) {
 async function main() {
   const commit = process.argv.includes('--commit');
   const fixMediaSyncOnly = process.argv.includes('--fix-media-sync');
+  const devImagePreview = process.argv.includes('--dev-image-preview');
   const wxrArgIdx = process.argv.indexOf('--wxr');
   const wxrPath = wxrArgIdx !== -1 ? process.argv[wxrArgIdx + 1] : DEFAULT_WXR_PATH;
+
+  // Task 7F.2A: checked first, before ANY other branch (including
+  // --fix-media-sync below) — no write-capable code path in this file may
+  // ever see --commit and --dev-image-preview together. See
+  // assertCommitDevPreviewNotCombined()'s own comment for why this check is
+  // independent of NODE_ENV, the database name, and CLI flag order.
+  try {
+    assertCommitDevPreviewNotCombined(commit, devImagePreview);
+  } catch (err) {
+    console.error(`\nABORT: ${err.message}`);
+    process.exitCode = 1;
+    return;
+  }
 
   if (fixMediaSyncOnly) {
     return runFixMediaSync(wxrPath, commit);
   }
 
+  // Task 7F.2, Step 2 requirement: never infer production safety from
+  // NODE_ENV alone — --dev-image-preview is the PRIMARY, explicit gate.
+  // This check is an additional, early, loud failure on top of that
+  // explicit gate (not a replacement for it): sanitizeBlogBody()'s own,
+  // separate, unmodified isLocalDevHost check would independently strip
+  // any resulting localhost <img> in a real production run regardless, but
+  // failing here first is clearer than letting content silently vanish
+  // later.
+  if (devImagePreview && env.nodeEnv === 'production') {
+    console.error('\nABORT: --dev-image-preview must never be used when NODE_ENV=production.');
+    process.exitCode = 1;
+    return;
+  }
+
   console.log('='.repeat(72));
   console.log(`Batch 1 importer — mode: ${commit ? 'COMMIT (will write)' : 'DRY-RUN (no writes)'}`);
   console.log('WXR source:', wxrPath);
+  console.log('Image mode:', devImagePreview ? 'DEV-PREVIEW (local-media URLs permitted)' : 'PRODUCTION-SAFE ONLY (no localhost URLs)');
   console.log('='.repeat(72));
 
   if (commit) {
@@ -554,10 +849,80 @@ async function main() {
 
   const realCategoryNames = [...new Set(parsed.blogPosts.flatMap((p) => p.categories))].sort();
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  // Task 7F.2: image mapping is resolved and validated BEFORE any database
+  // connection is made — "fail safely before any write" means before any
+  // write AND before any read of a real/configured database, not merely
+  // before the final commit step.
+  let manifest = null;
   try {
+    manifest = loadBlogImageManifest();
+  } catch (err) {
+    console.error('\nABORT: the blog image manifest exists but is malformed:', err.message);
+    process.exitCode = 1;
+    return;
+  }
+  if (devImagePreview && !manifest) {
+    console.error('\nABORT: --dev-image-preview was requested but Backend/.local-media/blog-image-manifest.json is absent.');
+    process.exitCode = 1;
+    return;
+  }
+  const { inlineMap, featuredByPostSlug } = buildImageUrlMap(manifest);
+
+  // Task 7F.7: a separate, optional production image URL map — absent by
+  // default (same .local-media/ gitignore convention as the manifest
+  // above) until an operator populates it after a real, verified upload
+  // (see Task 7F.6's audit). Loaded and validated here, before any database
+  // connection, same as the manifest above; a malformed file is a loud
+  // abort, an absent one is simply "no production mappings available yet"
+  // and changes nothing about today's behavior.
+  let productionManifest = null;
+  try {
+    productionManifest = loadProductionImageUrlMap();
+  } catch (err) {
+    console.error('\nABORT: the production image URL map exists but is malformed:', err.message);
+    process.exitCode = 1;
+    return;
+  }
+  const { productionUrlMap, invalidRows: invalidProductionRows } = buildProductionImageUrlMap(productionManifest);
+  if (invalidProductionRows.length) {
+    console.log(
+      `\n[WARNING] Ignoring ${invalidProductionRows.length} production image URL map entr${invalidProductionRows.length === 1 ? 'y' : 'ies'} ` +
+        `with a missing/unsafe field (postSlug/originalUrl must be strings; productionUrl must be https):`
+    );
+    for (const r of invalidProductionRows) console.log(' -', JSON.stringify(r));
+  }
+  console.log(
+    productionUrlMap.size
+      ? `[OK] Loaded ${productionUrlMap.size} production image URL mapping(s).`
+      : '[OK] No production image URL mappings loaded (none configured yet — expected until a verified upload is recorded).'
+  );
+
+  const imageContext = { inlineMap, featuredByPostSlug, devImagePreview, devImagePreviewPort: env.port, productionUrlMap };
+
+  const blogRecords = parsed.blogPosts.map((p) => toBlogPostRecord(p, imageContext));
+  const allImageIssues = blogRecords.flatMap((r) => r.imageIssues);
+  if (allImageIssues.length) {
+    console.log(`\n--- IMAGE PRESERVATION ISSUES (${allImageIssues.length}) ---`);
+    for (const issue of allImageIssues) console.log(' -', issue);
+    if (commit) {
+      console.error(
+        '\nABORT: image preservation cannot be guaranteed for the above — refusing to commit rather than silently ' +
+          'dropping an original image or writing a non-production-safe URL. Re-run with --dev-image-preview for a ' +
+          'local/staging-only preview, or resolve these once a verified production image host (S3) is available.'
+      );
+      console.error('No database connection was made.');
+      process.exitCode = 1;
+      return;
+    }
+    console.log('(dry-run: continuing to show the rest of the plan; a --commit run would ABORT here.)');
+  } else {
+    console.log('\n[OK] Every required image has a usable mapping for the selected image mode.');
+  }
+
+  const dbName = await connectToMigrationDb();
+  try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+
     const baseline = await classifyBaselineState(finalSlugs, realCategoryNames);
     if (baseline.errors.length) {
       console.error('\nVALIDATION FAILED (database baseline):');
@@ -602,7 +967,9 @@ async function main() {
     }
 
     // ---- Build the operation plan (same in both modes) --------------------
-    const blogRecords = parsed.blogPosts.map(toBlogPostRecord);
+    // blogRecords was already built above, before connectDb() — reused here
+    // as-is; see the image-mapping/validation block preceding the database
+    // connection.
     const homeRecords = homeSlider.filter((t) => HOME_CURATED_NAMES.has(t.name)).map(toHomeTestimonialRecord);
     const featuredRecords = homeSlider.map(toMediaTestimonialRecord);
     const allRecords = old.map(toMediaAllTestimonialRecord);
@@ -664,14 +1031,8 @@ async function main() {
     }
     console.log(`[done] ${realCategoryNames.length} BlogCategory upserts.`);
 
-    for (const r of blogRecords) {
-      await BlogPostModel.findOneAndUpdate(
-        { slug: r.slug },
-        { slug: r.slug, data: r.data, status: 'published', publishedAt: r.publishedAt },
-        { upsert: true, new: true }
-      );
-    }
-    console.log(`[done] ${blogRecords.length} BlogPost upserts.`);
+    await upsertBlogPosts(blogRecords);
+    console.log(`[done] ${blogRecords.length} BlogPost upserts (insert-only — see upsertBlogPosts()).`);
 
     if (demoPostsToDelete.length) {
       const delPosts = await BlogPostModel.deleteMany({ slug: { $in: demoPostsToDelete } });
@@ -704,7 +1065,19 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nFATAL:', err.message);
-  process.exitCode = 1;
-});
+// Blocker C (Task 7C): `main()` must only run when this file is executed
+// directly as the CLI entry point (`node batch1-import.mjs [...]`), never
+// as a side effect of `import`-ing it. This is what makes the exported
+// functions above (parseWxr, toBlogPostRecord, upsertBlogPosts,
+// assertSafeDatabaseTarget, classifyBaselineState, assertNoOtherReferences)
+// safe for a test file to import directly and exercise against its own
+// disposable mongodb-memory-server connection — no ambient MONGODB_URI, no
+// accidental connectDb() call, no accidental write, just from importing
+// this module.
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nFATAL:', err.message);
+    process.exitCode = 1;
+  });
+}

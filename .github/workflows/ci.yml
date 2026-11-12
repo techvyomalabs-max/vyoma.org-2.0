@@ -62,8 +62,22 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: Frontend/package-lock.json
+          cache-dependency-path: |
+            Frontend/package-lock.json
+            Backend/package-lock.json
       - run: npm ci
+      # Task 7D.21 — RichTextEditor.roundtrip.test.mjs is a deliberate, real
+      # cross-package integration test: it imports Backend's own
+      # sanitizeBlogBody() directly (not a Frontend copy/mock of it), so
+      # Node resolves ITS `sanitize-html` dependency starting from that
+      # file's own location (Backend/src/modules/blog/), walking up through
+      # Backend's own node_modules -- which this job never installed until
+      # now, since every other step here is scoped to Frontend/. Installing
+      # Backend's dependencies too (read-only, test-time only -- nothing in
+      # Frontend's own package.json changes) is the minimal fix that
+      # preserves the real integration rather than mocking it away.
+      - run: npm ci
+        working-directory: Backend
       # No NEXT_PUBLIC_API_BASE_URL is set for the test run itself: plain
       # `node --test` never sets NODE_ENV to 'production' (confirmed
       # throughout Task 7L/7M), so shouldUseMockData() (lib/apiConfig.js)

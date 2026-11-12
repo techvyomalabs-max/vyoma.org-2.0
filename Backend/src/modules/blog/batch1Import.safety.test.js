@@ -32,6 +32,7 @@
 // configured.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import sanitizeHtml from 'sanitize-html';
@@ -48,6 +49,20 @@ import { BlogPostRevisionModel } from './blogPostRevision.model.js';
 import { BlogCategoryModel } from './blogCategory.model.js';
 import { sanitizeBlogBody } from './sanitizeBody.js';
 
+// Task 7D.21 — same gitignored-fixture convention already established in
+// batch1ImportImages.test.js/blogImageManifest.integrity.test.js: this real,
+// private WordPress export is never committed, so it is absent on any
+// machine other than the one migration work was actually done on (confirmed
+// as the cause of a cascading GitHub Actions CI failure -- every test below
+// that needs it used to read it unconditionally via the shared `before()`
+// hook, with no guard at all). Every test that actually needs `parsed`/
+// `blogRecords` now skips explicitly, with a clear reason, when the file is
+// absent -- a skip here is never a confirmation that the importer/sanitizer
+// behaves correctly, only that it wasn't checked. Tests that only use
+// synthetic/fake post data (no WXR needed) are unaffected and never skip.
+const wxrExists = fs.existsSync(DEFAULT_WXR_PATH);
+const WXR_SKIP = 'The real WordPress export is absent (gitignored) -- skipping; not a confirmation of correctness.';
+
 let mem;
 let parsed;
 let blogRecords;
@@ -61,8 +76,10 @@ before(async () => {
   // just created. If this throws, every subsequent test in the file would
   // otherwise be writing through an unverified connection.
   assertDisposableTestDatabase(mongoose.connection, mem);
-  parsed = parseWxr(DEFAULT_WXR_PATH);
-  blogRecords = parsed.blogPosts.map(toBlogPostRecord);
+  if (wxrExists) {
+    parsed = parseWxr(DEFAULT_WXR_PATH);
+    blogRecords = parsed.blogPosts.map(toBlogPostRecord);
+  }
 });
 
 after(async () => {
@@ -76,13 +93,15 @@ async function resetBlog() {
   await BlogCategoryModel.deleteMany({});
 }
 
-test('sanity: the real WXR export still parses to exactly 19 real blog posts', () => {
+test('sanity: the real WXR export still parses to exactly 19 real blog posts', (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   assert.equal(parsed.blogPosts.length, 19);
   assert.equal(blogRecords.length, 19);
 });
 
 // 1. First-time insert
-test('first-time insert creates all 19 real posts with correct data, status, and publishedAt', async () => {
+test('first-time insert creates all 19 real posts with correct data, status, and publishedAt', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
 
@@ -102,7 +121,8 @@ test('first-time insert creates all 19 real posts with correct data, status, and
 });
 
 // 2. Safe rerun
-test('repeated reruns of upsertBlogPosts are idempotent -- no duplicates, no content drift', async () => {
+test('repeated reruns of upsertBlogPosts are idempotent -- no duplicates, no content drift', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
   await upsertBlogPosts(blogRecords);
@@ -114,7 +134,8 @@ test('repeated reruns of upsertBlogPosts are idempotent -- no duplicates, no con
 });
 
 // 3. Existing admin-edited post
-test('an admin-edited real post survives a rerun completely untouched', async () => {
+test('an admin-edited real post survives a rerun completely untouched', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
   const slug = blogRecords[0].slug;
@@ -137,7 +158,8 @@ test('an admin-edited real post survives a rerun completely untouched', async ()
 });
 
 // 4. Existing draftData
-test('existing draftData survives a rerun completely untouched', async () => {
+test('existing draftData survives a rerun completely untouched', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
   const slug = blogRecords[0].slug;
@@ -151,7 +173,8 @@ test('existing draftData survives a rerun completely untouched', async () => {
 });
 
 // 5. Existing publishedAt and status
-test('existing status and publishedAt survive a rerun completely untouched', async () => {
+test('existing status and publishedAt survive a rerun completely untouched', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
   const slug = blogRecords[0].slug;
@@ -166,7 +189,8 @@ test('existing status and publishedAt survive a rerun completely untouched', asy
 });
 
 // 6. Existing revisions remain unchanged
-test('existing BlogPostRevisionModel records are never created, deleted, or modified by the importer', async () => {
+test('existing BlogPostRevisionModel records are never created, deleted, or modified by the importer', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
   const slug = blogRecords[0].slug;
@@ -199,7 +223,8 @@ test('existing BlogPostRevisionModel records are never created, deleted, or modi
 });
 
 // 7. Partial import recovery
-test('a partially-imported batch recovers cleanly on rerun without duplicating or disturbing existing posts', async () => {
+test('a partially-imported batch recovers cleanly on rerun without duplicating or disturbing existing posts', async (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   await resetBlog();
   await upsertBlogPosts(blogRecords);
   const [first, second] = blogRecords;
@@ -275,7 +300,8 @@ function plainText(html) {
     .trim();
 }
 
-test('sanitization preserves plain-text wording exactly, across all 19 real published posts', () => {
+test('sanitization preserves plain-text wording exactly, across all 19 real published posts', (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   for (const post of parsed.blogPosts) {
     const sanitized = sanitizeBlogBody(post.bodyHtml);
     assert.equal(plainText(sanitized), plainText(post.bodyHtml), `wording must be unchanged by sanitization for post "${post.oldSlug}"`);
@@ -296,7 +322,8 @@ test('sanitization preserves plain-text wording exactly, across all 19 real publ
 // decision, not a silent behavior change.
 const NON_VYOMA_IMAGE_HOST_SLUGS = ['ramanavami', 'guru-purnima', 'what-is-sa%e1%b9%83sk%e1%b9%9btam', 'why-sa%e1%b9%83sk%e1%b9%9btam', 'how-sa%e1%b9%83sk%e1%b9%9btam'];
 
-test('finding: inline images hosted on Google\'s image CDN (not vyoma.org) are dropped by the existing image-host allowlist, for exactly the 5 known posts', () => {
+test('finding: inline images hosted on Google\'s image CDN (not vyoma.org) are dropped by the existing image-host allowlist, for exactly the 5 known posts', (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   for (const post of parsed.blogPosts) {
     const sanitized = sanitizeBlogBody(post.bodyHtml);
     const rawImgSrcs = [...post.bodyHtml.matchAll(/<img[^>]+src="([^"]+)"/gi)].map((m) => m[1]);
@@ -317,7 +344,8 @@ test('finding: inline images hosted on Google\'s image CDN (not vyoma.org) are d
   }
 });
 
-test('sanitization preserves required formatting tags (headings, lists, links, tables) wherever the raw post already uses them', () => {
+test('sanitization preserves required formatting tags (headings, lists, links, tables) wherever the raw post already uses them', (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   // img is checked separately above -- vyoma.org-hosted images survive,
   // non-vyoma.org-hosted ones are intentionally dropped (see the finding
   // test above), so a blanket "every raw <img> must survive" assertion
@@ -335,7 +363,8 @@ test('sanitization preserves required formatting tags (headings, lists, links, t
   }
 });
 
-test('sanitization preserves vyoma.org-hosted images wherever the raw post already uses them', () => {
+test('sanitization preserves vyoma.org-hosted images wherever the raw post already uses them', (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   for (const post of parsed.blogPosts) {
     if (NON_VYOMA_IMAGE_HOST_SLUGS.includes(post.oldSlug)) continue;
     const sanitized = sanitizeBlogBody(post.bodyHtml);
@@ -485,7 +514,8 @@ const EXPECTED_GOOGLE_HOSTED_IMAGES = {
   ],
 };
 
-test('finding: documents the exact Google-hosted image URLs and per-post counts that the unmodified allowlist drops', () => {
+test('finding: documents the exact Google-hosted image URLs and per-post counts that the unmodified allowlist drops', (t) => {
+  if (!wxrExists) return t.skip(WXR_SKIP);
   for (const [slug, expectedUrls] of Object.entries(EXPECTED_GOOGLE_HOSTED_IMAGES)) {
     const post = parsed.blogPosts.find((p) => p.oldSlug === slug);
     assert.ok(post, `expected to find post with oldSlug "${slug}" in the real WXR export`);

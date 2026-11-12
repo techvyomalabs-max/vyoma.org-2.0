@@ -145,6 +145,38 @@ test('listPostsPublic: limit is capped at 50 even if a larger value is requested
   assert.equal(body.meta.limit, 50);
 });
 
+// --- NoSQL operator-injection hardening (Task 7D.26) ---
+
+test('listPostsPublic: an operator-shaped category query parameter is rejected with a validation error, not passed to MongoDB', async () => {
+  // Express's default `qs` parser turns this bracket syntax into
+  // { $regex: '.*', $options: 'i' } -- if assigned directly into the
+  // Mongo filter, this would match every published post regardless of its
+  // real category (or worse, a slower/more dangerous operator).
+  const { res, body } = await get('/api/v1/public/blog?category[$regex]=.*&category[$options]=i');
+  assert.equal(res.status, 422);
+  assert.equal(body.success, false);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('listPostsPublic: an operator-shaped tag query parameter is rejected with a validation error', async () => {
+  const { res, body } = await get('/api/v1/public/blog?tag[$ne]=null');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('listPostsPublic: a repeated category query parameter (array, not a scalar) is rejected with a validation error', async () => {
+  const { res, body } = await get('/api/v1/public/blog?category=a&category=b');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('listPostsPublic: a normal single-value category filter is unaffected by the new validation', async () => {
+  await BlogPostModel.create({ slug: 'public-test-filter-still-works', status: 'published', data: postData({ title: 'Still Works', categories: ['still-works-category'] }) });
+  const { res, body } = await get('/api/v1/public/blog?category=still-works-category');
+  assert.equal(res.status, 200);
+  assert.ok(body.data.some((p) => p.title === 'Still Works'));
+});
+
 // --- GET /public/blog/categories ---
 
 test('listCategoriesPublic: only returns categories actually used by a published post, sorted', async () => {

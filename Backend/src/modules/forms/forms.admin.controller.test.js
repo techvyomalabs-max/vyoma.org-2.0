@@ -105,6 +105,13 @@ test('GET /admin/forms filters by formKey and status', async () => {
   assert.ok(body.data.every((s) => s.formKey === 'contact' && s.status === 'new'));
 });
 
+test('GET /admin/forms rejects an operator-shaped formKey query parameter (NoSQL injection attempt) with 422', async () => {
+  const token = await adminToken('form-key-injection');
+  const { res, body } = await listSubmissions(token, '?formKey[$ne]=null');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
 test('GET /admin/forms rejects an unknown status value with 422', async () => {
   const token = await adminToken('bad-status');
   const { res } = await listSubmissions(token, '?status=not_a_real_status');

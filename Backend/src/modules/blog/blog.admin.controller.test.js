@@ -545,6 +545,20 @@ test('GET /admin/blog filters by category, matching a published post\'s data.cat
   assert.ok(byCategory.body.data.some((p) => p.slug === 'list-filter-category-post'));
 });
 
+test('GET /admin/blog rejects an operator-shaped category query parameter (NoSQL injection attempt) with 422', async () => {
+  const token = await adminToken('list-filter-category-injection');
+  const { res, body } = await listPosts(token, '?category[$regex]=.*&category[$options]=i');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/blog rejects an operator-shaped tag query parameter with 422', async () => {
+  const token = await adminToken('list-filter-tag-injection');
+  const { res, body } = await listPosts(token, '?tag[$ne]=null');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
 // --- Categories ---
 
 test('GET /admin/blog/categories is rejected with 403 for a role without blog:read', async () => {

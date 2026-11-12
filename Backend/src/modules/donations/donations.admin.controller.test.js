@@ -129,6 +129,13 @@ test('GET /admin/donations filters by status and schemeSlug correctly', async ()
   assert.ok(body.data.every((d) => d.status === 'paid_verified' && d.schemeSlug === 'filter-scheme-a'));
 });
 
+test('GET /admin/donations rejects an operator-shaped schemeSlug query parameter (NoSQL injection attempt) with 422', async () => {
+  const token = await adminToken('scheme-slug-injection');
+  const { res, body } = await listDonations(token, '?schemeSlug[$ne]=null');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
 test('GET /admin/donations filters by donor email, case-insensitively, with regex-special characters safely escaped', async () => {
   const token = await adminToken('email-filter');
   await DonationModel.create(donationFixture({ donor: { name: 'Findable Donor', email: 'FindMe+test@Example.test' } }));

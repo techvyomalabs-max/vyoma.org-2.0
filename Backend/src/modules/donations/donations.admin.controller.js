@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { DonationModel } from './donation.model.js';
 import { DonationSchemeModel } from './donationScheme.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 import { recordAudit } from '../audit/audit.service.js';
 
 const VALID_STATUSES = ['initiated', 'order_created', 'paid_verified', 'receipt_sent', 'failed', 'cancelled', 'verification_failed'];
@@ -32,7 +33,8 @@ export async function listDonationsAdmin(req, res, next) {
       }
       filter.status = req.query.status;
     }
-    if (req.query.schemeSlug) filter.schemeSlug = req.query.schemeSlug;
+    const schemeSlug = expectScalarQueryParam(req.query.schemeSlug, 'schemeSlug');
+    if (schemeSlug) filter.schemeSlug = schemeSlug;
     if (req.query.email && typeof req.query.email === 'string' && req.query.email.trim()) {
       filter['donor.email'] = new RegExp(escapeRegex(req.query.email.trim()), 'i');
     }

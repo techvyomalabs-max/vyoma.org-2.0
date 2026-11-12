@@ -157,6 +157,24 @@ test('the targetType filter returns only exact matches', async () => {
   assert.ok(body.data.every((row) => row.targetType === 'PhotoProcessingJob'));
 });
 
+test('GET /admin/audit-logs rejects an operator-shaped action query parameter (NoSQL injection attempt) with 422', async () => {
+  const user = await createTestUser({ email: 'audit-filter-action-injection@example.test', roleKey: 'super_admin' });
+  const token = signAccessToken(user, superAdminRole);
+
+  const { res, body } = await listAuditLogs(token, '?action[$regex]=.*&action[$options]=i');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/audit-logs rejects an operator-shaped targetType query parameter with 422', async () => {
+  const user = await createTestUser({ email: 'audit-filter-targettype-injection@example.test', roleKey: 'super_admin' });
+  const token = signAccessToken(user, superAdminRole);
+
+  const { res, body } = await listAuditLogs(token, '?targetType[$ne]=null');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
 test('dateFrom/dateTo filter on createdAt, inclusive of the boundary', async () => {
   const marker = await seedLog({ action: 'audit-filter-date.event' });
   const user = await createTestUser({ email: 'audit-filter-date@example.test', roleKey: 'super_admin' });

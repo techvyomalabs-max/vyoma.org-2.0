@@ -1,5 +1,6 @@
 import { AuditLogModel } from './auditLog.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 
 // GET /api/v1/admin/audit-logs — Super Admin only (LLD Section 21: "Minimum
 // Admin Screens" lists audit-logs as Super Admin only). Read-only by design;
@@ -15,10 +16,12 @@ export async function listAuditLogs(req, res, next) {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
 
+    const action = expectScalarQueryParam(req.query.action, 'action');
+    const targetType = expectScalarQueryParam(req.query.targetType, 'targetType');
     const filter = {};
-    if (req.query.action) filter.action = req.query.action;
+    if (action) filter.action = action;
     if (req.query.actorEmail) filter.actorEmail = String(req.query.actorEmail).toLowerCase().trim();
-    if (req.query.targetType) filter.targetType = req.query.targetType;
+    if (targetType) filter.targetType = targetType;
     if (req.query.dateFrom || req.query.dateTo) {
       filter.createdAt = {};
       if (req.query.dateFrom) {

@@ -4,6 +4,7 @@ import { BlogPostRevisionModel } from './blogPostRevision.model.js';
 import { BlogCategoryModel } from './blogCategory.model.js';
 import { sanitizeBlogBody } from './sanitizeBody.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 import { recordAudit } from '../audit/audit.service.js';
 
 const MAX_REVISIONS_PER_POST = 20;
@@ -105,10 +106,12 @@ export async function listPostsAdmin(req, res, next) {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+    const category = expectScalarQueryParam(req.query.category, 'category');
+    const tag = expectScalarQueryParam(req.query.tag, 'tag');
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
-    if (req.query.category) filter['data.categories'] = req.query.category;
-    if (req.query.tag) filter['data.tags'] = req.query.tag;
+    if (category) filter['data.categories'] = category;
+    if (tag) filter['data.tags'] = tag;
 
     const [items, total] = await Promise.all([
       BlogPostModel.find(filter).sort({ updatedAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),

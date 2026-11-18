@@ -19,6 +19,16 @@ export function ContactPageForm({ reasons }) {
   const [sent, setSent] = useState(false);
   const [pending, setPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  // Bug 1 fix (Task 7P-SEC16 follow-up): submitForm() previously had no
+  // catch at all here -- a failed request (network error, rate limit,
+  // validation, etc.) left the button resetting to "Send Message" with no
+  // indication anything went wrong, indistinguishable from the form simply
+  // not submitting. A fixed, generic message is shown instead of the
+  // thrown error's own `.message` -- that string can originate from a
+  // network-level failure, a server response, or elsewhere, and is not
+  // vetted for safe display here (see apiClient.js/formService.js), unlike
+  // this component's own field-validation messages, which it writes itself.
+  const [submitError, setSubmitError] = useState(null);
   // Tracks only the length, not the value — the message textarea stays an
   // uncontrolled field (read via FormData on submit, like every other field
   // here); this is purely to drive the live "x / 2000 characters" counter.
@@ -42,6 +52,10 @@ export function ContactPageForm({ reasons }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Clear any error from a previous attempt as soon as the user retries --
+    // otherwise a stale failure message could still be showing next to a
+    // brand-new, still-pending submission.
+    setSubmitError(null);
     const values = Object.fromEntries(new FormData(e.target).entries());
     values.name = values.name?.trim() ?? '';
     const errors = validate(values);
@@ -52,6 +66,8 @@ export function ContactPageForm({ reasons }) {
     try {
       await submitForm('contact', { values, sourceUrl: '/contact' });
       setSent(true);
+    } catch {
+      setSubmitError('Something went wrong. Please try again.');
     } finally {
       setPending(false);
     }
@@ -118,6 +134,11 @@ export function ContactPageForm({ reasons }) {
         </p>
         {fieldErrors.message && <p className={errorText}>{fieldErrors.message}</p>}
       </div>
+      {submitError && (
+        <p role="alert" className={errorText}>
+          {submitError}
+        </p>
+      )}
       <Button type="submit" variant="solid" size="lg" className="w-full" disabled={pending}>
         {pending ? 'Sending…' : 'Send Message'}
       </Button>

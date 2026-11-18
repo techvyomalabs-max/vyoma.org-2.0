@@ -5,6 +5,22 @@
 // each of which keeps its own, more detailed test file) and the deploy-time
 // scripts/deploy/generate-redirect-manifest.mjs.
 //
+// Task 7D.33 (Phase 2B) — patrons-migration.mjs, patron-categories-unify-
+// migration.mjs, and leadership-awards-images-migration.mjs were
+// deliberately moved OFF the shared connectToMigrationDb() and onto a
+// separate, stricter guard (migrationTargetGuard.mjs's
+// connectToExplicitMigrationTarget(), requiring an explicit
+// MIGRATION_TARGET_MONGODB_URI + MIGRATION_TARGET_CONFIRM pointed at exactly
+// one allowlisted database, never the app's ambient MONGODB_URI) for this
+// specific restoration. Removed from MIGRATION_SCRIPTS below for exactly
+// that reason -- this file's own stated purpose is confirming every script
+// still wired to the ambient-configuration helper, which is no longer true
+// (nor intended to be) for these three. Their correct wiring to the new
+// guard, and the new guard's own behavior, has its own dedicated coverage:
+// Backend/src/modules/content/migrationTargetGuard.test.js,
+// migrationRevision.test.js, patronsRestorationMigrations.test.js, and
+// leadershipAwardsImagesMigration.test.js.
+//
 // What this file checks, and why it's enough:
 //   - Every script now delegates its database connection to the single,
 //     shared, already-and-separately-tested connectToMigrationDb()
@@ -47,13 +63,10 @@ const MIGRATION_SCRIPTS = [
   'events-migration.mjs',
   'fix-legal-body.mjs',
   'gallery-migration.mjs',
-  'leadership-awards-images-migration.mjs',
   'leadership-coreteam-bg-removal-apply.mjs',
   'newsletter-cover-migration.mjs',
   'newsletter-migration.mjs',
-  'patron-categories-unify-migration.mjs',
   'patron-test-category-cleanup.mjs',
-  'patrons-migration.mjs',
   'press-media-migration.mjs',
   'social-impact-fy25-migration.mjs',
   'testimonial-images-migration.mjs',
@@ -70,7 +83,10 @@ const DEPLOY_SCRIPTS = [{ name: 'generate-redirect-manifest.mjs', url: new URL('
 const ALL_SCRIPTS = [...MIGRATION_SCRIPTS, ...DEPLOY_SCRIPTS];
 
 test(`exactly ${MIGRATION_SCRIPTS.length} migration scripts + ${DEPLOY_SCRIPTS.length} deploy script are covered by this file`, () => {
-  assert.equal(MIGRATION_SCRIPTS.length, 27);
+  // Task 7D.33 — 27 -> 24: patrons-migration.mjs, patron-categories-unify-
+  // migration.mjs, and leadership-awards-images-migration.mjs moved to
+  // their own dedicated test coverage (see this file's header comment).
+  assert.equal(MIGRATION_SCRIPTS.length, 24);
   assert.equal(DEPLOY_SCRIPTS.length, 1);
 });
 

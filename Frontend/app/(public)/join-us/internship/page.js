@@ -4,6 +4,7 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray, toContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -18,8 +19,9 @@ export const metadata = pageMetadata({
 });
 
 export default async function InternshipPage() {
-  const { INTERNSHIP_REASONS, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
-  const INTERNSHIP_OPENINGS = OPENINGS_ALL.filter((o) => o.active !== false);
+  const { INTERNSHIP_REASONS: REASONS_ALL, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
+  const INTERNSHIP_REASONS = toContentArray(REASONS_ALL);
+  const INTERNSHIP_OPENINGS = toActiveContentArray(OPENINGS_ALL);
 
   return (
     <div className="font-sans">

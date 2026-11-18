@@ -6,6 +6,7 @@ import { Badge } from '@/components/common/Badge';
 import { PatronTierTable } from '@/components/sections/about/PatronTierTable';
 import { SmartImage } from '@/components/common/SmartImage';
 import { pageMetadata } from '@/lib/seo';
+import { toContentArray, toActiveContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -22,15 +23,18 @@ export const metadata = pageMetadata({
 export default async function OurPatronsPage() {
   const {
     PATRON_CATEGORIES: CATEGORIES_ALL,
-    GOLDEN_WALL,
+    GOLDEN_WALL: GOLDEN_WALL_ALL,
     PATRON_TESTIMONIAL_GALLERY: GALLERY_ALL,
     PATRON_MATCHING_PARTNERS: PARTNERS_ALL,
   } = await getAboutContent();
   // Categories an admin created/renamed/reordered and published show up
-  // here automatically — no hardcoded tier list.
-  const PATRON_CATEGORIES = CATEGORIES_ALL.filter((c) => c.active !== false);
-  const PATRON_TESTIMONIAL_GALLERY = GALLERY_ALL.filter((t) => t.active !== false);
-  const PATRON_MATCHING_PARTNERS = PARTNERS_ALL.filter((t) => t.active !== false);
+  // here automatically — no hardcoded tier list. toActiveContentArray()/
+  // toContentArray() (lib/contentArrays.js) degrade a missing/malformed
+  // field to an empty section instead of crashing the page.
+  const PATRON_CATEGORIES = toActiveContentArray(CATEGORIES_ALL);
+  const GOLDEN_WALL = toContentArray(GOLDEN_WALL_ALL);
+  const PATRON_TESTIMONIAL_GALLERY = toActiveContentArray(GALLERY_ALL);
+  const PATRON_MATCHING_PARTNERS = toActiveContentArray(PARTNERS_ALL);
 
   return (
     <div className="font-sans">

@@ -52,7 +52,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { disconnectDb } from '../../../src/config/db.js';
-import { connectToMigrationDb } from './migrationDb.mjs';
+import { connectToExplicitMigrationTarget } from './migrationTargetGuard.mjs';
+import { recordMigrationRevision } from './migrationRevision.mjs';
 import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
@@ -67,7 +68,7 @@ function img(url) {
 }
 
 // --- Leadership -------------------------------------------------------------
-const BOARD_IMAGES = {
+export const BOARD_IMAGES = {
   'Dr. CA. Viswanathan P': img('https://www.vyoma.org/wp-content/uploads/2022/07/Vishwanathan.png'),
   'Dr. Venkatasubramanian P': img('https://www.vyoma.org/wp-content/uploads/2022/12/Dr.-Venkata-Subramanian-P.jpeg'),
   'Dr. B. Krishnamurthy': img('https://www.vyoma.org/wp-content/uploads/2022/07/B_Krishna_Murthy.png'),
@@ -76,13 +77,13 @@ const BOARD_IMAGES = {
   'Dr. Sowmya Krishnapur': img('https://www.vyoma.org/wp-content/uploads/2022/07/Sowmya-Krishnapur.png'),
 };
 
-const ADVISORS_IMAGES = {
+export const ADVISORS_IMAGES = {
   'Dr. B. Mahadevan': img('https://www.vyoma.org/wp-content/uploads/2022/09/Prof-Mahadevan.jpg'),
   'Smt. Rama Sivaraman': img('https://www.vyoma.org/wp-content/uploads/2022/09/rama_sivaraman.jpg'),
   'Dr. Rajesh Bhaskaran Nair': img('https://www.vyoma.org/wp-content/uploads/2022/12/rajesh-nair.jpg'),
 };
 
-const COMMITTEE_IMAGES = {
+export const COMMITTEE_IMAGES = {
   'CA. Viswanathan Ganesan': img('https://www.vyoma.org/wp-content/uploads/2024/02/VishwanathanGaneshan.png'),
   'B. K. Shivakumar': img('https://www.vyoma.org/wp-content/uploads/2024/02/BKS-1.png'),
   'Uma V': img('https://www.vyoma.org/wp-content/uploads/2024/12/uma-venkataraman.png'),
@@ -91,7 +92,7 @@ const COMMITTEE_IMAGES = {
 };
 
 // --- Core Team (71 across 13 groups) ----------------------------------------
-const CORE_TEAM_IMAGES = {
+export const CORE_TEAM_IMAGES = {
   // CXO's Office
   'Sripriya Krishnamoorthy': img('https://www.vyoma.org/wp-content/uploads/2025/04/Sripriya.png'),
   'Amogha Rao': img('https://www.vyoma.org/wp-content/uploads/2023/05/Amogha-Rao.jpg'),
@@ -191,7 +192,7 @@ const EXPECTED_CORE_TEAM_IMAGES = 70; // 71 people minus the 1 deliberately-excl
 
 // --- Awards (9 items; 4 of them have a 2nd rotating photo, recorded here
 //     for the record even though the schema only stores one per item) ------
-const AWARDS_IMAGES = {
+export const AWARDS_IMAGES = {
   'Excellence Award (2024-25)': img('https://vyoma.org/wp-content/uploads/2025/02/VenkatsirRotaryaward-scaled.jpg'),
   // 2nd photo (not migrated, schema holds one image per item):
   // https://vyoma.org/wp-content/uploads/2025/02/VenkatRotaryAward2-scaled.jpg
@@ -217,7 +218,7 @@ function applyImages(list, imageMap) {
   return list.map((person) => (imageMap[person.name] ? { ...person, image: imageMap[person.name] } : person));
 }
 
-async function main() {
+export async function main() {
   const commit = process.argv.includes('--commit');
 
   console.log('='.repeat(72));
@@ -243,9 +244,9 @@ async function main() {
   const totalLeadership = EXPECTED_BOARD + EXPECTED_ADVISORS + EXPECTED_COMMITTEE + EXPECTED_CORE_TEAM_IMAGES;
   console.log(`[OK] Manifest self-check passed: ${totalLeadership} leadership/core-team images (${EXPECTED_BOARD} Board + ${EXPECTED_ADVISORS} Advisors + ${EXPECTED_COMMITTEE} Committee + ${EXPECTED_CORE_TEAM_IMAGES} Core Team), ${EXPECTED_AWARDS} award images.`);
 
-  const dbName = await connectToMigrationDb();
+  const dbName = await connectToExplicitMigrationTarget();
   try {
-    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+    console.log('[OK] Connected to the explicitly confirmed Atlas testing database (URI value not printed; database name:', dbName, ').');
     const errors = [];
     const aboutDoc = await ContentModel.findOne({ type: ABOUT_TYPE }).lean();
     const credDoc = await ContentModel.findOne({ type: CREDIBILITY_TYPE }).lean();
@@ -429,6 +430,29 @@ async function main() {
       console.error('\n[WARNING] At least one verification failed -- investigate before trusting this run.');
       process.exitCode = 1;
       return;
+    }
+
+    // Task 7D.33 — see migrationRevision.mjs's header. One revision per
+    // document actually written to -- never a spurious revision for a
+    // document this run left untouched (e.g. if Awards images already
+    // matched and only pages/about changed).
+    if (!boardState.allMatch || !advisorState.allMatch || !committeeState.allMatch || !coreTeamState.allMatch) {
+      const v = await recordMigrationRevision({
+        contentType: ABOUT_TYPE,
+        data: afterAbout.data,
+        scriptName: 'leadership-awards-images-migration.mjs',
+        details: { boardImages: Object.keys(BOARD_IMAGES).length, advisorImages: Object.keys(ADVISORS_IMAGES).length, committeeImages: Object.keys(COMMITTEE_IMAGES).length, coreTeamImages: Object.keys(CORE_TEAM_IMAGES).length },
+      });
+      console.log(`[OK] Recorded revision v${v} (action: migration) for "${ABOUT_TYPE}".`);
+    }
+    if (!awardsAllMatch) {
+      const v = await recordMigrationRevision({
+        contentType: CREDIBILITY_TYPE,
+        data: afterCred.data,
+        scriptName: 'leadership-awards-images-migration.mjs',
+        details: { awardsImages: Object.keys(AWARDS_IMAGES).length },
+      });
+      console.log(`[OK] Recorded revision v${v} (action: migration) for "${CREDIBILITY_TYPE}".`);
     }
 
     console.log('\n--- COMMIT complete, all verifications passed. ---');

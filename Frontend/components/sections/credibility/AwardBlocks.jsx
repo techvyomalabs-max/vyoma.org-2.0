@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 // A handful of awards have two original WordPress photos (the old site
 // rotated them as a pair); most have only one. Rendering both cases through
@@ -58,7 +59,7 @@ function AwardPhoto({ images, alt }) {
 // image on top and doc-style view/download links below. Mirrors the
 // AwardBlocks pattern in ui_kits/vyoma-org/Credibility.jsx.
 export function AwardBlocks({ items }) {
-  const active = items.filter((item) => item.active !== false);
+  const active = toActiveContentArray(items);
   return (
     <section className="bg-white px-8 py-16">
       <div

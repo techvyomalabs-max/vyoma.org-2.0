@@ -20,7 +20,10 @@ import * as faq from '../../../scripts/seedData/faq.js';
 import * as contact from '../../../scripts/seedData/contact.js';
 import * as donate from '../../../scripts/seedData/donate.js';
 
-const ALL_TYPES = ['pages/home', 'pages/about', 'pages/our-work', 'pages/impact', 'pages/credibility', 'pages/join-us', 'pages/donate', 'pages/faq', 'pages/contact', 'pages/media', 'media'];
+// Task 7D.32 — pages/privacy and pages/terms added to CONTENT_SEED (see
+// Backend/scripts/runSeed.js); this list and every "11" count below it were
+// updated to 13 to match, not left stale.
+const ALL_TYPES = ['pages/home', 'pages/about', 'pages/our-work', 'pages/impact', 'pages/credibility', 'pages/join-us', 'pages/donate', 'pages/faq', 'pages/contact', 'pages/media', 'media', 'pages/privacy', 'pages/terms'];
 
 let mem;
 
@@ -38,13 +41,13 @@ async function resetContent() {
   await ContentModel.deleteMany({});
 }
 
-test('seeding an empty collection creates all 11 content types with the correct data', async () => {
+test('seeding an empty collection creates all 13 content types with the correct data', async () => {
   await resetContent();
   const result = await runSeed();
-  assert.equal(result.contentTypes, 11);
+  assert.equal(result.contentTypes, 13);
 
   const docs = await ContentModel.find().lean();
-  assert.equal(docs.length, 11);
+  assert.equal(docs.length, 13);
   assert.deepEqual(
     docs.map((d) => d.type).sort(),
     [...ALL_TYPES].sort()
@@ -121,11 +124,12 @@ test('repeated reseeding is idempotent: an admin edit stays stable across multip
   assert.deepEqual(doc.data, { STABLE_EDIT: true });
 });
 
-// This task's scope forbids modifying seedData files or CONTENT_SEED, so a
-// truly new content type can't be introduced there for this test. A real
-// missing-then-seeded type is simulated instead by deleting one of the real
-// 11 documents (standing in for "a content type that doesn't exist in this
-// database yet") and confirming a single runSeed() call both (a) recreates
+// The task that originally wrote this test (Phase 1 Task 6I-B) forbade
+// modifying seedData files or CONTENT_SEED, so a truly new content type
+// couldn't be introduced there for this test. A real missing-then-seeded
+// type is simulated instead by deleting one of the real 13 documents
+// (standing in for "a content type that doesn't exist in this database
+// yet") and confirming a single runSeed() call both (a) recreates
 // it correctly and (b) leaves an unrelated, already-customized type
 // completely alone -- exactly the mixed insert+protected-no-op-update
 // scenario a real newly-introduced CONTENT_SEED entry would produce.
@@ -144,13 +148,13 @@ test('a content type missing from the database is (re)created correctly while an
   const customized = await ContentModel.findOne({ type: 'pages/impact' }).lean();
   assert.deepEqual(customized.data, { CUSTOMIZED: true }, 'an unrelated, already-customized content type must remain untouched');
 
-  assert.equal(await ContentModel.countDocuments(), 11, 'reseeding must not create duplicate documents for types that already exist');
+  assert.equal(await ContentModel.countDocuments(), 13, 'reseeding must not create duplicate documents for types that already exist');
 });
 
 test('seed summary counts remain correct after the fix', async () => {
   await resetContent();
   const result = await runSeed();
-  assert.equal(result.contentTypes, 11);
+  assert.equal(result.contentTypes, 13);
   assert.equal(result.donationSchemes, 9);
   assert.equal(result.blogPosts, (await import('../../../scripts/seedData/blog.js')).BLOG_POSTS.length);
 });

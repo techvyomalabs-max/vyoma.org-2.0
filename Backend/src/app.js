@@ -41,7 +41,15 @@ export function createApp() {
   // credentials: true — the auth refresh token travels as an HTTP-only
   // cookie (see auth.controller.js), which requires an explicit origin
   // (already the case) plus this flag, on both server and fetch() callers.
-  app.use(cors({ origin: env.corsOrigin, credentials: true }));
+  const allowedCorsOrigins = env.corsOrigin
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.use(cors({
+    origin: allowedCorsOrigins,
+    credentials: true,
+  }));
   app.use(morgan(env.nodeEnv === 'development' ? 'dev' : 'combined'));
   // `verify` stashes the raw bytes on req.rawBody, needed for Razorpay
   // webhook signature verification (LLD 9.3) without a second body parser.

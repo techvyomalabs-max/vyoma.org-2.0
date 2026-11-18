@@ -12,3 +12,8 @@ node_modules
 # Local-development-only background-removal output (localDev.storageAdapter.js)
 # — never committed, never used in production.
 .local-media/
+
+# Local MongoDB backups (scripts/backup/backupDatabase.mjs's default output
+# directory) — may contain real document/content data; never committed.
+# Pass --out-dir to redirect elsewhere entirely if preferred.
+.backups/

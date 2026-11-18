@@ -4,6 +4,7 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { CareersBoard } from '@/components/sections/joinUs/CareersBoard';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray, toContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -18,8 +19,9 @@ export const metadata = pageMetadata({
 });
 
 export default async function CareersPage() {
-  const { CAREER_ROLES, CAREER_STEPS: STEPS_ALL } = await getJoinUsContent();
-  const CAREER_STEPS = STEPS_ALL.filter((s) => s.active !== false);
+  const { CAREER_ROLES: ROLES_ALL, CAREER_STEPS: STEPS_ALL } = await getJoinUsContent();
+  const CAREER_ROLES = toContentArray(ROLES_ALL);
+  const CAREER_STEPS = toActiveContentArray(STEPS_ALL);
 
   return (
     <div className="font-sans">

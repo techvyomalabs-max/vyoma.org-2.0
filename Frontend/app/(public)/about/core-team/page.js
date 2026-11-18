@@ -4,6 +4,7 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 export const metadata = pageMetadata({
   path: '/about/core-team',
@@ -26,7 +27,12 @@ const isProcessedPhoto = (url) => typeof url === 'string' && url.includes('/loca
 
 export default async function CoreTeamPage() {
   const { CORE_TEAMS: CORE_TEAMS_ALL } = await getAboutContent();
-  const CORE_TEAMS = CORE_TEAMS_ALL.filter((g) => g.active !== false);
+  // toActiveContentArray() (lib/contentArrays.js) — same "a stored content
+  // document may predate this field" guard as the Patrons page
+  // (app/(public)/about/patrons/page.js): an absent or malformed CORE_TEAMS
+  // degrades to an empty page instead of crashing with "Cannot read
+  // properties of undefined (reading 'filter')".
+  const CORE_TEAMS = toActiveContentArray(CORE_TEAMS_ALL);
 
   return (
     <div className="font-sans">
@@ -47,7 +53,7 @@ export default async function CoreTeamPage() {
             className="mx-auto grid max-w-[1100px] gap-5"
             style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))' }}
           >
-            {t.people.filter((p) => p.active !== false).map((p, i) => (
+            {toActiveContentArray(t.people).map((p, i) => (
               <div key={p.name} className="text-center">
                 <div className="mx-auto mb-2.5 h-[170px] w-[170px]">
                   <ImagePlaceholder

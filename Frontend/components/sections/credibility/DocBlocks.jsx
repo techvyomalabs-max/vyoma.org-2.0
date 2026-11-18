@@ -3,9 +3,10 @@
 // Compliances & Registrations, Audit Reports). Mirrors the DocBlocks
 // pattern in ui_kits/vyoma-org/Credibility.jsx.
 import { isPdfUrl, downloadUrlFor } from '@/lib/documentLinks';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 export function DocBlocks({ items }) {
-  const active = items.filter((item) => item.active !== false);
+  const active = toActiveContentArray(items);
   return (
     <section className="bg-white px-8 py-16">
       <div className="mx-auto flex max-w-[800px] flex-col gap-4">

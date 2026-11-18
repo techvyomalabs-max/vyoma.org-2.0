@@ -13,6 +13,39 @@
 // `--uri`/`--from-uri` CLI argument string, before anything else runs.
 export const PROTECTED_DB_NAMES = new Set(['vyoma_migration_dryrun']);
 
+// Task 7P-SEC — exact-name allowlist for backupDatabase.mjs, mirroring
+// scripts/wordpress/import/migrationTargetGuard.mjs's ALLOWED_DB_NAMES
+// pattern (Set, case-insensitive, exact match only) rather than importing
+// that module directly -- this backup tooling is deliberately independent of
+// the WordPress-migration script family (see this file's own header comment
+// on why PROTECTED_DB_NAMES isn't shared that way either), so the pattern is
+// reused, not the object itself. Only the Atlas test database this project's
+// current restoration work targets is on this list; a different project or
+// a later backup target would need its own explicit addition here, never a
+// silent broadening.
+// Task 7P-SEC11 — named as its own constant (not just a literal inside the
+// Set below) so restoreDatabase.mjs's new explicit namespace-mapping check
+// can reuse the exact same value as the one legitimate backup source,
+// rather than declaring a second, independent literal that could silently
+// drift from this one.
+export const BACKUP_SOURCE_DB_NAME = 'vyoma_2_0_test';
+export const ALLOWED_BACKUP_DB_NAMES = new Set([BACKUP_SOURCE_DB_NAME]);
+
+// Task 7P-SEC4 — exact-name allowlist for restoreDatabase.mjs's TARGET
+// (where mongorestore WRITES), deliberately a SEPARATE set from
+// ALLOWED_BACKUP_DB_NAMES above (backupDatabase.mjs's SOURCE, read from,
+// which legitimately must be "vyoma_2_0_test" itself). Conflating these two
+// would be exactly backwards: restoring is the destructive direction, and
+// it must never be allowed to target the same live database a backup is
+// read from. Deliberately NOT "vyoma_migration_dryrun" either -- that name
+// is independently, categorically protected (PROTECTED_DB_NAMES above) and
+// must never become a legitimate target for ANY tool, including this one.
+// "vyoma_2_0_test_restore_check" is a brand-new name, never used elsewhere
+// in this project, reserved solely for verifying a restore actually works
+// by restoring into it and querying the result -- never written to by
+// anything else.
+export const ALLOWED_RESTORE_TARGET_DB_NAMES = new Set(['vyoma_2_0_test_restore_check']);
+
 // Parses a MongoDB connection string's database name using the standard URL
 // parser (mongodb:// and mongodb+srv:// are both valid URLs) -- the same
 // technique disposableDbTarget.mjs already uses. Returns null (never
@@ -71,6 +104,55 @@ export function assertNotProtectedDbUri(uri, { label = 'target' } = {}) {
   if (dbName && PROTECTED_DB_NAMES.has(dbName.toLowerCase())) {
     throw new Error(
       `Refusing to proceed: the ${label} database ("${dbName}") is on this project's protected list and must never be read, written, reset, or reseeded by this tooling.`
+    );
+  }
+  return dbName;
+}
+
+// Task 7P-SEC — the allowlist counterpart to assertNotProtectedDbUri() above:
+// that function refuses one specific known-dangerous name; this one refuses
+// everything EXCEPT the one name this backup tool is currently meant to
+// target. Both checks are independent and both must pass -- neither
+// supersedes the other. Never throws with the raw URI in its message, only
+// the parsed (and in the "none" case, explicitly absent) database name, same
+// convention as every other guard in this project.
+export function assertAllowedBackupDbUri(uri, { label = 'target' } = {}) {
+  const dbName = extractDatabaseName(uri);
+  if (!dbName || !ALLOWED_BACKUP_DB_NAMES.has(dbName.toLowerCase())) {
+    throw new Error(
+      `Refusing to proceed: the ${label} database ("${dbName || '(none -- URI has no database-name segment)'}") is not on this ` +
+        `backup tool's explicit allowlist (${[...ALLOWED_BACKUP_DB_NAMES].join(', ')}). This tool must target exactly the ` +
+        `approved backup source, never an unconfirmed or unrelated database.`
+    );
+  }
+  return dbName;
+}
+
+// Task 7P-SEC4 — the restore-target counterpart to assertAllowedBackupDbUri()
+// above, independent of it (restore and backup validate different URIs for
+// different reasons -- see ALLOWED_RESTORE_TARGET_DB_NAMES's own comment).
+// "vyoma_2_0_test" gets its own, more specific error branch: it is the one
+// target an operator is most likely to reach for by habit (it is the live
+// database every other tool in this project legitimately targets), so a
+// generic "not on the allowlist" message would under-explain exactly why
+// that specific, very plausible mistake is dangerous. Never throws with the
+// raw URI in its message, only the parsed database name, same convention as
+// every other guard in this file.
+export function assertAllowedRestoreTargetUri(uri, { label = 'target' } = {}) {
+  const dbName = extractDatabaseName(uri);
+  if (dbName && dbName.toLowerCase() === 'vyoma_2_0_test') {
+    throw new Error(
+      `Refusing to proceed: the ${label} database ("${dbName}") is the LIVE test database this project is actively ` +
+        `validating -- restoring into it would overwrite or corrupt the very data a restore drill exists to verify, not ` +
+        `prove anything about it. Restore is only ever allowed into an explicitly isolated, disposable verification ` +
+        `database (${[...ALLOWED_RESTORE_TARGET_DB_NAMES].join(', ')}), never the live database itself.`
+    );
+  }
+  if (!dbName || !ALLOWED_RESTORE_TARGET_DB_NAMES.has(dbName.toLowerCase())) {
+    throw new Error(
+      `Refusing to proceed: the ${label} database ("${dbName || '(none -- URI has no database-name segment)'}") is not on this ` +
+        `restore tool's explicit target allowlist (${[...ALLOWED_RESTORE_TARGET_DB_NAMES].join(', ')}). Restore must target ` +
+        `exactly an isolated, disposable verification database -- never a live, staging, or production database.`
     );
   }
   return dbName;

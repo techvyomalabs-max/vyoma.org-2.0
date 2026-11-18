@@ -5,6 +5,7 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { MetricCard } from '@/components/sections/impact/MetricCard';
 import { KpiDashboard } from '@/components/sections/impact/KpiDashboard';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -32,7 +33,7 @@ function MetricSection({ eyebrow, title, items }) {
         <div className="mb-2.5 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
         <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))' }}>
-          {items.filter((m) => m.active !== false).map((m) => (
+          {toActiveContentArray(items).map((m) => (
             <MetricCard key={m.label} value={m.value} label={m.label} />
           ))}
         </div>

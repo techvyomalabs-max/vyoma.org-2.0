@@ -4,6 +4,7 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -26,7 +27,7 @@ export async function generateMetadata() {
 
 export default async function CredibilityPage() {
   const { CREDIBILITY_SECTIONS: SECTIONS_ALL } = await getCredibilityContent();
-  const CREDIBILITY_SECTIONS = SECTIONS_ALL.filter((s) => s.active !== false);
+  const CREDIBILITY_SECTIONS = toActiveContentArray(SECTIONS_ALL);
 
   return (
     <div className="font-sans">

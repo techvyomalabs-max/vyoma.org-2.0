@@ -160,7 +160,8 @@ test('seed summary counts remain correct after the fix', async () => {
   await resetBlog();
   const result = await runSeed();
   assert.equal(result.blogPosts, blog.BLOG_POSTS.length);
-  assert.equal(result.contentTypes, 11);
+  // Task 7D.32 — pages/privacy and pages/terms added to CONTENT_SEED, 11 -> 13.
+  assert.equal(result.contentTypes, 13);
   assert.equal(result.donationSchemes, 9);
 });
 
@@ -178,7 +179,8 @@ test('blog categories, ContentModel and DonationSchemeModel seeding still behave
     categories.map((c) => c.name).sort(),
     [...blog.BLOG_CATEGORIES].sort()
   );
-  assert.equal(await ContentModel.countDocuments(), 11);
+  // Task 7D.32 — pages/privacy and pages/terms added to CONTENT_SEED, 11 -> 13.
+  assert.equal(await ContentModel.countDocuments(), 13);
   assert.equal(await DonationSchemeModel.countDocuments(), 9);
 });
 

@@ -4,6 +4,7 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -26,7 +27,7 @@ export async function generateMetadata() {
 
 export default async function JoinUsPage() {
   const { TRACKS: TRACKS_ALL } = await getJoinUsContent();
-  const TRACKS = TRACKS_ALL.filter((t) => t.active !== false);
+  const TRACKS = toActiveContentArray(TRACKS_ALL);
 
   return (
     <div className="font-sans">

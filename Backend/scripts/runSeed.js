@@ -15,6 +15,8 @@ import * as faq from './seedData/faq.js';
 import * as contact from './seedData/contact.js';
 import * as media from './seedData/media.js';
 import * as blog from './seedData/blog.js';
+import * as privacy from './seedData/privacy.js';
+import * as terms from './seedData/terms.js';
 
 // One Content document per `type` key the frontend's service layer actually
 // requests (Frontend/services/pageService.js, mediaService.js). "media" and
@@ -34,6 +36,15 @@ const CONTENT_SEED = {
   'pages/contact': contact,
   'pages/media': media,
   media: media,
+  // Task 7D.32 — previously absent from this map entirely (confirmed by
+  // grep across Backend/ before this fix), so a freshly bootstrapped
+  // database had no pages/privacy or pages/terms Content document at all,
+  // and GET /public/pages/privacy|terms 404'd unconditionally. Registered
+  // here only -- runSeed() itself is not invoked as part of this fix (no
+  // seed/migration script was run), so this has no effect on any
+  // already-existing database until it is genuinely reseeded.
+  'pages/privacy': privacy,
+  'pages/terms': terms,
 };
 
 function withImageUrl(people) {

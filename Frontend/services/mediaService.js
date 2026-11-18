@@ -1,4 +1,4 @@
-import { getPublicContent } from './contentService';
+import { getPublicContent } from './contentService.js';
 
 // Media module sub-collections (LLD: press, events, testimonials, newsletter,
 // gallery, resources contentItems). All mock data currently lives in one
@@ -17,9 +17,13 @@ export const getEvents = async () => {
   const m = await loadMedia();
   return { upcoming: m.UPCOMING_EVENTS, past: m.PAST_EVENTS };
 };
+// Defensively defaulted (same reasoning as getPressCoverage() above) --
+// a not-yet-migrated Content document missing either key must render an
+// empty section instead of crashing media/testimonials/page.js's
+// unguarded .map() calls.
 export const getTestimonials = async () => {
   const m = await loadMedia();
-  return { featured: m.TESTIMONIALS_FEATURED, all: m.TESTIMONIALS_ALL };
+  return { featured: m.TESTIMONIALS_FEATURED || [], all: m.TESTIMONIALS_ALL || [] };
 };
 export const getNewsletterIssues = async () => {
   const m = await loadMedia();

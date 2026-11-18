@@ -37,7 +37,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { disconnectDb } from '../../../src/config/db.js';
-import { connectToMigrationDb } from './migrationDb.mjs';
+import { connectToExplicitMigrationTarget } from './migrationTargetGuard.mjs';
+import { recordMigrationRevision } from './migrationRevision.mjs';
 import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
@@ -52,16 +53,16 @@ function deepEqual(a, b) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-async function main() {
+export async function main() {
   const commit = process.argv.includes('--commit');
   console.log('='.repeat(72));
   console.log(`Patron categories unification -- mode: ${commit ? 'COMMIT (will write)' : 'DRY-RUN (no writes)'}`);
   console.log("Scope: merges data.PATRON_TIERS + data.PATRON_TIER_ROWS into data.PATRON_CATEGORIES, on {type: 'pages/about'}.");
   console.log('='.repeat(72));
 
-  const dbName = await connectToMigrationDb();
+  const dbName = await connectToExplicitMigrationTarget();
   try {
-    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
+    console.log('[OK] Connected to the explicitly confirmed Atlas testing database (URI value not printed; database name:', dbName, ').');
     const doc = await ContentModel.findOne({ type: TYPE }).lean();
     if (!doc) {
       console.error(`\nVALIDATION FAILED: no Content document for type "${TYPE}". ABORT.`);
@@ -191,6 +192,16 @@ async function main() {
       process.exitCode = 1;
       return;
     }
+
+    // Task 7D.33 — see migrationRevision.mjs's header. Additive only.
+    const revisionVersion = await recordMigrationRevision({
+      contentType: TYPE,
+      data: after.data,
+      scriptName: 'patron-categories-unify-migration.mjs',
+      details: { categoryCount: categories.length, totalPatronRows: afterTotal },
+    });
+    console.log(`[OK] Recorded revision v${revisionVersion} (action: migration) for "${TYPE}".`);
+
     console.log('\n--- COMMIT complete, all verifications passed. ---');
   } finally {
     await disconnectDb();

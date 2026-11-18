@@ -5,6 +5,7 @@ import { ContactCta } from '@/components/sections/CtaButtons';
 import { Button } from '@/components/common/Button';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -20,8 +21,8 @@ export const metadata = pageMetadata({
 
 export default async function VolunteerPage() {
   const { VOLUNTEER_CATEGORIES: CATEGORIES_ALL, VOLUNTEER_FEATURED: FEATURED_ALL, VOLUNTEER_APPLY_URL } = await getJoinUsContent();
-  const VOLUNTEER_CATEGORIES = CATEGORIES_ALL.filter((c) => c.active !== false);
-  const VOLUNTEER_FEATURED = FEATURED_ALL.filter((v) => v.active !== false);
+  const VOLUNTEER_CATEGORIES = toActiveContentArray(CATEGORIES_ALL);
+  const VOLUNTEER_FEATURED = toActiveContentArray(FEATURED_ALL);
 
   return (
     <div className="font-sans">

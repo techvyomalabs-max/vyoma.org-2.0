@@ -48,8 +48,12 @@ export default async function PressPage() {
           <div className="mx-auto max-w-[1100px]">
             <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{section.heading}</h2>
             <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))' }}>
-              {section.items.map((item) => (
-                <PressCard key={item.title + item.image.url} item={item} />
+              {section.items.map((item, i) => (
+                // key avoids item.image.url directly -- a real, currently
+                // seeded item can have image: null (see
+                // Backend/scripts/seedData/media.js's PRESS_CLIPPING_SECTIONS),
+                // which would throw here otherwise.
+                <PressCard key={`${item.title}-${i}`} item={item} />
               ))}
             </div>
           </div>

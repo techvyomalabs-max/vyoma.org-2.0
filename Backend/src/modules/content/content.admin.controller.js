@@ -32,7 +32,11 @@ function requireType(req) {
 // Keeps only the MAX_REVISIONS_PER_TYPE most recent revisions for a type —
 // the bounded-retention half of the separate-revision-model design (see
 // contentRevision.model.js). Runs right after a new revision is inserted.
-async function pruneOldRevisions(contentType) {
+// Task 7D.33 — exported (previously module-private) so
+// scripts/wordpress/import/migrationRevision.mjs can reuse this exact same
+// bounded-retention logic for migration-sourced revisions, instead of a
+// second, independently-maintained copy.
+export async function pruneOldRevisions(contentType) {
   const excessIds = await ContentRevisionModel.find({ contentType })
     .sort({ version: -1 })
     .skip(MAX_REVISIONS_PER_TYPE)

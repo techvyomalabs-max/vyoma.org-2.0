@@ -7,8 +7,9 @@ import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { HeroCarousel } from '@/components/sections/home/HeroCarousel';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
-const active = (items) => items.filter((item) => item.active !== false);
+const active = (items) => toActiveContentArray(items);
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see

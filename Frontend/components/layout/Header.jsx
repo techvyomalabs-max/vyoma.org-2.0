@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { NAV, CONTACT_LINK } from '@/lib/navConfig';
 import { useMobileNav } from '@/lib/useMobileNav';
 import { useModal } from './ModalProvider';
@@ -357,9 +357,39 @@ function NavLink({ href, active, children }) {
   );
 }
 
+// QA Bug 5, Stage 5: wires this previously-inert toggle up to the real
+// /search?q=<query> results page (Stage 4) -- Enter and clicking the icon
+// while already open (with a non-empty keyword) both submit the same way,
+// via one shared submit() function, so desktop and mobile (both of which
+// render this exact function, never a second copy) behave identically
+// with no duplicated logic.
 function SearchBox() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
+  // A ref, not state -- tracking the last-submitted value/time causes no
+  // re-render and leaves no visible "stale" UI of its own. Only absorbs an
+  // accidental, near-instant repeat (held-Enter key-repeat, a rapid double
+  // click) within a short window; a deliberate repeat search of the exact
+  // same keyword a moment later is never permanently blocked, since the
+  // window expires on its own.
+  const lastSubmitRef = useRef({ value: '', time: 0 });
+
+  const submit = () => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const now = Date.now();
+    const last = lastSubmitRef.current;
+    if (trimmed === last.value && now - last.time < 1000) return;
+    lastSubmitRef.current = { value: trimmed, time: now };
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    // Only reached on an actual navigation -- both early returns above
+    // (empty, and the near-instant duplicate) skip this, so neither ever
+    // clears or closes the input unexpectedly.
+    setValue('');
+    setOpen(false);
+  };
+
   return (
     <div className="flex items-center">
       {open && (
@@ -367,12 +397,23 @@ function SearchBox() {
           autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') submit();
+          }}
           onBlur={() => !value && setOpen(false)}
+          aria-label="Search the site"
           placeholder="Search the site…"
           className="mr-2 w-[200px] rounded-md border border-white/40 bg-white/12 px-3 py-1.5 font-sans text-sm text-white outline-none placeholder:text-white/75"
         />
       )}
-      <button onClick={() => setOpen((o) => !o)} aria-label="Search" className="flex items-center p-1">
+      <button
+        onClick={() => {
+          if (open && value.trim()) submit();
+          else setOpen((o) => !o);
+        }}
+        aria-label="Search"
+        className="flex items-center p-1"
+      >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
           <circle cx="11" cy="11" r="7" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />

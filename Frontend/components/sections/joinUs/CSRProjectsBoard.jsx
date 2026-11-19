@@ -39,7 +39,14 @@ export function CSRProjectsBoard({ projects: projectsInput }) {
   const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'sent' | 'error'
   const [fieldErrors, setFieldErrors] = useState({});
 
+  // QA Bug 4 fix: validation errors were only ever set in handleSubmit and
+  // never cleared when the CSR option changed -- every error from a prior
+  // submit attempt (not just the "project of interest" one) stayed visible
+  // after switching, even though the form hadn't been resubmitted yet. Only
+  // clear on an actual change (not a re-pick of the same option already
+  // selected), and never touch `fields`, so user-entered values survive.
   const pick = (name) => {
+    if (name !== selected) setFieldErrors({});
     setSelected(name);
     document.getElementById('csr-enquiry-form')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -178,7 +185,11 @@ export function CSRProjectsBoard({ projects: projectsInput }) {
               <div>
                 <select
                   value={selected}
-                  onChange={(e) => setSelected(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value !== selected) setFieldErrors({});
+                    setSelected(value);
+                  }}
                   aria-label="Project of interest"
                   aria-invalid={!!fieldErrors.selected}
                   className="w-full rounded-sm border border-[var(--border-subtle)] px-3.5 py-3 font-sans text-[15px] text-charcoal"

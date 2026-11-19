@@ -50,9 +50,12 @@ function makeSubmit() {
   const body = extractSubmitBody();
   // eslint-disable-next-line no-new-func -- deliberate: executing the
   // real, verbatim-extracted statements as real code, with `value`/
-  // `router`/`lastSubmitRef`/`setValue`/`setOpen` supplied as explicit
-  // parameters in place of the closures SearchBox() normally provides.
-  return new Function('value', 'router', 'lastSubmitRef', 'setValue', 'setOpen', body);
+  // `router`/`lastSubmitRef`/`setValue`/`setOpen`/`onNavigate` supplied as
+  // explicit parameters in place of the closures SearchBox() normally
+  // provides. Existing calls that omit the 6th argument get `undefined`,
+  // which `onNavigate?.()` already handles as a safe no-op -- this is why
+  // every test written before onNavigate existed still passes unchanged.
+  return new Function('value', 'router', 'lastSubmitRef', 'setValue', 'setOpen', 'onNavigate', body);
 }
 
 function fakeRouter() {
@@ -170,6 +173,57 @@ test('setValue(\'\')/setOpen(false) appear in the real source only after router.
   assert.match(source, /router\.push\(`\/search\?q=\$\{encodeURIComponent\(trimmed\)\}`\);\s*\n[\s\S]*?setValue\(''\);\s*\n\s*setOpen\(false\);/);
 });
 
+// --- onNavigate (mobile menu auto-close): real, extracted behavior ------
+
+test('a valid search calls onNavigate exactly once, alongside the existing successful-navigation cleanup', () => {
+  const submit = makeSubmit();
+  const router = fakeRouter();
+  const ref = { current: { value: '', time: 0 } };
+  const onNavigate = spy();
+  submit('team', router, ref, spy(), spy(), onNavigate);
+  assert.equal(onNavigate.calls.length, 1, 'onNavigate must be called exactly once for a real submission');
+  assert.deepEqual(router.calls, ['/search?q=team']);
+});
+
+test('an empty search never calls onNavigate', () => {
+  const submit = makeSubmit();
+  const router = fakeRouter();
+  const ref = { current: { value: '', time: 0 } };
+  const onNavigate = spy();
+  submit('', router, ref, spy(), spy(), onNavigate);
+  assert.deepEqual(onNavigate.calls, []);
+  assert.deepEqual(router.calls, []);
+});
+
+test('a whitespace-only search never calls onNavigate', () => {
+  const submit = makeSubmit();
+  const router = fakeRouter();
+  const ref = { current: { value: '', time: 0 } };
+  const onNavigate = spy();
+  submit('   \t\n  ', router, ref, spy(), spy(), onNavigate);
+  assert.deepEqual(onNavigate.calls, []);
+  assert.deepEqual(router.calls, []);
+});
+
+test('a duplicate submission suppressed by the existing debounce guard never calls onNavigate', () => {
+  const submit = makeSubmit();
+  const router = fakeRouter();
+  // Same near-instant-repeat setup as the existing debounce test above.
+  const ref = { current: { value: 'team', time: Date.now() - 10 } };
+  const onNavigate = spy();
+  submit('team', router, ref, spy(), spy(), onNavigate);
+  assert.deepEqual(onNavigate.calls, [], 'a debounce-suppressed duplicate must never call onNavigate');
+  assert.deepEqual(router.calls, []);
+});
+
+test('calling submit() with no onNavigate argument at all (the desktop case) never throws, since onNavigate?.() is a safe no-op', () => {
+  const submit = makeSubmit();
+  const router = fakeRouter();
+  const ref = { current: { value: '', time: 0 } };
+  assert.doesNotThrow(() => submit('team', router, ref, spy(), spy() /* no onNavigate */));
+  assert.deepEqual(router.calls, ['/search?q=team'], 'the search itself must still work with no onNavigate supplied');
+});
+
 // --- Structural assertions on the JSX wiring (NOT browser/render verification) --
 
 test('clicking the search icon while closed opens the input (structural: existing toggle branch preserved)', () => {
@@ -186,10 +240,20 @@ test('the input has its own accessible label, distinct from the icon button\'s',
 });
 
 test('both desktop and mobile render the exact same SearchBox function -- no second implementation', () => {
-  const defCount = (source.match(/function SearchBox\(\)/g) || []).length;
-  const usageCount = (source.match(/<SearchBox \/>/g) || []).length;
-  assert.equal(defCount, 1, 'SearchBox must be defined exactly once');
-  assert.equal(usageCount, 2, 'SearchBox must be rendered at both the desktop and mobile call sites');
+  const defCount = (source.match(/function SearchBox\(\{ onNavigate \} = \{\}\)/g) || []).length;
+  assert.equal(defCount, 1, 'SearchBox must be defined exactly once, with onNavigate as its one optional parameter');
+});
+
+test('the desktop SearchBox instance is unchanged -- no onNavigate prop, since there is no menu to close there', () => {
+  assert.match(source, /<SearchBox \/>/, 'the desktop call site must remain prop-less');
+});
+
+test('the mobile SearchBox instance receives the existing closeMobileMenu callback via onNavigate', () => {
+  assert.match(source, /<SearchBox onNavigate=\{onNavigate\} \/>/, 'the mobile call site must pass MobileNavPanel\'s own onNavigate prop through');
+  // MobileNavPanel's own `onNavigate` prop is `closeMobileMenu`, passed down
+  // from Header() -- confirmed by the existing <MobileNavPanel ...
+  // onNavigate={closeMobileMenu} ... /> wiring, unchanged by this fix.
+  assert.match(source, /onNavigate=\{closeMobileMenu\}/);
 });
 
 test('the existing onBlur-closes-when-empty behavior is preserved unchanged', () => {

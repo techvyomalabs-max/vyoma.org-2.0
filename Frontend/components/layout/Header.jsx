@@ -194,7 +194,7 @@ function MobileNavPanel({ panelId, isActive, openGroup, setOpenGroup, onNavigate
         </ul>
 
         <div className="mt-6">
-          <SearchBox />
+          <SearchBox onNavigate={onNavigate} />
         </div>
       </div>
     </div>
@@ -363,7 +363,15 @@ function NavLink({ href, active, children }) {
 // via one shared submit() function, so desktop and mobile (both of which
 // render this exact function, never a second copy) behave identically
 // with no duplicated logic.
-function SearchBox() {
+// `onNavigate` is optional -- the desktop call site passes none (there is
+// no menu to close there), so it only ever does anything at the mobile
+// call site inside MobileNavPanel, which already has `closeMobileMenu`
+// available as its own `onNavigate` prop. Mirrors the exact pattern every
+// other interactive element inside MobileNavPanel already uses (every
+// link, the Donate button) to close the menu explicitly and synchronously
+// on its own action, rather than relying solely on useMobileNav.js's
+// indirect, pathname-change-triggered close effect.
+function SearchBox({ onNavigate } = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -388,6 +396,7 @@ function SearchBox() {
     // clears or closes the input unexpectedly.
     setValue('');
     setOpen(false);
+    onNavigate?.();
   };
 
   return (

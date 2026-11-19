@@ -66,9 +66,13 @@ async function donationCount() {
 
 // --- Accepted currency values ---
 
+// QA Bug 1 fix: donor.name/donor.email are now validated too (see
+// donations.controller.donorValidation.test.js) -- a valid donor is included
+// below so these currency-focused tests keep exercising currency defaulting/
+// acceptance specifically, not the (now separately covered) donor-missing case.
 test('a missing currency defaults to INR and passes validation (reaches the pre-existing Razorpay-unconfigured stage, not a currency rejection)', async () => {
   const before = await donationCount();
-  const { res, body } = await createOrderRequest({ schemeSlug: 'test-scheme', amount: 500 });
+  const { res, body } = await createOrderRequest({ schemeSlug: 'test-scheme', amount: 500, donor: { name: 'Jane Doe', email: 'jane@example.test' } });
   assert.equal(res.status, 503, 'must NOT be rejected as a currency validation error');
   assert.equal(body.code, 'RAZORPAY_NOT_CONFIGURED');
   assert.equal(await donationCount(), before, 'no Donation record is created either way, since Razorpay remains unconfigured');
@@ -76,7 +80,7 @@ test('a missing currency defaults to INR and passes validation (reaches the pre-
 
 test('an explicit currency of "INR" is accepted and passes validation', async () => {
   const before = await donationCount();
-  const { res, body } = await createOrderRequest({ schemeSlug: 'test-scheme', amount: 500, currency: 'INR' });
+  const { res, body } = await createOrderRequest({ schemeSlug: 'test-scheme', amount: 500, currency: 'INR', donor: { name: 'Jane Doe', email: 'jane@example.test' } });
   assert.equal(res.status, 503);
   assert.equal(body.code, 'RAZORPAY_NOT_CONFIGURED');
   assert.equal(await donationCount(), before);

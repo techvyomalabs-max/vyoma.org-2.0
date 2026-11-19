@@ -17,6 +17,31 @@ import { shapePublicScheme } from './publicSchemeShape.js';
 // the second one's filter simply won't match anymore.
 const PAID_STATUSES = ['paid_verified', 'receipt_sent'];
 
+// QA Bug 1 fix: mirrors forms.controller.js's own EMAIL_RE/NAME_RE exactly
+// (which itself mirrors ContactForm.jsx/ContactPageForm.jsx) -- the same
+// Unicode-letter name check and email-shape check already enforced
+// everywhere else a donor-supplied name/email is accepted, now also applied
+// here. Previously `donor: { name: String, email: String }` (donation.model.js)
+// had no validation at all: a donor.name of "0" or an email with no "@"/"."
+// reached DonationModel.create() unchanged.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_RE = /^\p{L}[\p{L}\s'’-]*$/u;
+
+function validateDonor(donor) {
+  const fieldErrors = {};
+  const name = typeof donor?.name === 'string' ? donor.name.trim() : '';
+  if (!name) {
+    fieldErrors.name = 'Name is required.';
+  } else if (!NAME_RE.test(name)) {
+    fieldErrors.name = 'Please enter a valid name without numbers or special characters.';
+  }
+  const email = typeof donor?.email === 'string' ? donor.email.trim() : '';
+  if (!email || !EMAIL_RE.test(email)) {
+    fieldErrors.email = 'A valid email is required.';
+  }
+  return Object.keys(fieldErrors).length ? fieldErrors : null;
+}
+
 // GET /api/v1/public/donation-schemes — LLD 9.1. Active schemes only, sorted
 // by admin-controlled displayOrder (Phase D) — inactive schemes are excluded
 // from the public list entirely, never shown as if available.
@@ -67,6 +92,11 @@ export async function createDonationOrder(req, res, next) {
     if (currency !== 'INR') {
       throw new ApiError(422, 'VALIDATION_ERROR', 'Only INR donations are supported.', { currency: 'Must be "INR".' });
     }
+    const donorFieldErrors = validateDonor(donor);
+    if (donorFieldErrors) {
+      throw new ApiError(422, 'VALIDATION_ERROR', 'Please check the highlighted fields.', donorFieldErrors);
+    }
+    const trimmedDonor = { name: donor.name.trim(), email: donor.email.trim() };
 
     const scheme = await DonationSchemeModel.findOne({ slug: schemeSlug, status: 'active' });
     if (!scheme) {
@@ -82,7 +112,7 @@ export async function createDonationOrder(req, res, next) {
     }
 
     const donation = await DonationModel.create({
-      donor,
+      donor: trimmedDonor,
       schemeId: scheme._id,
       schemeSlug: scheme.slug,
       amount,

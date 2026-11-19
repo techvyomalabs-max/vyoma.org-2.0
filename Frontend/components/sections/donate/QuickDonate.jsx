@@ -9,6 +9,24 @@ import { loadRazorpayScript } from '@/lib/loadRazorpayScript';
 const PRESETS = [1000, 2500, 5000, 10000];
 const RAZORPAY_KEY_ID = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || null;
 
+// QA Bug 1 fix: mirrors ContactForm.jsx/ContactPageForm.jsx's own NAME_RE/
+// EMAIL_RE exactly. Previously this form only checked `!name.trim()` /
+// `!email.trim()` -- a non-blank, non-whitespace value like "0" passed that
+// check with no error, since "0" is a truthy string.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_RE = /^\p{L}[\p{L}\s'’-]*$/u;
+
+function validateDonor({ name, email }) {
+  const errors = {};
+  const trimmedName = name.trim();
+  if (!trimmedName) errors.name = 'Name is required.';
+  else if (!NAME_RE.test(trimmedName)) errors.name = 'Please enter a valid name without numbers or special characters.';
+  const trimmedEmail = email.trim();
+  if (!trimmedEmail) errors.email = 'Email is required.';
+  else if (!EMAIL_RE.test(trimmedEmail)) errors.email = 'Enter a valid email address.';
+  return errors;
+}
+
 // Week 4 Decision W4-3: this component only ever attempts a real checkout
 // when it's given a real `schemeSlug` (i.e. rendered on
 // /donate/[schemeSlug], which always has one — see that page). Rendered on
@@ -22,12 +40,14 @@ export function QuickDonate({ schemeSlug = null }) {
   const [email, setEmail] = useState('');
   const [stage, setStage] = useState('idle'); // idle | creating_order | awaiting_checkout | verifying | verified | error | cancelled
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const sym = path === 'india' ? '₹' : '$';
 
   const busy = stage === 'creating_order' || stage === 'awaiting_checkout' || stage === 'verifying';
 
   const handleDonate = async () => {
     setError(null);
+    setFieldErrors({});
 
     if (!schemeSlug) {
       document.getElementById('schemes')?.scrollIntoView({ behavior: 'smooth' });
@@ -46,8 +66,9 @@ export function QuickDonate({ schemeSlug = null }) {
       router.push('/donate#bank-transfer');
       return;
     }
-    if (!name.trim() || !email.trim()) {
-      setError('Please enter your name and email.');
+    const donorErrors = validateDonor({ name, email });
+    if (Object.keys(donorErrors).length > 0) {
+      setFieldErrors(donorErrors);
       return;
     }
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -188,22 +209,30 @@ export function QuickDonate({ schemeSlug = null }) {
 
           {schemeSlug && path === 'india' && (
             <div className="mb-[18px] flex flex-col gap-2.5">
-              <input
-                type="text"
-                aria-label="Full name"
-                placeholder="Full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="rounded-md border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 font-sans text-sm text-charcoal"
-              />
-              <input
-                type="email"
-                aria-label="Email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="rounded-md border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 font-sans text-sm text-charcoal"
-              />
+              <div>
+                <input
+                  type="text"
+                  aria-label="Full name"
+                  placeholder="Full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  aria-invalid={!!fieldErrors.name}
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 font-sans text-sm text-charcoal"
+                />
+                {fieldErrors.name && <p className="mt-1 font-sans text-[13px] text-red-600">{fieldErrors.name}</p>}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  aria-label="Email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-invalid={!!fieldErrors.email}
+                  className="w-full rounded-md border border-[var(--border-subtle)] bg-white px-3.5 py-2.5 font-sans text-sm text-charcoal"
+                />
+                {fieldErrors.email && <p className="mt-1 font-sans text-[13px] text-red-600">{fieldErrors.email}</p>}
+              </div>
             </div>
           )}
           {/* Foreign/NRI donations are bank-transfer only (see handleDonate) —

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { getDonateContent } from '@/services/pageService';
 import { getDonationSchemes } from '@/services/donationService';
 import { getPublicSettings } from '@/services/settingsService';
-import { DonateCta } from '@/components/sections/CtaButtons';
 import { Button } from '@/components/common/Button';
 import { QuickDonate } from '@/components/sections/donate/QuickDonate';
 import { SchemesGrid } from '@/components/sections/donate/SchemesGrid';
@@ -80,7 +79,17 @@ export default async function DonatePage() {
           {HERO.body}
         </p>
         <div className="mt-[26px]">
-          <DonateCta>{HERO.ctaLabel}</DonateCta>
+          {/* QA Bug 3 fix: this CTA lives on /donate itself, so it must jump
+              to the Donation Schemes section (#schemes, SchemesGrid.jsx)
+              below -- not reuse the site-wide DonateCta/openDonate handler
+              (ModalProvider.jsx), which only router.push('/donate')s and is
+              a same-page no-op here. A real <a href="#schemes"> (via
+              Button's href prop) gives a native, keyboard-accessible anchor
+              jump with no JS dependency, unlike QuickDonate.jsx's
+              scrollIntoView() equivalent used elsewhere on this page. */}
+          <Button variant="outline-inverse" size="lg" href="#schemes">
+            {HERO.ctaLabel}
+          </Button>
         </div>
       </section>
 

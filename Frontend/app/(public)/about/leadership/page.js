@@ -78,6 +78,7 @@ export default async function LeadershipPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our leadership"
+        eyebrowSize="text-[13px]"
         title="The people guiding Vyoma"
         body={[
           'Vyoma is led by a team of scholars, technologists, and institution-builders, guided by an experienced advisory board.',

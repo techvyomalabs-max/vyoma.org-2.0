@@ -38,6 +38,7 @@ export default async function CoreTeamPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our people"
+        eyebrowSize="text-[13px]"
         title="Core Team"
         body="Behind every course, tool, and initiative is a dedicated team of teachers, technologists, and coordinators. These are the people who bring Sanskrit to learners across the world, day after day."
       />

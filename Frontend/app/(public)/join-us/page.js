@@ -33,6 +33,7 @@ export default async function JoinUsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Join Us"
+        eyebrowSize="text-[13px]"
         title="Careers, internships, and volunteering — one mission."
         body="Whether you give your time, your skills, your company's support, or your career, there is a place for you in Vyoma's work. Choose the path that fits you."
         maxWidth="max-w-[720px]"

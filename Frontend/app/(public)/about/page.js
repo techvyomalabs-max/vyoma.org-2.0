@@ -33,6 +33,7 @@ export default async function AboutPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="About Vyoma"
+        eyebrowSize="text-[13px]"
         title="A nonprofit dedicated to keeping Saṃskṛtam a living, learnable language."
       />
 
@@ -90,7 +91,7 @@ export default async function AboutPage() {
           ))}
         </div>
         <div className="text-center">
-          <div className="mb-2 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-charcoal">Our goal</div>
+          <div className="mb-2 font-sans text-[13px] font-bold uppercase tracking-eyebrow text-charcoal">Our goal</div>
           <div className="font-sans text-[56px] font-extrabold leading-none text-vyoma-blue">1 Million</div>
           <div className="mt-2 font-sans text-lg text-charcoal">people reached by 2032</div>
         </div>

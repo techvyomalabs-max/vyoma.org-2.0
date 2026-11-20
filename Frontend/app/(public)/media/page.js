@@ -23,6 +23,7 @@ export default async function MediaPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
+        eyebrowSize="text-[13px]"
         title="Stories, coverage, and updates."
         body="How Vyoma's work is seen, shared, and remembered, our writing, our press coverage, and moments from the field."
       />

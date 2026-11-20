@@ -30,7 +30,7 @@ function MetricSection({ eyebrow, title, items }) {
   return (
     <section className="bg-white px-8 py-14">
       <div className="mx-auto max-w-[1100px]">
-        <div className="mb-2.5 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
+        <div className="mb-2.5 font-sans text-[13px] font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
         <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))' }}>
           {toActiveContentArray(items).map((m) => (

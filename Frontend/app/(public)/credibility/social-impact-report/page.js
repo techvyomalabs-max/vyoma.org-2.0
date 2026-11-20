@@ -24,6 +24,7 @@ export default async function SocialImpactReportPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Social Impact Report"
+        eyebrowSize="text-[13px]"
         title="Social Impact Report"
         body="A closer look at outcomes, who our work reaches, and the difference it makes on the ground."
       />

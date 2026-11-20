@@ -1,5 +1,8 @@
 import dns from 'node:dns/promises';
 import net from 'node:net';
+import { fork } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import mongoose from 'mongoose';
 import { removeBackground } from '@imgly/background-removal-node';
 import sharp from 'sharp';
@@ -9,6 +12,11 @@ import { saveProcessedImage, isLocalDevStorageAllowed } from './localDev.storage
 import { uploadObject, buildStorageKey } from '../media/s3.adapter.js';
 import { ProcessedImageModel } from './processedImage.model.js';
 import { ApiError } from '../../utils/apiResponse.js';
+
+// QA Bug 7 Stage E: the file forked by runPipelineIsolated() below to run
+// the native-dependency-heavy pipeline in an isolated child process. See
+// runPipelineIsolated()'s own header comment for why.
+const PIPELINE_CHILD_ENTRY = path.join(path.dirname(fileURLToPath(import.meta.url)), 'backgroundRemoval.pipeline.child.js');
 
 export const BG_COLOR = { r: 0xf1, g: 0xf5, b: 0xf9, alpha: 1 }; // #F1F5F9
 
@@ -206,7 +214,12 @@ function refineAlpha(data, width, height) {
   return out;
 }
 
-async function runPipeline(sourceBuffer, mimeType) {
+// Exported (previously module-private) solely so backgroundRemoval.pipeline.
+// child.js -- the isolated child process runPipelineIsolated() below forks
+// -- can import and call this exact, unchanged function. No other caller
+// exists or is intended; processJob()'s own `pipeline` parameter now
+// defaults to runPipelineIsolated(), never this directly.
+export async function runPipeline(sourceBuffer, mimeType) {
   const meta = await validateImage(sourceBuffer);
   const inputBlob = new Blob([sourceBuffer], { type: mimeType });
   const cutoutBlob = await removeBackground(inputBlob, { model: 'medium' });
@@ -220,6 +233,126 @@ async function runPipeline(sourceBuffer, mimeType) {
     .composite([{ input: refinedCutoutPng, left: 0, top: 0 }])
     .png()
     .toBuffer();
+}
+
+// QA Bug 7 Stage E: runs runPipeline() above in an isolated child process
+// (node:child_process.fork(), no new external dependency) instead of in
+// this process directly.
+//
+// Confirmed root cause (QA Bug 7 Stage D investigation): @imgly/background-
+// removal-node pulls in its own separately-versioned, nested native sharp/
+// libvips build (sharp@0.32.6, bundled alongside onnxruntime-node) alongside
+// this file's own top-level sharp (0.35.5) -- two independently-built
+// native libvips/GLib copies active in one process is a known class of bug
+// matching the exact Render QA crash signature ("GLib-GObject-CRITICAL:
+// invalid unclassed type" immediately followed by a segmentation fault). A
+// plain JS try/catch (processJob()'s own, below) can never catch a true
+// native SIGSEGV -- it terminates the whole process instantly, which is
+// exactly what "Instance restarted" on Render confirmed was happening.
+// Isolating runPipeline() in its own process means a crash there only
+// kills that one child; this server, and every other in-flight request, is
+// unaffected.
+//
+// `childEntry`/`forkFn`/`timeoutMs`/`onChildSpawned` are optional,
+// injectable overrides (the same established pattern every other testable
+// function in this file already uses -- node:test's mock.method() cannot
+// redefine a plain ES module's named export), defaulting to the real child
+// script, the real node:child_process.fork, and this file's own
+// JOB_TIMEOUT_MS. No production caller (processJob() below) ever passes
+// any of them; `onChildSpawned` exists solely so this function's own tests
+// can grab a handle to the real forked child (e.g. to kill it mid-flight,
+// simulating an unexpected crash) without needing a real native crash.
+export function runPipelineIsolated(
+  sourceBuffer,
+  mimeType,
+  { childEntry = PIPELINE_CHILD_ENTRY, forkFn = fork, timeoutMs = JOB_TIMEOUT_MS, onChildSpawned } = {}
+) {
+  return new Promise((resolve, reject) => {
+    const child = forkFn(childEntry, [], { serialization: 'advanced' });
+    if (typeof onChildSpawned === 'function') onChildSpawned(child);
+
+    let settled = false;
+    let timer;
+
+    // Guarantees this child is never left running regardless of which of
+    // the four outcomes below actually settles this promise -- kill() is a
+    // harmless no-op if the child has already exited on its own. Listeners
+    // are deliberately never removed (see settleOnce below): detaching the
+    // lone 'error' listener here could leave a later, genuinely-unlucky
+    // 'error' event with zero listeners, which Node treats as a special
+    // case and throws synchronously for.
+    function cleanup() {
+      clearTimeout(timer);
+      child.kill('SIGKILL');
+    }
+
+    // Every one of this promise's four possible triggers (message, exit,
+    // spawn error, timeout) is wrapped through this -- whichever fires
+    // first settles the promise and runs cleanup(); every later trigger
+    // (e.g. 'exit' arriving just after 'message' already resolved it, or
+    // vice versa) becomes a harmless no-op. This is what prevents both
+    // duplicate completion and an orphaned child process.
+    function settleOnce(handler) {
+      return (...args) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        handler(...args);
+      };
+    }
+
+    const handleMessage = settleOnce((msg) => {
+      if (!msg || typeof msg !== 'object' || typeof msg.ok !== 'boolean') {
+        reject(Object.assign(new Error('Background removal process returned an invalid response.'), { code: 'PIPELINE_CRASHED' }));
+        return;
+      }
+      if (!msg.ok) {
+        reject(new Error(msg.message || 'Background removal failed.'));
+        return;
+      }
+      if (!(msg.resultBuffer instanceof Uint8Array)) {
+        reject(Object.assign(new Error('Background removal process returned an invalid result.'), { code: 'PIPELINE_CRASHED' }));
+        return;
+      }
+      resolve(Buffer.from(msg.resultBuffer));
+    });
+
+    // Covers both "terminated by a signal" (e.g. the native SIGSEGV this
+    // whole fix exists for) and "exited with a nonzero code" (e.g. an
+    // uncaught JS exception escaping even the child script's own try/catch)
+    // -- neither ever reaches this process as a thrown exception; both
+    // surface only as this ordinary 'exit' event. The message intentionally
+    // reports only the signal/exit code, never any internal detail from the
+    // crash itself (no stack trace, no path, no env value).
+    const handleExit = settleOnce((code, signal) => {
+      const detail = signal ? `signal ${signal}` : `code ${code}`;
+      reject(Object.assign(new Error(`Background removal process crashed unexpectedly (${detail}).`), { code: 'PIPELINE_CRASHED' }));
+    });
+
+    const handleError = settleOnce((err) => {
+      reject(Object.assign(new Error(`Background removal process failed to start: ${err.message}`), { code: 'PIPELINE_CRASHED' }));
+    });
+
+    child.on('message', handleMessage);
+    child.on('exit', handleExit);
+    child.on('error', handleError);
+
+    // Reuses the exact same JOB_TIMEOUT_MS boundary and message text as the
+    // existing outer withTimeout(pipeline(...), JOB_TIMEOUT_MS, ...) call in
+    // processJob() below -- this is a second, independent enforcement of
+    // that same preserved timeout semantics, not a new/different one: the
+    // outer withTimeout() alone would abandon this promise without ever
+    // killing the still-running child, which is exactly the orphan-process
+    // outcome this inner timer exists to prevent.
+    timer = setTimeout(
+      settleOnce(() => {
+        reject(Object.assign(new Error('Background removal took too long and was stopped.'), { status: 504, code: 'PROCESSING_TIMEOUT' }));
+      }),
+      timeoutMs
+    );
+
+    child.send({ sourceBuffer, mimeType });
+  });
 }
 
 function mimeFromFormat(format) {
@@ -446,7 +579,7 @@ export async function workLoop(jobOptions) {
 // caller -- workLoop() below -- simply never passes the second argument).
 export async function processJob(
   jobId,
-  { fetchImage = fetchSourceImage, pipeline = runPipeline, persist = persistProcessedImage } = {}
+  { fetchImage = fetchSourceImage, pipeline = runPipelineIsolated, persist = persistProcessedImage } = {}
 ) {
   const job = await PhotoProcessingJobModel.findById(jobId);
   if (!job) return;

@@ -6,11 +6,24 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { pageMetadata } from '@/lib/seo';
 
-export const metadata = pageMetadata({
-  path: '/about',
-  title: 'About',
-  description: "Founded in Bengaluru, Vyoma Linguistic Labs Foundation has grown into the organisation behind India's largest free Sanskrit e-learning ecosystem, serving over a lakh learners worldwide.",
-});
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const { SEO } = await getAboutContent();
+  const meta = pageMetadata({
+    path: '/about',
+    title: SEO?.title || 'About',
+    description:
+      SEO?.description ||
+      "Founded in Bengaluru, Vyoma Linguistic Labs Foundation has grown into the organisation behind India's largest free Sanskrit e-learning ecosystem, serving over a lakh learners worldwide.",
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function AboutPage() {
   const { EXPLORE_MORE_LINKS: LINKS_ALL } = await getAboutContent();
@@ -20,6 +33,7 @@ export default async function AboutPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="About Vyoma"
+        eyebrowSize="text-[13px]"
         title="A nonprofit dedicated to keeping Saṃskṛtam a living, learnable language."
       />
 
@@ -77,7 +91,7 @@ export default async function AboutPage() {
           ))}
         </div>
         <div className="text-center">
-          <div className="mb-2 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-charcoal">Our goal</div>
+          <div className="mb-2 font-sans text-[13px] font-bold uppercase tracking-eyebrow text-charcoal">Our goal</div>
           <div className="font-sans text-[56px] font-extrabold leading-none text-vyoma-blue">1 Million</div>
           <div className="mt-2 font-sans text-lg text-charcoal">people reached by 2032</div>
         </div>

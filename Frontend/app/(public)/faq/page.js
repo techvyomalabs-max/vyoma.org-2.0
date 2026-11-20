@@ -4,6 +4,13 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { FaqGroup } from '@/components/sections/faq/FaqGroup';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
+
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
   const { SEO } = await getFaqContent();
@@ -20,7 +27,7 @@ export async function generateMetadata() {
 
 export default async function FaqPage() {
   const { FAQ_GROUPS: GROUPS_ALL } = await getFaqContent();
-  const FAQ_GROUPS = GROUPS_ALL.filter((g) => g.active !== false);
+  const FAQ_GROUPS = toActiveContentArray(GROUPS_ALL);
 
   return (
     <div className="font-sans">

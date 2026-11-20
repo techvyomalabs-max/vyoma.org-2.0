@@ -1,14 +1,20 @@
 // Read-only Blog Migration Parity Audit. No writes, no media downloads, no
 // redirects created. Compares the 19 migrated BlogPost documents against a
 // fresh parse of the WXR source.
+//
+// Task 7H: requires an explicit WP_AUDIT_MONGODB_URI (see
+// ./disposableDbTarget.mjs) instead of a hardcoded database target -- this
+// script used to connect directly to the standing-rules-protected
+// vyoma_migration_dryrun database with no guard at all.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import mongoose from 'mongoose';
+import { requireDisposableDbTarget } from './disposableDbTarget.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WXR_PATH = path.resolve(__dirname, '../../../.migration-data/vyomalinguisticlabsfoundation.WordPress.2026-09-29.xml');
-const MONGO_URI = 'mongodb://127.0.0.1:27017/vyoma_migration_dryrun';
+const MONGO_URI = requireDisposableDbTarget();
 
 const SLUG_OVERRIDES = new Map([
   ['unveiling-the-mysteries-of-ga%e1%b9%87apati', 'unveiling-the-mysteries-of-ganapati'],

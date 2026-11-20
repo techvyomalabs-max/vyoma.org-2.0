@@ -9,6 +9,12 @@ import { pageMetadata } from '@/lib/seo';
 
 // PENDING ROUTE: not in the LLD route table (Phase 1 conflict). Preserved per
 // instruction until final route approval; see lib/navConfig.js.
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/our-work/all',
   title: 'Our Work — Seven Schools & Current Work',
@@ -22,6 +28,7 @@ export default async function OurWorkAllPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our Work"
+        eyebrowSize="text-[13px]"
         pill="Provisional — the Seven Schools are under review and may change."
         title="The Seven Schools of Vyoma"
         body="From phonetics to applied AI, from children's value education to advanced research, each School advances one facet of a living tradition, backed by scholarship and built to reach millions."

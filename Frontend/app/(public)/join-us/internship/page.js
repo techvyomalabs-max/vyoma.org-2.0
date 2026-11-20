@@ -4,6 +4,13 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray, toContentArray } from '@/lib/contentArrays';
+
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
 
 export const metadata = pageMetadata({
   path: '/join-us/internship',
@@ -12,13 +19,15 @@ export const metadata = pageMetadata({
 });
 
 export default async function InternshipPage() {
-  const { INTERNSHIP_REASONS, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
-  const INTERNSHIP_OPENINGS = OPENINGS_ALL.filter((o) => o.active !== false);
+  const { INTERNSHIP_REASONS: REASONS_ALL, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
+  const INTERNSHIP_REASONS = toContentArray(REASONS_ALL);
+  const INTERNSHIP_OPENINGS = toActiveContentArray(OPENINGS_ALL);
 
   return (
     <div className="font-sans">
       <PageHero
         eyebrow="Join Us"
+        eyebrowSize="text-[13px]"
         title="Internship"
         body="Work on real projects at the meeting point of Sanskrit, Indian Knowledge Systems, education, and technology."
         maxWidth="max-w-[720px]"

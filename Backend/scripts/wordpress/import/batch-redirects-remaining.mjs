@@ -15,7 +15,9 @@
 //   node batch-redirects-remaining.mjs            -> dry-run (default)
 //   node batch-redirects-remaining.mjs --commit   -> performs the real insert
 
-import { connectDb, disconnectDb } from '../../../src/config/db.js';
+import { disconnectDb } from '../../../src/config/db.js';
+import { connectToMigrationDb } from './migrationDb.mjs';
+import { pathToFileURL } from 'node:url';
 import { RedirectModel } from '../../../src/modules/redirects/redirect.model.js';
 
 const APPROVED_RULES = [
@@ -91,10 +93,9 @@ async function main() {
     );
   }
 
-  await connectDb();
-  console.log('[OK] Connected to configured MongoDB (URI value not printed).');
-
+  const dbName = await connectToMigrationDb();
   try {
+    console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const existingCount = await RedirectModel.countDocuments({});
     console.log(`[OK] Current Redirect count: ${existingCount} (expect 25).`);
     if (existingCount !== 25) {
@@ -145,7 +146,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nUNEXPECTED ERROR:', err);
-  process.exitCode = 1;
-});
+const isDirectCliInvocation = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isDirectCliInvocation) {
+  main().catch((err) => {
+    console.error('\nUNEXPECTED ERROR:', err);
+    process.exitCode = 1;
+  });
+}

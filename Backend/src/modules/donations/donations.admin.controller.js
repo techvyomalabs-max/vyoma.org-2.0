@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { DonationModel } from './donation.model.js';
 import { DonationSchemeModel } from './donationScheme.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 import { recordAudit } from '../audit/audit.service.js';
 
 const VALID_STATUSES = ['initiated', 'order_created', 'paid_verified', 'receipt_sent', 'failed', 'cancelled', 'verification_failed'];
@@ -32,7 +33,8 @@ export async function listDonationsAdmin(req, res, next) {
       }
       filter.status = req.query.status;
     }
-    if (req.query.schemeSlug) filter.schemeSlug = req.query.schemeSlug;
+    const schemeSlug = expectScalarQueryParam(req.query.schemeSlug, 'schemeSlug');
+    if (schemeSlug) filter.schemeSlug = schemeSlug;
     if (req.query.email && typeof req.query.email === 'string' && req.query.email.trim()) {
       filter['donor.email'] = new RegExp(escapeRegex(req.query.email.trim()), 'i');
     }
@@ -146,7 +148,7 @@ export async function updateSchemeAdmin(req, res, next) {
     const doc = await DonationSchemeModel.findOne({ slug: req.params.slug });
     if (!doc) throw new ApiError(404, 'SCHEME_NOT_FOUND', `No scheme with slug "${req.params.slug}".`);
 
-    const { name, description, note, amountOptions, status, displayOrder } = req.body || {};
+    const { name, description, note, amountOptions, status, displayOrder, image } = req.body || {};
     const fieldErrors = {};
 
     if (name !== undefined) {
@@ -170,6 +172,11 @@ export async function updateSchemeAdmin(req, res, next) {
     if (displayOrder !== undefined) {
       if (!Number.isInteger(displayOrder)) fieldErrors.displayOrder = 'Must be an integer.';
       else doc.displayOrder = displayOrder;
+    }
+    if (image !== undefined) {
+      if (image !== null && (typeof image !== 'object' || typeof image.url !== 'string' || !image.url.trim())) {
+        fieldErrors.image = 'Must be an image with a url, or null to remove it.';
+      } else doc.image = image;
     }
     if (Object.keys(fieldErrors).length) {
       throw new ApiError(422, 'VALIDATION_ERROR', 'Please check the highlighted fields.', fieldErrors);

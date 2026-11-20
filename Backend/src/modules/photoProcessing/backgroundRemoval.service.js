@@ -4,7 +4,6 @@ import { fork } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import mongoose from 'mongoose';
-import { removeBackground } from '@imgly/background-removal-node';
 import sharp from 'sharp';
 import { env, isS3Configured } from '../../config/env.js';
 import { PhotoProcessingJobModel } from './photoProcessingJob.model.js';
@@ -219,9 +218,31 @@ function refineAlpha(data, width, height) {
 // -- can import and call this exact, unchanged function. No other caller
 // exists or is intended; processJob()'s own `pipeline` parameter now
 // defaults to runPipelineIsolated(), never this directly.
+//
+// QA Bug 7 Stage G: @imgly/background-removal-node is imported dynamically,
+// here, immediately before use -- not as a static top-level import -- for a
+// confirmed reason, not stylistic preference: its own bundled dist/index.cjs
+// does `require("sharp")` and `require("onnxruntime-node")` at ITS OWN module
+// top level (confirmed directly by inspecting that file), which pulls in a
+// second, separately-versioned, nested native sharp/libvips build the
+// instant @imgly is loaded -- regardless of whether removeBackground() is
+// ever actually called. A static top-level import here would load that
+// second native build into WHICHEVER process loads this file, including the
+// parent Express server (which imports this file unconditionally at startup
+// for enqueueJob()/getJob()/persistProcessedImage()), giving the parent the
+// exact same dual-native-libvips hazard Stage D identified -- independent of
+// Stage E's own child-process isolation, since that isolation only ever
+// moved the *call* to removeBackground(), never this *import*. A dynamic
+// import here means only whichever process actually calls runPipeline() --
+// since Stage E, only the forked child -- ever loads @imgly or its nested
+// dependencies at all; the parent's own sharp (used by validateImage()
+// below, and by persistProcessedImage()'s PNG validation) stays the only
+// native image library in its process, eliminating the parent's own
+// exposure to this crash class.
 export async function runPipeline(sourceBuffer, mimeType) {
   const meta = await validateImage(sourceBuffer);
   const inputBlob = new Blob([sourceBuffer], { type: mimeType });
+  const { removeBackground } = await import('@imgly/background-removal-node');
   const cutoutBlob = await removeBackground(inputBlob, { model: 'medium' });
   const cutoutBuffer = Buffer.from(await cutoutBlob.arrayBuffer());
 

@@ -101,7 +101,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
       `}</style>
       <section className="bg-gradient-to-b from-[#f4f8fc] to-sky-mist px-8 pb-10 pt-14">
         <div className="mx-auto max-w-[900px] text-center">
-          <div className="mb-3 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-teal">Our Work</div>
+          <div className="mb-3 font-sans text-[13px] font-bold uppercase tracking-eyebrow text-teal">Our Work</div>
           <Heading className="mx-auto max-w-[760px] font-sans text-h1 font-bold leading-tight text-vyoma-blue">Current Work</Heading>
           <p className="mx-auto mt-4 max-w-[680px] font-sans text-lg leading-normal text-charcoal">
             Everything Vyoma runs today, the platforms that make Sanskrit accessible to all, and the programmes

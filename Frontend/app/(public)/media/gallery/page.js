@@ -22,7 +22,7 @@ export default async function GalleryPage() {
 
   return (
     <div className="font-sans">
-      <PageHero eyebrow="Media" title="Gallery" body="Moments from Vyoma's work, events, outreach, and recognition." />
+      <PageHero eyebrow="Media" eyebrowSize="text-[13px]" title="Gallery" body="Moments from Vyoma's work, events, outreach, and recognition." />
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[1200px]">

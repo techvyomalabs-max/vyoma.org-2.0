@@ -15,6 +15,7 @@ export default function CorpusFundPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Join Us"
+        eyebrowSize="text-[13px]"
         title="Corpus Fund"
         body="Vyoma's vision is to enable personal transformation in every individual through SSS consciousness (SSS = Samskrita-Samskriti-Samskara)."
         maxWidth="max-w-[720px]"

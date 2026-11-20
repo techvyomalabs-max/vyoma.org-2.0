@@ -22,6 +22,7 @@ export default async function ResourcesPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
+        eyebrowSize="text-[13px]"
         title="Resources"
         body="A curated collection of Sanskrit resources from across the web, compiled as a service to learners, researchers, and knowledge enthusiasts everywhere."
       />

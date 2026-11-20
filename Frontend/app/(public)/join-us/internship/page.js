@@ -27,6 +27,7 @@ export default async function InternshipPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Join Us"
+        eyebrowSize="text-[13px]"
         title="Internship"
         body="Work on real projects at the meeting point of Sanskrit, Indian Knowledge Systems, education, and technology."
         maxWidth="max-w-[720px]"

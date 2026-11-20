@@ -28,6 +28,7 @@ export default async function VolunteerPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Join Us"
+        eyebrowSize="text-[13px]"
         title="Volunteer"
         body="Begin your seva journey. Vyoma's mission runs on people who give their time and skills, and Sanskrit knowledge is not required."
         maxWidth="max-w-[720px]"

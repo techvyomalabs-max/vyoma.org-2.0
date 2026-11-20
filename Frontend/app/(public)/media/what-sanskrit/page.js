@@ -22,6 +22,7 @@ export default async function WhatSanskritPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
+        eyebrowSize="text-[13px]"
         title="What Sanskrit ???"
         body={[
           'Illustrative representation of Knowledge repository in Sanskrit',

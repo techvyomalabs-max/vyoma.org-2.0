@@ -24,6 +24,7 @@ export default async function PressPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
+        eyebrowSize="text-[13px]"
         title="Press"
         body="Vyoma's work in the words of others, across newspapers, radio, and magazines."
       />

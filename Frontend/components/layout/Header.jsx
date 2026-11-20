@@ -13,10 +13,12 @@ const MOBILE_NAV_PANEL_ID = 'mobile-nav-panel';
 export function Header() {
   const pathname = usePathname();
   const { openDonate } = useModal();
-  // Which parent's dropdown is open via the touch/keyboard disclosure control
-  // (mouse hover keeps working independently of this — see NavItem). Only one
-  // open at a time; reset on navigation so a stale open panel doesn't persist
-  // across route changes (this layout isn't remounted by App Router).
+  // Which desktop dropdown is open -- the single shared source of truth for
+  // both click (the trigger button) and hover (onMouseEnter) in NavItem, so
+  // only one dropdown can ever be open at a time, however it was opened.
+  // Only one open at a time; reset on navigation so a stale open panel
+  // doesn't persist across route changes (this layout isn't remounted by
+  // App Router).
   const [openItem, setOpenItem] = useState(null);
 
   useEffect(() => {
@@ -42,6 +44,45 @@ export function Header() {
   } = useMobileNav(pathname);
 
   const isActive = (href) => pathname === href || (href !== '/' && pathname.startsWith(href));
+
+  // QA Bug 6: desktop dropdown overlap/close handling. A single shared
+  // `openItem` (above) is already the one source of truth for which
+  // dropdown is open -- this effect adds the two close conditions that
+  // were previously missing entirely for the desktop dropdown (confirmed
+  // by investigation: no outside-click/Escape handling existed here
+  // before, only useMobileNav.js's own, unrelated handling for the mobile
+  // panel). `mousedown` (not `click`) is used for the outside-click
+  // check, the conventional choice for this pattern -- it only ever acts
+  // when the target is outside the whole desktop nav row (`navRowRef`),
+  // so it never races with an in-row click's own onClick (which handles
+  // toggling/closing that specific item itself, via normal event bubbling
+  // up through React's delegated handlers before this listener runs).
+  // Scoped to `if (!openItem) return` exactly like useMobileNav.js's own
+  // Escape effect, so no listener is ever attached while nothing is open,
+  // and it only ever touches `openItem` -- never `mobileOpen` or
+  // SearchBox's own state -- so it cannot interfere with the mobile menu
+  // or search input.
+  const navRowRef = useRef(null);
+
+  useEffect(() => {
+    if (!openItem) return undefined;
+
+    function handleOutsideClick(e) {
+      if (!navRowRef.current?.contains(e.target)) {
+        setOpenItem(null);
+      }
+    }
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setOpenItem(null);
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openItem]);
 
   return (
     <nav className="relative flex flex-col justify-center gap-2.5 bg-vyoma-blue px-8 py-4 border-b border-white/25">
@@ -104,7 +145,7 @@ export function Header() {
       </div>
       {/* Desktop-only nav row — unchanged except for the added `hidden
           md:flex` (it was unconditional `flex` before). */}
-      <div className="hidden md:flex relative z-10 items-center justify-end gap-7 flex-wrap">
+      <div ref={navRowRef} className="hidden md:flex relative z-10 items-center justify-end gap-7 flex-wrap">
         {NAV.map((item) => (
           <NavItem key={item.label} item={item} isActive={isActive} openItem={openItem} setOpenItem={setOpenItem} />
         ))}
@@ -277,65 +318,116 @@ function ChevronIcon(props) {
   );
 }
 
+// QA Bug 6: desktop dropdown usability/overlap fix.
+//
+// Items without children are completely unchanged -- a plain NavLink.
+//
+// For items with children, text and arrow are now one single, accessible
+// <button> (never two separate controls, and never a nested button) that
+// toggles the shared `openItem` state -- clicking it, pressing Enter/Space
+// while focused on it, or clicking it again while open all behave exactly
+// the same way text and arrow clicks always did for the arrow alone.
+// Hovering the whole trigger+panel area (`onMouseEnter` on this component's
+// own wrapper) sets the SAME shared `openItem` to this item -- since it's
+// a single shared value, opening any one item via hover or click always
+// implicitly closes whichever other item was open, by construction, with
+// no independent per-item CSS `group-hover` state left to ever disagree
+// with it (removed entirely -- visibility is driven only by `isOpen` now).
+//
+// Deliberately no `onMouseLeave`-driven auto-close: moving the pointer
+// away from an open dropdown (without clicking elsewhere, pressing
+// Escape, or hovering a different item) is not one of the required close
+// conditions, and omitting it removes any chance of a hover-vs-click race
+// or flicker -- there is nothing for a click's own state update to be
+// "undone" by, since leaving never changes `openItem` on its own.
 function NavItem({ item, isActive, openItem, setOpenItem }) {
   const active = isActive(item.href) || item.children?.some((c) => isActive(c.href));
   const hasChildren = !!item.children;
-  const isOpen = hasChildren && openItem === item.label;
+
+  if (!hasChildren) {
+    return (
+      <NavLink href={item.href} active={active}>
+        {item.label}
+      </NavLink>
+    );
+  }
+
+  const isOpen = openItem === item.label;
   const dropdownId = `nav-dropdown-${item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  // Parent-page preservation: only "Our Work" already has its own href
+  // among its children (Seven Schools -> /our-work) -- confirmed by
+  // reading lib/navConfig.js, not assumed. Every other dropdown parent's
+  // own page would otherwise become unreachable once its label stops
+  // navigating directly, so an extra "<Label> Overview" entry is added
+  // for exactly those, reusing the parent's own already-defined href --
+  // never an invented route, and never added where it would duplicate an
+  // existing equivalent destination.
+  const parentAlreadyLinked = item.children.some((c) => c.href === item.href);
 
   return (
-    <div className="group relative">
-      <span className="inline-flex items-center">
-        <NavLink href={item.href} active={active}>
-          {item.label}
-        </NavLink>
-        {hasChildren && (
-          <button
-            type="button"
-            aria-expanded={isOpen}
-            aria-controls={dropdownId}
-            aria-label={`${isOpen ? 'Close' : 'Open'} ${item.label} submenu`}
-            onClick={() => setOpenItem(isOpen ? null : item.label)}
-            className="ml-1.5 flex items-center justify-center p-2 text-white/70 hover:text-white"
-          >
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`transition-transform duration-[var(--duration-fast)] ${isOpen ? 'rotate-180' : ''}`}
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-        )}
-      </span>
-      {hasChildren && (
-        <div
-          id={dropdownId}
-          className={
-            isOpen
-              ? 'absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white py-2 shadow-hover transition-opacity duration-[var(--duration-fast)]'
-              : 'invisible absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white py-2 shadow-hover opacity-0 transition-opacity duration-[var(--duration-fast)] group-hover:visible group-hover:opacity-100'
-          }
+    <div className="relative" onMouseEnter={() => setOpenItem(item.label)}>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={dropdownId}
+        onClick={() => setOpenItem(isOpen ? null : item.label)}
+        className="inline-flex cursor-pointer items-center border-0 bg-transparent p-0"
+      >
+        <span
+          className={`font-sans text-[17px] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-standard)] ${
+            active ? 'font-bold text-white' : 'font-normal text-white/90 hover:text-white'
+          }`}
         >
-          {item.children.map((c) => (
-            <Link
-              key={c.href}
-              href={c.href}
-              className={`block whitespace-nowrap px-4.5 py-2.5 font-sans text-base text-vyoma-blue ${
-                isActive(c.href) ? 'font-bold' : 'font-normal'
-              }`}
-            >
-              {c.label}
-            </Link>
-          ))}
-        </div>
-      )}
+          {item.label}
+        </span>
+        <span className="ml-1.5 flex items-center justify-center p-2 text-white/70">
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`transition-transform duration-[var(--duration-fast)] ${isOpen ? 'rotate-180' : ''}`}
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </span>
+      </button>
+      <div
+        id={dropdownId}
+        className={
+          isOpen
+            ? 'absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white py-2 shadow-hover transition-opacity duration-[var(--duration-fast)]'
+            : 'invisible absolute right-0 top-[calc(100%+10px)] z-30 min-w-[220px] rounded-sm bg-white py-2 shadow-hover opacity-0 transition-opacity duration-[var(--duration-fast)]'
+        }
+      >
+        {!parentAlreadyLinked && (
+          <Link
+            href={item.href}
+            onClick={() => setOpenItem(null)}
+            className={`block whitespace-nowrap px-4.5 py-2.5 font-sans text-base text-vyoma-blue ${
+              isActive(item.href) ? 'font-bold' : 'font-normal'
+            }`}
+          >
+            {item.label} Overview
+          </Link>
+        )}
+        {item.children.map((c) => (
+          <Link
+            key={c.href}
+            href={c.href}
+            onClick={() => setOpenItem(null)}
+            className={`block whitespace-nowrap px-4.5 py-2.5 font-sans text-base text-vyoma-blue ${
+              isActive(c.href) ? 'font-bold' : 'font-normal'
+            }`}
+          >
+            {c.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

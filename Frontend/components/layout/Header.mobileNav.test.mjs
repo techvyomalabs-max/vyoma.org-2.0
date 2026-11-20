@@ -20,11 +20,21 @@ test('the desktop nav cluster and nav row are gated behind the md breakpoint, no
   assert.match(source, /hidden md:flex relative z-10 items-center justify-end gap-7 flex-wrap/, 'expected the desktop NAV row to be hidden below md');
 });
 
-test('desktop regression: NavItem/NavLink/SearchBox and their hover+click dropdown markup are unchanged', () => {
+test('desktop regression: NavItem/NavLink/SearchBox exist, and dropdown visibility is driven only by the shared openItem state (QA Bug 6)', () => {
   assert.match(source, /function NavItem\(/);
   assert.match(source, /function NavLink\(/);
   assert.match(source, /function SearchBox\(/);
-  assert.match(source, /group-hover:visible group-hover:opacity-100/, 'desktop hover-reveal dropdown behavior must still be present');
+  // QA Bug 6: the old independent CSS hover mechanism (group-hover:),
+  // which let two dropdowns be visible at once, has been removed --
+  // visibility is now driven only by `isOpen` (openItem === item.label)
+  // for both click and hover, since onMouseEnter sets the same shared
+  // openItem click already does. See Header.dropdown.test.mjs for the
+  // full regression coverage of this fix; this test only guards against
+  // the old, removed mechanism silently coming back.
+  assert.ok(!source.includes('group-hover:visible'), 'the old independent per-item hover-visibility mechanism must remain removed');
+  assert.ok(!source.includes('group-hover:opacity-100'), 'the old independent per-item hover-visibility mechanism must remain removed');
+  assert.match(source, /onMouseEnter=\{\(\) => setOpenItem\(item\.label\)\}/, 'hover must open the dropdown via the same shared openItem state as click');
+  assert.match(source, /const isOpen = openItem === item\.label;/, 'dropdown visibility must be computed from the single shared openItem state');
 });
 
 test('the mobile menu toggle button is hidden at md and up, and carries the required aria attributes', () => {
@@ -76,10 +86,25 @@ test('each expanded submenu renders every child link from item.children (no hard
 test('mobile-nav behavior (open/close, Escape, scroll-lock, route-change, focus) is delegated to the shared useMobileNav hook, not reimplemented inline', () => {
   assert.match(source, /import \{ useMobileNav \} from '@\/lib\/useMobileNav';/);
   assert.match(source, /useMobileNav\(pathname\)/);
-  // No duplicate escape-key listener or body-overflow manipulation inside
-  // Header.jsx itself -- that logic has exactly one home, in the hook.
-  assert.ok(!/addEventListener\('keydown'/.test(source), 'Header.jsx must not duplicate the Escape-key handling that useMobileNav.js already owns');
+  // No body-overflow manipulation inside Header.jsx itself -- that logic
+  // has exactly one home, in the hook. (Unaffected by QA Bug 6.)
   assert.ok(!/document\.body\.style\.overflow/.test(source), 'Header.jsx must not duplicate the scroll-lock logic that useMobileNav.js already owns');
+  // QA Bug 6: Header.jsx now legitimately owns exactly ONE keydown
+  // listener of its own -- the new desktop dropdown's Escape handler,
+  // scoped to `openItem` (the desktop dropdown state) inside its own
+  // useEffect keyed on [openItem]. This is a different, approved feature,
+  // not a duplicate of the mobile panel's Escape handling, which still
+  // lives entirely inside useMobileNav.js -- Header.jsx never reimplements
+  // that logic itself, it only ever calls the hook (asserted above). A
+  // second keydown listener appearing here would mean mobile's own Escape
+  // handling had been duplicated inline, which this still catches.
+  const keydownListenerCount = (source.match(/addEventListener\('keydown'/g) || []).length;
+  assert.equal(keydownListenerCount, 1, 'exactly one keydown listener is expected: the new desktop dropdown Escape handler, scoped to openItem -- not zero, and not a second, duplicated one for the mobile panel');
+  assert.match(
+    source,
+    /useEffect\(\(\) => \{\s*\n\s*if \(!openItem\) return undefined;/,
+    'the one keydown listener must be scoped to the desktop openItem state, not reimplementing the mobile panel\'s own Escape handling'
+  );
 });
 
 test('Task 7K.1: the panel attaches mobilePanelRef to its own root, so the hook\'s focus trap can query its live focusable elements', () => {

@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { enqueueJob, getJob } from './backgroundRemoval.service.js';
+import { enqueueJob, getJob, isMongoProcessedImageStorageReady } from './backgroundRemoval.service.js';
 import { isLocalDevStorageAllowed } from './localDev.storageAdapter.js';
 import { isS3Configured } from '../../config/env.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
@@ -32,7 +32,15 @@ function jobView(job) {
 // neither storage path is available.
 export async function enqueuePhotoProcessing(req, res, next) {
   try {
-    if (!isLocalDevStorageAllowed() && !isS3Configured()) {
+    // QA Bug 7 Stage C: the Mongo-backed option is always available once
+    // connected -- no AWS configuration required -- so this upfront gate
+    // (fail fast, before a job is even created) must recognize it as a
+    // third valid path, alongside the unchanged dev/S3 checks. Uses the
+    // wider isMongoProcessedImageStorageReady() (not isMongoProcessedImageStorageAllowed()),
+    // which also requires BACKEND_PUBLIC_URL -- a job that is already known
+    // to be unable to ever succeed must be rejected here, not accepted and
+    // left to fail asynchronously once the worker runs.
+    if (!isLocalDevStorageAllowed() && !isS3Configured() && !isMongoProcessedImageStorageReady()) {
       throw new ApiError(503, 'BACKGROUND_REMOVAL_NOT_CONFIGURED', 'Background removal storage is not configured on this server yet.');
     }
     const sourceUrl = (req.body?.sourceUrl || '').trim();

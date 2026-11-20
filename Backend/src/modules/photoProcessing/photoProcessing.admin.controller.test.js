@@ -26,6 +26,7 @@ import { AuditLogModel } from '../audit/auditLog.model.js';
 import { PhotoProcessingJobModel } from './photoProcessingJob.model.js';
 import { env } from '../../config/env.js';
 import { assertSafeSourceUrl } from './backgroundRemoval.service.js';
+import { enqueuePhotoProcessing } from './photoProcessing.admin.controller.js';
 import { ApiError } from '../../utils/apiResponse.js';
 
 // --- Direct unit coverage of the fix itself: assertSafeSourceUrl() must
@@ -142,15 +143,124 @@ function withS3Config(overrides, fn) {
   });
 }
 
-test('POST /admin/photo-processing returns 503 BACKGROUND_REMOVAL_NOT_CONFIGURED outside local development when S3 is also not configured', async () => {
-  const user = await createTestUser({ email: 'photoproc-post-prod@example.test', roleKey: 'admin' });
+// QA Bug 7 Stage C follow-up: this file never otherwise touches
+// env.backendPublicUrl, so it stays at its real process.env.BACKEND_PUBLIC_URL
+// value (unset in this test environment) unless a test explicitly overrides
+// it -- exactly like withS3Config/withNodeEnv above, always restored on exit.
+function withBackendPublicUrl(value, fn) {
+  const backup = env.backendPublicUrl;
+  env.backendPublicUrl = value;
+  return fn().finally(() => {
+    env.backendPublicUrl = backup;
+  });
+}
+
+// QA Bug 7 Stage C: this test used to expect 503 here, because at the time
+// dev OR S3-configured were the only two recognized storage paths. Since
+// Stage C added a third path (Mongo-backed persistent storage,
+// isMongoProcessedImageStorageAllowed() in backgroundRemoval.service.js),
+// and this file's own setupTestEnv() keeps a real, connected
+// mongodb-memory-server for the whole suite, that third path is genuinely
+// available here even with dev off and S3 unconfigured -- so 503 is no
+// longer the correct outcome for this exact combination. Updated to expect
+// the now-correct 202, using the same env.port + waitForJobSettled pattern
+// already proven by the "S3 looks configured" test directly below (no real
+// external network access).
+//
+// QA Bug 7 Stage C follow-up: the gate now uses isMongoProcessedImageStorageReady()
+// (Mongo connected AND BACKEND_PUBLIC_URL set), not the narrower
+// isMongoProcessedImageStorageAllowed() -- this test must therefore supply a
+// valid test-only backendPublicUrl for the gate to let it through at all.
+// Genuine "Mongo connected but public URL missing" and "nothing at all is
+// available" coverage live in the two tests further below.
+test('POST /admin/photo-processing is allowed past the gate outside local development when S3 is not configured but MongoDB storage is available (QA Bug 7 Stage C)', async () => {
+  const user = await createTestUser({ email: 'photoproc-post-prod-mongo@example.test', roleKey: 'admin' });
+  const token = signAccessToken(user, adminRole);
+
+  const testPort = new URL(env_.baseUrl).port;
+  const portBackup = env.port;
+  env.port = Number(testPort);
+
+  try {
+    await withNodeEnv('production', async () => {
+      await withS3Config({ region: null, bucket: null, accessKeyId: null, secretAccessKey: null }, async () => {
+        await withBackendPublicUrl('https://qa-backend.example.test', async () => {
+          const sourceUrl = `http://localhost:${testPort}/local-media/processed/does-not-exist-7c-mongo.png`;
+          const { res, body } = await enqueue(token, { sourceUrl });
+          assert.equal(res.status, 202, 'the gate must allow this through once Mongo-backed storage is genuinely ready, even without S3');
+          assert.equal(body.success, true);
+          assert.equal(body.data.status, 'queued');
+
+          // Let the background worker settle (deterministic 404 against our
+          // own test server, no real external request) before this test (and
+          // the eventual env.port/env.nodeEnv/env.s3/env.backendPublicUrl
+          // restoration) proceeds.
+          const settled = await waitForJobSettled(body.data.id);
+          assert.equal(settled.status, 'failed');
+          assert.match(settled.errorMessage, /Could not fetch the source image/);
+        });
+      });
+    });
+  } finally {
+    env.port = portBackup;
+  }
+});
+
+// QA Bug 7 Stage C follow-up: Mongo is connected (the only recognized path
+// here -- dev off, S3 unconfigured) but BACKEND_PUBLIC_URL is missing, so the
+// job is already known to be unable to ever succeed. The upfront gate must
+// now reject it immediately with 503, before a job row is even created --
+// not accept it and let it fail asynchronously once the worker runs.
+test('POST /admin/photo-processing returns 503 BACKGROUND_REMOVAL_NOT_CONFIGURED when Mongo is connected but BACKEND_PUBLIC_URL is missing and no other storage is available', async () => {
+  const user = await createTestUser({ email: 'photoproc-post-prod-mongo-no-url@example.test', roleKey: 'admin' });
   const token = signAccessToken(user, adminRole);
 
   await withNodeEnv('production', async () => {
     await withS3Config({ region: null, bucket: null, accessKeyId: null, secretAccessKey: null }, async () => {
-      const { res, body } = await enqueue(token, { sourceUrl: 'https://vyoma.org/x.png' });
-      assert.equal(res.status, 503);
-      assert.equal(body.code, 'BACKGROUND_REMOVAL_NOT_CONFIGURED');
+      await withBackendPublicUrl(null, async () => {
+        const before = await PhotoProcessingJobModel.countDocuments({});
+        const { res, body } = await enqueue(token, { sourceUrl: 'https://vyoma.org/x.png' });
+        assert.equal(res.status, 503);
+        assert.equal(body.code, 'BACKGROUND_REMOVAL_NOT_CONFIGURED');
+        assert.equal(
+          await PhotoProcessingJobModel.countDocuments({}),
+          before,
+          'a job that is already known to be unable to succeed must never be created'
+        );
+      });
+    });
+  });
+});
+
+// QA Bug 7 Stage C: genuine "no usable storage backend at all" 503 coverage.
+//
+// A true "dev off AND S3 unconfigured AND Mongo disconnected" state cannot
+// be safely produced through the full HTTP stack in this file: requireAuth's
+// own DB check (UserModel.exists -- see middleware/requireAuth.js) shares
+// this file's one real mongodb-memory-server connection, so disconnecting it
+// would also break authentication before the request ever reached this
+// controller's own gate -- turning the test into a 401 (or a flaky
+// buffered-query wait), never a clean 503. Calling enqueuePhotoProcessing()
+// directly -- the same direct-function-call technique already used above for
+// assertSafeSourceUrl -- exercises the real gate logic with no auth layer in
+// the way, so the disconnect-then-reconnect-in-`finally` pattern already
+// proven safe in backgroundRemoval.worker.test.js can be reused here without
+// risking any other test in this file.
+test('enqueuePhotoProcessing() rejects with a real 503 BACKGROUND_REMOVAL_NOT_CONFIGURED ApiError when dev, S3, and MongoDB storage are all unavailable', async () => {
+  await withNodeEnv('production', async () => {
+    await withS3Config({ region: null, bucket: null, accessKeyId: null, secretAccessKey: null }, async () => {
+      await mongoose.disconnect();
+      try {
+        const fakeReq = { body: { sourceUrl: 'https://vyoma.org/x.png' }, user: { id: 'fake-user-id', email: 'fake@example.test' } };
+        let capturedErr;
+        await enqueuePhotoProcessing(fakeReq, {}, (err) => { capturedErr = err; });
+
+        assert.ok(capturedErr instanceof ApiError, 'expected a real ApiError instance, not a generic Error');
+        assert.equal(capturedErr.status, 503);
+        assert.equal(capturedErr.code, 'BACKGROUND_REMOVAL_NOT_CONFIGURED');
+      } finally {
+        await mongoose.connect(env_.mem.getUri());
+      }
     });
   });
 });

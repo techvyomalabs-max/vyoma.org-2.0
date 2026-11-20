@@ -82,6 +82,21 @@ export const env = {
   nodeEnv: resolveNodeEnv(),
   trustProxy: resolveTrustProxy(),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  // QA Bug 7 Stage C: this server's own externally-reachable base URL --
+  // needed only to build a real, working URL for a MongoDB-stored
+  // processed image (see photoProcessing/backgroundRemoval.service.js's
+  // Mongo storage branch and processedImage.routes.js), since that code
+  // runs in a background worker with no incoming request to derive a host
+  // from. Deliberately no hardcoded fallback of any kind (not localhost,
+  // not a guess) -- the same "throw a clear, actionable error rather than
+  // silently using a wrong URL" rule this file's own resolveApiBase()-style
+  // callers already follow elsewhere in this app (see
+  // Frontend/lib/apiConfig.js's resolveApiBase() for the established
+  // precedent of this exact pattern on the other side of this codebase).
+  // Unset until an operator explicitly configures it for a given
+  // deployment -- the Mongo storage branch below throws a clear
+  // NOT_CONFIGURED-style error until then, never a localhost URL.
+  backendPublicUrl: process.env.BACKEND_PUBLIC_URL || null,
   mongodbUri: process.env.MONGODB_URI || null,
   // 'true' | 'false' | null (unset) -- see isMockContentSeedAllowed() below.
   allowMockContentSeed: process.env.ALLOW_MOCK_CONTENT_SEED ?? null,

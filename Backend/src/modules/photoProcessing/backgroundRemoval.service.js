@@ -7,6 +7,7 @@ import { env, isS3Configured } from '../../config/env.js';
 import { PhotoProcessingJobModel } from './photoProcessingJob.model.js';
 import { saveProcessedImage, isLocalDevStorageAllowed } from './localDev.storageAdapter.js';
 import { uploadObject, buildStorageKey } from '../media/s3.adapter.js';
+import { ProcessedImageModel } from './processedImage.model.js';
 import { ApiError } from '../../utils/apiResponse.js';
 
 export const BG_COLOR = { r: 0xf1, g: 0xf5, b: 0xf9, alpha: 1 }; // #F1F5F9
@@ -16,6 +17,13 @@ const MAX_DIMENSION = 6000; // avoid pathological memory use on a corrupt/huge f
 const ALLOWED_FORMATS = new Set(['jpeg', 'png', 'webp']);
 const FETCH_TIMEOUT_MS = 20_000;
 const JOB_TIMEOUT_MS = 90_000; // a job stuck longer than this is marked failed, never left hanging
+// QA Bug 7 Stage C: comfortable headroom under MongoDB's 16MB per-document
+// BSON limit (leaves room for the document's other fields and any driver/
+// index overhead) -- a processed portrait PNG at this module's own
+// existing MAX_DIMENSION/ALLOWED_FORMATS caps should virtually always be
+// far smaller than this in practice; this is a hard safety ceiling, not an
+// expected size.
+export const MAX_STORED_IMAGE_BYTES = 8 * 1024 * 1024;
 
 // --- SSRF protection -------------------------------------------------------
 // The admin only ever supplies a URL indirectly (whatever is already set as
@@ -229,37 +237,121 @@ function withTimeout(promise, ms, message) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-// Task 7D.2 — processed-output persistence. Development is unchanged
-// (local disk, via localDev.storageAdapter.js). Outside development, this
-// reuses the EXACT same S3 adapter (buildStorageKey/uploadObject) the
-// direct media-upload path already uses (media.admin.controller.js) --
-// no second upload implementation, no new abstraction. Mirrors that same
-// "no fake success" rule: if neither local-dev storage nor S3 is
+// QA Bug 7 Stage C: MongoDB is already connected wherever this app is
+// actually running (every other feature depends on it) -- unlike
+// isLocalDevStorageAllowed() (dev-only, ephemeral Render disk) and
+// isS3Configured() (requires AWS credentials not yet provisioned for QA),
+// this needs no new external configuration at all. Checked defensively
+// via mongoose's own readyState (same signal GET /api/v1/ready already
+// uses) rather than assumed, since persistProcessedImage() can in
+// principle be called while a connection is mid-reconnect.
+export function isMongoProcessedImageStorageAllowed() {
+  return mongoose.connection.readyState === 1;
+}
+
+// QA Bug 7 Stage C follow-up: distinct from isMongoProcessedImageStorageAllowed()
+// above, which only answers "is Mongo reachable at all" -- persistProcessedImage()'s
+// own branch-selection deliberately keeps using that narrower check unchanged,
+// since it must still save a document and surface a clear NOT_CONFIGURED
+// failure if only the public URL is missing (see its own buildProcessedImagePublicUrl()
+// call and processedImage.test.js's dedicated coverage for that exact case).
+// This wider check additionally requires BACKEND_PUBLIC_URL, and is used only
+// by the admin controller's upfront accept/reject gate, so a job that is
+// already known to be unable to ever succeed (Mongo connected, but no public
+// URL to serve the result from) is rejected with 503 immediately -- before a
+// job row is even created -- instead of being accepted and failing
+// asynchronously once the worker runs.
+export function isMongoProcessedImageStorageReady() {
+  return isMongoProcessedImageStorageAllowed() && !!env.backendPublicUrl;
+}
+
+// Confirms the buffer is genuinely a PNG that still carries its alpha
+// channel before it's ever stored -- "accept only validated processed PNG
+// output" / "preserve transparent alpha channels" are checked here, not
+// assumed from the caller. Throws the same shape of error (status/code)
+// as validateImage() above for consistency within this file.
+async function validateProcessedPngBuffer(buffer) {
+  let meta;
+  try {
+    meta = await sharp(buffer).metadata();
+  } catch {
+    throw Object.assign(new Error('Processed image could not be read.'), { status: 422, code: 'INVALID_PROCESSED_IMAGE' });
+  }
+  if (meta.format !== 'png') {
+    throw Object.assign(new Error('Processed image must be a PNG.'), { status: 422, code: 'INVALID_PROCESSED_IMAGE' });
+  }
+  if (!meta.hasAlpha) {
+    throw Object.assign(new Error('Processed image is missing its transparency channel.'), { status: 422, code: 'INVALID_PROCESSED_IMAGE' });
+  }
+  return meta;
+}
+
+// Builds this server's own externally-reachable URL for a stored
+// ProcessedImage document -- never localhost, ever. Throws a clear,
+// actionable, code-tagged error (the same "no fake success" rule every
+// not-yet-configured integration in this app already follows -- Razorpay,
+// S3, SMTP) if BACKEND_PUBLIC_URL has not been set, rather than ever
+// guessing or falling back to anything resembling localhost.
+function buildProcessedImagePublicUrl(id) {
+  if (!env.backendPublicUrl) {
+    throw Object.assign(
+      new Error('BACKEND_PUBLIC_URL is not configured on this server yet -- cannot build a public URL for a stored processed image.'),
+      { code: 'NOT_CONFIGURED' }
+    );
+  }
+  return `${env.backendPublicUrl.replace(/\/+$/, '')}/api/v1/public/processed-images/${id}`;
+}
+
+// Task 7D.2 / QA Bug 7 Stage C — processed-output persistence, in priority
+// order: local disk (development only, unchanged, via
+// localDev.storageAdapter.js) -> S3 (unchanged, via the EXACT same adapter
+// media.admin.controller.js's direct upload path already uses -- no second
+// upload implementation) -> MongoDB (new: always available once connected,
+// requires no AWS configuration, intended as the QA-phase persistent
+// storage until AWS migration). Neither of the first two branches' own
+// conditions is weakened by this change -- dev storage is still gated on
+// NODE_ENV==='development' exactly as Task 7T.3 left it, and S3 is still
+// only used when isS3Configured() is genuinely true. Mirrors this file's
+// own "no fake success" rule throughout: if none of the three is
 // available, this throws a clear, code-tagged error rather than silently
 // losing the processed image or inventing a fake URL.
 //
-// `upload`/`buildKey` are optional, injectable overrides (defaulting to
-// the real imports) specifically so this function's success/failure
-// behavior can be unit-tested directly, with a mocked implementation, with
-// zero real network/AWS calls -- Node's `node:test` mock.method() cannot
-// redefine a plain ES module's named exports (confirmed directly: it
-// throws "Cannot redefine property"), so a plain, ordinary injectable
-// parameter is the smallest mechanism that makes this testable without a
-// module-loader hook or any change to production callers, which simply
-// never pass the second argument and always get the real implementation.
-export async function persistProcessedImage(buffer, { upload = uploadObject, buildKey = buildStorageKey } = {}) {
+// `upload`/`buildKey`/`Model` are optional, injectable overrides
+// (defaulting to the real imports), the same established pattern this
+// function already used for its S3 branch -- the smallest mechanism that
+// lets this function's success/failure behavior be unit-tested directly,
+// with zero real network/AWS/Mongo calls required for a given test, without
+// changing any production caller (none of which ever pass these arguments).
+export async function persistProcessedImage(
+  buffer,
+  { upload = uploadObject, buildKey = buildStorageKey, Model = ProcessedImageModel, jobId } = {}
+) {
   if (isLocalDevStorageAllowed()) {
     return saveProcessedImage(buffer);
   }
-  if (!isS3Configured()) {
-    throw Object.assign(new Error('Background removal storage is not configured on this server yet.'), { code: 'NOT_CONFIGURED' });
+  if (isS3Configured()) {
+    const key = buildKey('processed.png');
+    const result = await upload({ key, buffer, mimeType: 'image/png' });
+    if (!result) {
+      throw Object.assign(new Error('Background removal storage is not configured on this server yet.'), { code: 'NOT_CONFIGURED' });
+    }
+    return result;
   }
-  const key = buildKey('processed.png');
-  const result = await upload({ key, buffer, mimeType: 'image/png' });
-  if (!result) {
-    throw Object.assign(new Error('Background removal storage is not configured on this server yet.'), { code: 'NOT_CONFIGURED' });
+  if (isMongoProcessedImageStorageAllowed()) {
+    if (buffer.length > MAX_STORED_IMAGE_BYTES) {
+      throw Object.assign(
+        new Error(`Processed image exceeds the ${Math.round(MAX_STORED_IMAGE_BYTES / (1024 * 1024))}MB storage limit.`),
+        { status: 422, code: 'PROCESSED_IMAGE_TOO_LARGE' }
+      );
+    }
+    await validateProcessedPngBuffer(buffer);
+    // Saved before the URL is ever returned -- the document (and therefore
+    // its real, dereferenceable _id) must exist first, or there would be
+    // nothing for the returned URL to actually point at.
+    const doc = await Model.create({ data: buffer, mimeType: 'image/png', byteLength: buffer.length, sourceJobId: jobId });
+    return { url: buildProcessedImagePublicUrl(doc._id.toString()) };
   }
-  return result;
+  throw Object.assign(new Error('Background removal storage is not configured on this server yet.'), { code: 'NOT_CONFIGURED' });
 }
 
 // --- Strictly sequential in-process worker ----------------------------------
@@ -367,11 +459,12 @@ export async function processJob(
     // it would have incorrectly rejected every S3-configured staging/
     // production job before any processing even started. The controller
     // (enqueuePhotoProcessing) already gates this the same way persistence
-    // now does -- dev OR S3-configured -- before a job is even created;
-    // persistProcessedImage() below performs the one remaining, final
-    // check (defensive against the narrow case where configuration changed
-    // between enqueue and processing) immediately before it would need
-    // storage, not before the real processing work.
+    // now does -- dev OR S3-configured OR Mongo-connected (QA Bug 7 Stage
+    // C) -- before a job is even created; persistProcessedImage() below
+    // performs the one remaining, final check (defensive against the
+    // narrow case where configuration/connectivity changed between enqueue
+    // and processing) immediately before it would need storage, not before
+    // the real processing work.
     const url = await assertSafeSourceUrl(job.sourceUrl);
     const sourceBuffer = await withTimeout(fetchImage(url), FETCH_TIMEOUT_MS + 5000, 'Timed out fetching the source image.');
     const meta = await sharp(sourceBuffer).metadata();
@@ -380,7 +473,12 @@ export async function processJob(
       JOB_TIMEOUT_MS,
       'Background removal took too long and was stopped.'
     );
-    const { url: resultUrl } = await persist(resultBuffer);
+    // QA Bug 7 Stage C: `jobId` is forwarded so persistProcessedImage()'s
+    // Mongo branch can tag the stored ProcessedImage document with the job
+    // that produced it (traceability only -- never read back by the public
+    // serving endpoint). The dev/S3 branches both ignore this argument
+    // entirely, so their behavior is completely unchanged.
+    const { url: resultUrl } = await persist(resultBuffer, { jobId });
 
     job.status = 'done';
     job.resultUrl = resultUrl;

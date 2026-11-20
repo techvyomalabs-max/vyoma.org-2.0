@@ -18,6 +18,7 @@ import {
 import { settingsPublicRouter } from './modules/settings/settings.routes.js';
 import { blogPublicRouter } from './modules/blog/blog.routes.js';
 import { documentsPublicRouter } from './modules/documents/documents.routes.js';
+import { processedImagesPublicRouter } from './modules/photoProcessing/processedImage.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { adminRouter } from './routes/admin.routes.js';
 import { LOCAL_MEDIA_DIR, isLocalDevStorageAllowed } from './modules/photoProcessing/localDev.storageAdapter.js';
@@ -135,6 +136,7 @@ export function createApp() {
   app.use('/api/v1/public', settingsPublicRouter);
   app.use('/api/v1/public', blogPublicRouter);
   app.use('/api/v1/public', documentsPublicRouter);
+  app.use('/api/v1/public', processedImagesPublicRouter);
   app.use('/api/v1/public', contentRouter);
   app.use('/api/v1/forms', formsRouter);
   app.use('/api/v1/donations', donationsRouter);

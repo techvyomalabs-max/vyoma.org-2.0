@@ -48,7 +48,7 @@ export default async function CredibilityPage() {
               key={s.title}
               className="rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-white p-[28px_24px]"
             >
-              <div className="mb-3 font-sans text-[17px] font-bold text-charcoal">{String(i + 1).padStart(2, '0')}</div>
+              <div className="mb-3 font-sans text-[19px] font-bold text-charcoal">{String(i + 1).padStart(2, '0')}</div>
               <div className="mb-2 font-sans text-h3 font-bold text-vyoma-blue">{s.title}</div>
               <p className="mb-4 font-sans text-base text-charcoal">{s.body}</p>
               <Link href={s.href} className="font-sans font-bold text-vyoma-blue">

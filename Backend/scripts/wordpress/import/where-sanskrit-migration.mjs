@@ -80,7 +80,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { disconnectDb } from '../../../src/config/db.js';
-import { connectToMigrationDb } from './migrationDb.mjs';
+import { connectToExplicitMigrationTarget } from './migrationTargetGuard.mjs';
 import { pathToFileURL } from 'node:url';
 import { ContentModel } from '../../../src/modules/content/content.model.js';
 
@@ -93,7 +93,7 @@ const MEDIA_CONTENT_TYPES = ['pages/media', 'media'];
 // The 8 categories, in the live page's own order. Identical names/order to
 // the current fabricated data, so this migration replaces row content only.
 // ---------------------------------------------------------------------------
-const APPROVED_RESOURCE_CATEGORIES = [
+export const APPROVED_RESOURCE_CATEGORIES = [
   'Repositories of Sanskrit Texts',
   'Video Based Learning',
   'Magazines & Journals',
@@ -108,7 +108,7 @@ function row(title, desc, link) {
   return { title, desc, link };
 }
 
-const APPROVED_RESOURCE_ROWS = {
+export const APPROVED_RESOURCE_ROWS = {
   'Repositories of Sanskrit Texts': [
     row('Portal to Sanskrit Resources', 'Has more than 100 links from on various headings – updated as of 17th March 2021', 'https://sanskrit.inria.fr/portal.html'),
     row('Sanskrit Library', 'A vast collection of texts in IAST format, accurately proofread and tagged', 'https://www.sanskritlibrary.org/textsList.html'),
@@ -285,7 +285,7 @@ function validateManifest() {
   return { errors, total };
 }
 
-async function main() {
+export async function main() {
   const commit = process.argv.includes('--commit');
 
   console.log('='.repeat(72));
@@ -308,7 +308,7 @@ async function main() {
     console.log(`     - "${cat}": ${expected} rows`);
   }
 
-  const dbName = await connectToMigrationDb();
+  const dbName = await connectToExplicitMigrationTarget();
   try {
     console.log('[OK] Connected to configured MongoDB (URI value not printed; database name:', dbName || '(unknown)', ').');
     const docs = {};

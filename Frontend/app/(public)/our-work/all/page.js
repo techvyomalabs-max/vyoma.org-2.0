@@ -28,7 +28,7 @@ export default async function OurWorkAllPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our Work"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         pill="Provisional — the Seven Schools are under review and may change."
         title="The Seven Schools of Vyoma"
         body="From phonetics to applied AI, from children's value education to advanced research, each School advances one facet of a living tradition, backed by scholarship and built to reach millions."

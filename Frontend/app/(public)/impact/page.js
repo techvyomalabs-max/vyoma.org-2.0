@@ -26,11 +26,16 @@ export async function generateMetadata() {
   return meta;
 }
 
-function MetricSection({ eyebrow, title, items }) {
+// QA Bug (reopened): eyebrowSize is an optional, explicit per-caller
+// override (same pattern as PageHero.jsx's own eyebrowSize prop) -- this
+// component is shared by all three sections below (Impact/Input/Output
+// achieved), so only the "Impact" call passes it, leaving Input/Output
+// achieved at the component's existing default size.
+function MetricSection({ eyebrow, eyebrowSize, title, items }) {
   return (
     <section className="bg-white px-8 py-14">
       <div className="mx-auto max-w-[1100px]">
-        <div className="mb-2.5 font-sans text-[13px] font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
+        <div className={`mb-2.5 font-sans ${eyebrowSize || 'text-[13px]'} font-bold uppercase tracking-eyebrow text-charcoal`}>{eyebrow}</div>
         <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))' }}>
           {toActiveContentArray(items).map((m) => (
@@ -63,7 +68,7 @@ export default async function ImpactPage() {
       </section>
 
       <KpiDashboard input={INPUT} impact={IMPACT} />
-      <MetricSection eyebrow="Impact" title="Reach at scale" items={IMPACT} />
+      <MetricSection eyebrow="Impact" eyebrowSize="text-[16px]" title="Reach at scale" items={IMPACT} />
       <MetricSection eyebrow="Input" title="What we invest" items={INPUT} />
       <MetricSection eyebrow="Output achieved" title="What we've built" items={OUTPUT} />
 

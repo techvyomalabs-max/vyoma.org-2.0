@@ -27,7 +27,7 @@ export default async function NewsletterPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Newsletter"
         body="Our journey in Vyoma's own words, milestones, programmes, and moments, issue by issue since 2011."
       />

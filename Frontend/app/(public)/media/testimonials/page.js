@@ -24,7 +24,7 @@ export default async function TestimonialsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Testimonials"
         body="In their own words, learners across India and the world on what Vyoma has meant to them."
       />

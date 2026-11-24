@@ -37,7 +37,7 @@ export default async function BlogPage({ searchParams }) {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Blog"
         body="Long-form stories and updates from classrooms, research, and the field."
       />

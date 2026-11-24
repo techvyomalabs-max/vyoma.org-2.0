@@ -27,7 +27,7 @@ export default async function CareersPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Work @ Vyoma"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Build free Sanskrit education at scale."
         body="Would you like to work with a purpose-driven team building free Sanskrit education at scale? Explore our open roles."
         maxWidth="max-w-[720px]"

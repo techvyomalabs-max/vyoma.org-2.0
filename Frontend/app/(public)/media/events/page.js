@@ -29,7 +29,7 @@ export default async function EventsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Events"
         body="Where Vyoma's work meets people, talks, workshops, visits, and gatherings through the year."
       />

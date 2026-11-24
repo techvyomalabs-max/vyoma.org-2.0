@@ -2,6 +2,7 @@ import { FormSubmissionModel } from './formSubmission.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 import { recordAudit } from '../audit/audit.service.js';
+import { CATEGORY_KEYS, buildCategoryFilter } from './formCategoryFilter.js';
 
 const VALID_STATUSES = ['new', 'handled'];
 
@@ -19,6 +20,18 @@ export async function listSubmissions(req, res, next) {
     const filter = {};
     const formKey = expectScalarQueryParam(req.query.formKey, 'formKey');
     if (formKey) filter.formKey = formKey;
+    // Admin Forms application-category filter -- validated against a fixed
+    // allowlist (never a caller-controlled regex/operator), same
+    // expectScalarQueryParam() guard formKey already uses against an
+    // array/operator-shaped query value. See formCategoryFilter.js for the
+    // actual values.subject matching rules.
+    const category = expectScalarQueryParam(req.query.category, 'category');
+    if (category) {
+      if (!CATEGORY_KEYS.includes(category)) {
+        throw new ApiError(422, 'VALIDATION_ERROR', `category must be one of: ${CATEGORY_KEYS.join(', ')}.`);
+      }
+      Object.assign(filter, buildCategoryFilter(category));
+    }
     if (req.query.status) {
       if (!VALID_STATUSES.includes(req.query.status)) {
         throw new ApiError(422, 'VALIDATION_ERROR', `status must be one of: ${VALID_STATUSES.join(', ')}.`);

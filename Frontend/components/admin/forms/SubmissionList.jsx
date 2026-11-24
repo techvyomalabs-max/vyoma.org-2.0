@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { subjectLabel } from './submissionDisplay.mjs';
 
-// Deliberately shows only formKey/name/email/status/date in the list row —
-// the full submitted message/values only render on the detail page, so
-// scanning the list doesn't surface more of a submitter's data than needed.
+// Shows formKey/name/email/status/date, plus the submitted subject (now
+// prominently, as its own headline line) in the list row -- the full
+// submitted message/values only render on the detail page, so scanning the
+// list still doesn't surface more of a submitter's data than needed.
 export function SubmissionList({ items }) {
   if (!items.length) {
     return <p className="font-sans text-sm text-charcoal/60">No submissions match these filters.</p>;
@@ -18,8 +20,10 @@ export function SubmissionList({ items }) {
           className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border-subtle)] px-3.5 py-2.5 hover:bg-sky-mist"
         >
           <div className="font-sans text-sm text-charcoal">
-            <span className="font-bold text-vyoma-blue">{s.formKey}</span> — {s.values?.name || '(no name)'} ·{' '}
-            {s.values?.email || '(no email)'}
+            <div className="font-bold text-vyoma-blue">{subjectLabel(s)}</div>
+            <div className="text-xs text-charcoal/70">
+              {s.formKey} — {s.values?.name || '(no name)'} · {s.values?.email || '(no email)'}
+            </div>
           </div>
           <div className="flex items-center gap-3 font-sans text-xs text-charcoal/60">
             <span

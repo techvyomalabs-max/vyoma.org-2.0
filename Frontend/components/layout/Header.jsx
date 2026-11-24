@@ -380,21 +380,6 @@ function NavItem({ item, isActive, openItem, setOpenItem }) {
         >
           {item.label}
         </span>
-        <span className="ml-1.5 flex items-center justify-center p-2 text-white/70">
-          <svg
-            width="10"
-            height="10"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`transition-transform duration-[var(--duration-fast)] ${isOpen ? 'rotate-180' : ''}`}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </span>
       </button>
       <div
         id={dropdownId}

@@ -15,7 +15,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_RE = /^\p{L}[\p{L}\s'’-]*$/u;
 const MESSAGE_MAX_LENGTH = 2000;
 
-export function ContactForm({ subject = 'General inquiry' }) {
+// `showRoleBanner`/`roleLabel`: optional, default-off context for a
+// specific CMS-driven role (e.g. an Internship vacancy) -- passed
+// explicitly by the caller (see InternshipApplyButton.jsx/ModalProvider.jsx),
+// never derived by parsing `subject` itself, so there's no fragile
+// string-prefix logic to keep in sync with however `subject` happens to be
+// built. Every other caller omits both, so this renders nothing extra and
+// changes nothing about their existing appearance or behavior.
+export function ContactForm({ subject = 'General inquiry', showRoleBanner = false, roleLabel = '' }) {
   const [submitted, setSubmitted] = useState(false);
   const [pending, setPending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -84,6 +91,11 @@ export function ContactForm({ subject = 'General inquiry' }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+      {showRoleBanner && (
+        <div className="rounded-md bg-sky-mist px-3.5 py-2.5 font-sans text-sm text-charcoal">
+          <span className="font-bold text-vyoma-blue">Applying for:</span> {roleLabel}
+        </div>
+      )}
       <div>
         <label htmlFor="modal-contact-org" className={label}>Organization</label>
         <input id="modal-contact-org" name="organization" className={field} placeholder="Company / Foundation name" />

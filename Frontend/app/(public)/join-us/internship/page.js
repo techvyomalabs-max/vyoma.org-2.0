@@ -2,6 +2,7 @@ import { getJoinUsContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
+import { InternshipApplyButton } from '@/components/sections/joinUs/InternshipApplyButton';
 import { pageMetadata } from '@/lib/seo';
 import { toActiveContentArray, toContentArray } from '@/lib/contentArrays';
 
@@ -65,7 +66,7 @@ export default async function InternshipPage() {
                     <div className="font-sans text-[17px] font-bold text-vyoma-blue">{o.role}</div>
                     <div className="mt-[3px] font-sans text-sm text-charcoal">Skill required: {o.skill}</div>
                   </div>
-                  <span className="flex-shrink-0 font-sans text-sm font-bold text-vyoma-blue">Apply →</span>
+                  <InternshipApplyButton role={o.role} />
                 </div>
               ))}
             </div>

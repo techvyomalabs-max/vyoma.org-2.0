@@ -54,7 +54,17 @@ test('active internship vacancies still render through the existing CMS data flo
   assert.match(source, /\{INTERNSHIP_OPENINGS\.map\(\(o, i\) => \(/);
   assert.match(source, /\{o\.role\}/);
   assert.match(source, /Skill required: \{o\.skill\}/);
-  assert.match(source, /Apply →/);
+});
+
+// QA Bug — Internship Apply button fix: the per-vacancy "Apply →" affordance
+// was a dead, non-interactive <span> -- now replaced with a real,
+// keyboard-accessible button (InternshipApplyButton.jsx). Its own dynamic
+// subject-building logic is covered separately, with genuine execution, by
+// internshipApplyLogic.test.mjs and InternshipApplyButton.wiring.test.mjs.
+test('each vacancy renders a real InternshipApplyButton (not the old dead <span>), passing the CMS role through', () => {
+  assert.match(source, /import \{ InternshipApplyButton \} from '@\/components\/sections\/joinUs\/InternshipApplyButton';/);
+  assert.match(source, /<InternshipApplyButton role=\{o\.role\} \/>/);
+  assert.doesNotMatch(source, /<span className="flex-shrink-0 font-sans text-sm font-bold text-vyoma-blue">Apply →<\/span>/, 'the old dead span must be gone');
 });
 
 test('INTERNSHIP_REASONS ("Why intern at Vyoma?") is untouched', () => {

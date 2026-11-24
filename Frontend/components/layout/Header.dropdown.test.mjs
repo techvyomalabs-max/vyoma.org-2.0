@@ -198,9 +198,16 @@ test('pathname-change still resets openItem, unchanged from before this fix', ()
   assert.match(source, /useEffect\(\(\) => \{\s*\n\s*setOpenItem\(null\);\s*\n\s*\}, \[pathname\]\);/);
 });
 
-test('MobileNavItem and useMobileNav.js are completely untouched by this fix', () => {
+test('MobileNavItem is untouched by QA Bug 6 itself: this fix\'s own navRowRef/outside-click state never appears inside it', () => {
   assert.ok(!source.includes('navRowRef') || !source.slice(source.indexOf('function MobileNavItem')).includes('navRowRef'), 'navRowRef must never appear inside MobileNavItem');
-  assert.match(source, /function MobileNavItem\(\{ item, isActive, openGroup, setOpenGroup, onNavigate \}\) \{/, 'MobileNavItem\'s own signature must be unchanged');
+});
+
+// Signature later, separately extended (nav dropdown active-state fix) to add
+// activeSubmenuHref -- see Header.navActive.wiring.test.mjs for coverage of
+// that addition; this file's own QA Bug 6 concern (no navRowRef leak, above)
+// still holds regardless of that addition.
+test('MobileNavItem\'s signature includes exactly the expected parameters', () => {
+  assert.match(source, /function MobileNavItem\(\{ item, isActive, activeSubmenuHref, openGroup, setOpenGroup, onNavigate \}\) \{/);
 });
 
 test('every other interactive element inside MobileNavPanel (links, Donate) is unchanged and still calls onNavigate directly', () => {

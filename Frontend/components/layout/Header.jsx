@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { NAV, CONTACT_LINK } from '@/lib/navConfig';
 import { useMobileNav } from '@/lib/useMobileNav';
 import { useModal } from './ModalProvider';
+import { isRouteActive, getActiveSubmenuHref } from './navActiveLogic.mjs';
 
 const MOBILE_NAV_PANEL_ID = 'mobile-nav-panel';
 
@@ -43,7 +44,17 @@ export function Header() {
     closeMobileMenu,
   } = useMobileNav(pathname);
 
-  const isActive = (href) => pathname === href || (href !== '/' && pathname.startsWith(href));
+  // Group-level ("is any page in this whole section active," used only to
+  // bold a top-level label like "About") -- unchanged in meaning, now
+  // segment-aware (navActiveLogic.mjs) so it can never be fooled by a bare
+  // string-prefix collision between unrelated routes.
+  const isActive = (href) => isRouteActive(pathname, href);
+  // Submenu-level: given the hrefs actually rendered inside one dropdown,
+  // picks the single most specific (longest) one that's active for the
+  // current page -- see navActiveLogic.mjs's own header comment for why
+  // this (not isActive() per link) is what fixes the duplicate-highlight
+  // bug.
+  const activeSubmenuHref = (candidates) => getActiveSubmenuHref(pathname, candidates);
 
   // QA Bug 6: desktop dropdown overlap/close handling. A single shared
   // `openItem` (above) is already the one source of truth for which
@@ -147,7 +158,14 @@ export function Header() {
           md:flex` (it was unconditional `flex` before). */}
       <div ref={navRowRef} className="hidden md:flex relative z-10 items-center justify-end gap-7 flex-wrap">
         {NAV.map((item) => (
-          <NavItem key={item.label} item={item} isActive={isActive} openItem={openItem} setOpenItem={setOpenItem} />
+          <NavItem
+            key={item.label}
+            item={item}
+            isActive={isActive}
+            activeSubmenuHref={activeSubmenuHref}
+            openItem={openItem}
+            setOpenItem={setOpenItem}
+          />
         ))}
       </div>
 
@@ -155,6 +173,7 @@ export function Header() {
         <MobileNavPanel
           panelId={MOBILE_NAV_PANEL_ID}
           isActive={isActive}
+          activeSubmenuHref={activeSubmenuHref}
           openGroup={mobileOpenGroup}
           setOpenGroup={setMobileOpenGroup}
           onNavigate={closeMobileMenu}
@@ -178,7 +197,7 @@ export function Header() {
 // focus are all managed by useMobileNav.js via `panelRef`, so this component
 // only needs to attach that ref to its own root and call `onClose`/
 // `onNavigate` at the right moments.
-function MobileNavPanel({ panelId, isActive, openGroup, setOpenGroup, onNavigate, onClose, closeButtonRef, panelRef, openDonate }) {
+function MobileNavPanel({ panelId, isActive, activeSubmenuHref, openGroup, setOpenGroup, onNavigate, onClose, closeButtonRef, panelRef, openDonate }) {
   return (
     <div ref={panelRef} id={panelId} role="dialog" aria-modal="true" aria-label="Site navigation" className="fixed inset-0 z-40 md:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
@@ -204,6 +223,7 @@ function MobileNavPanel({ panelId, isActive, openGroup, setOpenGroup, onNavigate
               key={item.label}
               item={item}
               isActive={isActive}
+              activeSubmenuHref={activeSubmenuHref}
               openGroup={openGroup}
               setOpenGroup={setOpenGroup}
               onNavigate={onNavigate}
@@ -242,11 +262,16 @@ function MobileNavPanel({ panelId, isActive, openGroup, setOpenGroup, onNavigate
   );
 }
 
-function MobileNavItem({ item, isActive, openGroup, setOpenGroup, onNavigate }) {
+function MobileNavItem({ item, isActive, activeSubmenuHref, openGroup, setOpenGroup, onNavigate }) {
   const active = isActive(item.href) || item.children?.some((c) => isActive(c.href));
   const hasChildren = !!item.children;
   const isOpen = hasChildren && openGroup === item.label;
   const panelId = `mobile-subnav-${item.label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  // Mobile never renders a separate "Overview" link (unlike desktop's
+  // NavItem below) -- its rendered candidates are exactly item.children's
+  // own hrefs. Our Work's "Seven Schools" child (href === item.href) is the
+  // one case this still matters for on mobile; see navActiveLogic.mjs.
+  const activeChildHref = hasChildren ? activeSubmenuHref(item.children.map((c) => c.href)) : null;
 
   return (
     <li>
@@ -281,7 +306,7 @@ function MobileNavItem({ item, isActive, openGroup, setOpenGroup, onNavigate }) 
                 href={c.href}
                 onClick={onNavigate}
                 className={`block rounded-md px-3 py-2.5 font-sans text-base ${
-                  isActive(c.href) ? 'font-bold text-white' : 'font-normal text-white/70'
+                  activeChildHref === c.href ? 'font-bold text-white' : 'font-normal text-white/70'
                 }`}
               >
                 {c.label}
@@ -340,7 +365,7 @@ function ChevronIcon(props) {
 // conditions, and omitting it removes any chance of a hover-vs-click race
 // or flicker -- there is nothing for a click's own state update to be
 // "undone" by, since leaving never changes `openItem` on its own.
-function NavItem({ item, isActive, openItem, setOpenItem }) {
+function NavItem({ item, isActive, activeSubmenuHref, openItem, setOpenItem }) {
   const active = isActive(item.href) || item.children?.some((c) => isActive(c.href));
   const hasChildren = !!item.children;
 
@@ -363,6 +388,15 @@ function NavItem({ item, isActive, openItem, setOpenItem }) {
   // never an invented route, and never added where it would duplicate an
   // existing equivalent destination.
   const parentAlreadyLinked = item.children.some((c) => c.href === item.href);
+  // The actual set of hrefs this dropdown renders: the synthetic Overview
+  // link (only when the parent isn't already one of the real children), plus
+  // every real child -- the exact candidate list navActiveLogic.mjs's
+  // getActiveSubmenuHref() needs to pick the single most specific match
+  // from, instead of each link independently re-checking isActive() (the
+  // root cause of the duplicate-highlight bug: the Overview/parent href is
+  // always a path-prefix of every sibling child route).
+  const submenuCandidates = [...(parentAlreadyLinked ? [] : [item.href]), ...item.children.map((c) => c.href)];
+  const activeHref = activeSubmenuHref(submenuCandidates);
 
   return (
     <div className="relative" onMouseEnter={() => setOpenItem(item.label)}>
@@ -394,7 +428,7 @@ function NavItem({ item, isActive, openItem, setOpenItem }) {
             href={item.href}
             onClick={() => setOpenItem(null)}
             className={`block whitespace-nowrap px-4.5 py-2.5 font-sans text-base text-vyoma-blue ${
-              isActive(item.href) ? 'font-bold' : 'font-normal'
+              activeHref === item.href ? 'font-bold' : 'font-normal'
             }`}
           >
             {item.label} Overview
@@ -406,7 +440,7 @@ function NavItem({ item, isActive, openItem, setOpenItem }) {
             href={c.href}
             onClick={() => setOpenItem(null)}
             className={`block whitespace-nowrap px-4.5 py-2.5 font-sans text-base text-vyoma-blue ${
-              isActive(c.href) ? 'font-bold' : 'font-normal'
+              activeHref === c.href ? 'font-bold' : 'font-normal'
             }`}
           >
             {c.label}

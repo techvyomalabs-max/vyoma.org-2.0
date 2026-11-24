@@ -22,6 +22,7 @@ export default async function WhereIksPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
+        eyebrowSize="text-[16px]"
         title="Where IKS"
         body="O-MANTRI: a curated directory of resources for Indian Knowledge Systems, organised into Universal, Domain Specific, and Auxiliary Tools series."
       />

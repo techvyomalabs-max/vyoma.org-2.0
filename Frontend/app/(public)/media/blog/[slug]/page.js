@@ -70,7 +70,7 @@ export default async function BlogPostPage({ params }) {
     <div className="font-sans">
       <script type="application/ld+json" {...jsonLdScriptProps(article)} />
       <script type="application/ld+json" {...jsonLdScriptProps(breadcrumb)} />
-      <PageHero eyebrow="Media" title={post.title} body={post.excerpt} />
+      <PageHero eyebrow="Media" eyebrowSize="text-[16px]" title={post.title} body={post.excerpt} />
 
       <section className="bg-white px-8 py-16">
         <div className="mx-auto max-w-[700px]">

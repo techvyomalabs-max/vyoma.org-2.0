@@ -24,7 +24,7 @@ export default async function TermsPage() {
 
   return (
     <div className="font-sans">
-      <PageHero eyebrow="Legal" title={TITLE} />
+      <PageHero eyebrow="Legal" eyebrowSize="text-[16px]" title={TITLE} />
 
       <section className="bg-white px-8 py-16">
         <div className="mx-auto max-w-[820px]">

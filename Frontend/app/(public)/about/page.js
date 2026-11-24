@@ -33,7 +33,7 @@ export default async function AboutPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="About Vyoma"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="A nonprofit dedicated to keeping Saṃskṛtam a living, learnable language."
       />
 

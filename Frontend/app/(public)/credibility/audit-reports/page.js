@@ -28,7 +28,7 @@ export default async function AuditReportsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Audit Reports"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Audit Reports"
         body="Our audited annual financial statements, published in full for donors, partners, and grant reviewers."
       />

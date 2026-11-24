@@ -24,7 +24,7 @@ export default async function CompliancesRegistrationsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Compliances & Registrations"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Compliances & Registrations"
         body="Vyoma's statutory approvals and registrations, in plain terms, so you can confirm exactly what we're cleared to do."
       />

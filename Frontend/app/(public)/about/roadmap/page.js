@@ -28,7 +28,7 @@ export default async function RoadmapPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our roadmap"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="From a Sanskrit ecosystem to a global virtual university."
         body={[
           "Vyoma's seven Schools are growing, step by step, into a Vyoma Global Virtual University for Sanskrit and Indian Knowledge Systems.",

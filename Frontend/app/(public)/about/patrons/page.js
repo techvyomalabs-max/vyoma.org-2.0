@@ -40,6 +40,7 @@ export default async function OurPatronsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our supporters"
+        eyebrowSize="text-[16px]"
         title="Our Patrons"
         body="Vyoma's work is made possible by the generosity of those who believe in our mission. Our patrons, donors, and well-wishers help keep authentic Sanskrit learning free and accessible to all, and we are deeply grateful for their trust and support."
       />

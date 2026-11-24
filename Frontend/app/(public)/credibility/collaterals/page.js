@@ -24,7 +24,7 @@ export default async function CollateralsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Collaterals"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Collaterals"
         body="Everything that introduces Vyoma in one place, brochures, presentations, and catalogues to download, share, or bring into a partnership conversation."
       />

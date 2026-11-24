@@ -24,7 +24,7 @@ export default async function AwardsRecognitionPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Awards & Recognition"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Awards & Recognition"
         body="More than ten years of Saṃskṛta-Saṃskṛti-Saṃskāra seva, recognised by universities, institutions, and peers."
       />

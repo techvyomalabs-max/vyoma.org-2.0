@@ -24,7 +24,7 @@ export default async function AnnualReportsPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Annual Reports"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Annual Reports"
         body="Our year-by-year record of activities, reach, and finances, published in full for donors, partners, and grant reviewers."
       />

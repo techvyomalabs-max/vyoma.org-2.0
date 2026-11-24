@@ -33,7 +33,7 @@ export default async function CredibilityPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Credibility"
-        eyebrowSize="text-[13px]"
+        eyebrowSize="text-[16px]"
         title="Transparency you can verify."
         body="Vyoma opens its record to the people who fund and partner with it, our reports, registrations, and recognition, all in one place. Look as closely as you like; that's the point."
       />

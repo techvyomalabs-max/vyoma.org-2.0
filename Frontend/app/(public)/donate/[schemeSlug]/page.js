@@ -82,7 +82,7 @@ export default async function DonationSchemePage({ params }) {
 
   return (
     <div className="font-sans">
-      <PageHero eyebrow="Donate" title={publicScheme.name} body={publicScheme.body} />
+      <PageHero eyebrow="Donate" eyebrowSize="text-[16px]" title={publicScheme.name} body={publicScheme.body} />
 
       <section className="bg-white px-8 py-14">
         <div className="mx-auto max-w-[900px]">

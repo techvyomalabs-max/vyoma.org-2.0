@@ -33,6 +33,7 @@ export default async function FaqPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Support"
+        eyebrowSize="text-[16px]"
         title="Frequently Asked Questions"
         body="Answers to common questions about donating to Vyoma, tax benefits, partnerships, and learning Sanskrit."
         maxWidth="max-w-[760px]"

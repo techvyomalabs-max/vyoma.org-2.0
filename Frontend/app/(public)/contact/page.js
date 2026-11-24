@@ -48,7 +48,7 @@ export default async function ContactPage() {
 
   return (
     <div className="font-sans">
-      <PageHero eyebrow="Get in touch" title={HERO.title} body={HERO.body} maxWidth="max-w-[760px]" />
+      <PageHero eyebrow="Get in touch" eyebrowSize="text-[16px]" title={HERO.title} body={HERO.body} maxWidth="max-w-[760px]" />
 
       <section className="bg-sky-mist px-8 py-14">
         <div className="mx-auto grid max-w-[1040px] items-start gap-8" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>

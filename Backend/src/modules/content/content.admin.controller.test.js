@@ -319,6 +319,220 @@ test('revision pruning: publishing more than MAX_REVISIONS_PER_TYPE (20) times k
   assert.deepEqual(versions, Array.from({ length: 20 }, (_, i) => i + 3), 'expected versions 3..22 retained -- the oldest 2 (versions 1 and 2) must be the ones pruned');
 });
 
+// --- pages/join-us: Internship Role/Skill required validation ----------
+// Narrowly scoped server-side enforcement closing the gap where a direct
+// API request could bypass the Frontend's own validateJoinUs() entirely
+// (confirmed, before this fix, by the generic PUT/publish handlers
+// performing no per-type/per-field validation at all). Only 'pages/join-us'
+// is affected -- every other type's draft-save/publish behavior above is
+// unchanged, as already proven by the untouched tests surrounding this
+// block.
+
+const JOIN_US_TYPE = 'pages/join-us';
+
+function openingsData(openings) {
+  return { CAREER_ROLES: [], VOLUNTEER_APPLY_URL: '', INTERNSHIP_OPENINGS: openings };
+}
+
+test('PUT /admin/content for pages/join-us accepts a valid internship opening (Role and Skill both present)', async () => {
+  const token = await adminToken('join-us-valid-put');
+  const { res, body } = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Frontend Intern', skill: 'React', active: true }]));
+  assert.equal(res.status, 200);
+  assert.equal(body.data.draftData.INTERNSHIP_OPENINGS[0].role, 'Frontend Intern');
+});
+
+test('PUT /admin/content for pages/join-us accepts an empty INTERNSHIP_OPENINGS array', async () => {
+  const token = await adminToken('join-us-empty-put');
+  const { res } = await saveDraft(token, JOIN_US_TYPE, openingsData([]));
+  assert.equal(res.status, 200);
+});
+
+test('PUT /admin/content for pages/join-us accepts a document where INTERNSHIP_OPENINGS is entirely absent (legacy compatibility)', async () => {
+  const token = await adminToken('join-us-absent-put');
+  const { res } = await saveDraft(token, JOIN_US_TYPE, { CAREER_ROLES: [], VOLUNTEER_APPLY_URL: '' });
+  assert.equal(res.status, 200);
+});
+
+test('PUT /admin/content for pages/join-us rejects a missing Role or Skill individually, and both missing, with 422 and a clear, one-based, field-named message', async () => {
+  const token = await adminToken('join-us-missing-fields');
+
+  const missingRole = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: '', skill: 'Python', active: true }]));
+  assert.equal(missingRole.res.status, 422);
+  assert.match(missingRole.body.message, /Internship opening 1: Role is required\./);
+
+  const missingSkill = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Backend Intern', skill: '', active: true }]));
+  assert.equal(missingSkill.res.status, 422);
+  assert.match(missingSkill.body.message, /Internship opening 1: Skill is required\./);
+
+  const missingBoth = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: '', skill: '', active: true }]));
+  assert.equal(missingBoth.res.status, 422);
+  assert.match(missingBoth.body.message, /Internship opening 1: Role and Skill are required\./);
+});
+
+test('PUT /admin/content for pages/join-us rejects whitespace-only Role/Skill, null, and non-string values (number/boolean/object/array) with 422', async () => {
+  const token = await adminToken('join-us-blank-variants');
+  const cases = ['   ', null, 42, true, {}, []];
+  for (const bad of cases) {
+    const { res, body } = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: bad, skill: 'Python', active: true }]));
+    assert.equal(res.status, 422, `expected rejection for role=${JSON.stringify(bad)}`);
+    assert.match(body.message, /Internship opening 1: Role is required\./);
+  }
+});
+
+test('PUT /admin/content for pages/join-us rejects a malformed individual opening entry (null, string, number, array) with 422, without throwing', async () => {
+  const token = await adminToken('join-us-malformed-entry');
+  for (const bad of [null, 'not-an-opening', 42, ['role', 'skill']]) {
+    const { res, body } = await saveDraft(token, JOIN_US_TYPE, openingsData([bad]));
+    assert.equal(res.status, 422, `expected rejection for opening=${JSON.stringify(bad)}`);
+    assert.match(body.message, /Internship opening 1 is malformed\./);
+  }
+});
+
+test('PUT /admin/content for pages/join-us rejects a malformed INTERNSHIP_OPENINGS container (null, string, number, object) with 422', async () => {
+  const token = await adminToken('join-us-malformed-container');
+  for (const bad of [null, 'not-an-array', 42, { role: 'x' }]) {
+    const { res, body } = await saveDraft(token, JOIN_US_TYPE, { CAREER_ROLES: [], INTERNSHIP_OPENINGS: bad });
+    assert.equal(res.status, 422, `expected rejection for INTERNSHIP_OPENINGS=${JSON.stringify(bad)}`);
+    assert.match(body.message, /INTERNSHIP_OPENINGS must be an array/);
+  }
+});
+
+test('PUT /admin/content for pages/join-us: with multiple openings, the FIRST invalid one is reported, by its own one-based position', async () => {
+  const token = await adminToken('join-us-multi-first-invalid');
+  const { res, body } = await saveDraft(
+    token,
+    JOIN_US_TYPE,
+    openingsData([
+      { role: 'Valid Intern', skill: 'Sanskrit', active: true },
+      { role: '', skill: 'Linguistics', active: true },
+      { role: 'Also Invalid', skill: '', active: true },
+    ])
+  );
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Internship opening 2: Role is required\./, 'must report opening 2 (first invalid), not opening 3 or a generic message');
+});
+
+test('PUT /admin/content for pages/join-us validates INACTIVE openings exactly the same as active ones', async () => {
+  const token = await adminToken('join-us-inactive-invalid');
+  const invalidInactive = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: '', skill: 'Python', active: false }]));
+  assert.equal(invalidInactive.res.status, 422, 'an inactive opening with missing Role must still be rejected -- it can be flipped visible later with no further edit');
+
+  const validInactive = await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Hidden Intern', skill: 'Python', active: false }]));
+  assert.equal(validInactive.res.status, 200, 'a VALID inactive opening must still be accepted');
+});
+
+test('PUT /admin/content for pages/join-us on a REJECTED request leaves content and audit state completely unchanged (no draft write, no audit entry)', async () => {
+  const token = await adminToken('join-us-rejected-no-side-effects');
+  // Must be the real, exact JOIN_US_TYPE -- the validation this test exists
+  // to exercise only ever runs for that literal type string.
+  const type = JOIN_US_TYPE;
+  // Seed a valid baseline draft first so we can prove it's untouched.
+  await saveDraft(token, type, openingsData([{ role: 'Existing Intern', skill: 'Existing Skill', active: true }]));
+  const beforeAuditCount = await AuditLogModel.countDocuments({ action: 'content.draft_saved', targetId: type });
+  const beforeDoc = await ContentModel.findOne({ type }).lean();
+
+  const { res } = await saveDraft(token, type, openingsData([{ role: '', skill: '', active: true }]));
+  assert.equal(res.status, 422);
+
+  const afterAuditCount = await AuditLogModel.countDocuments({ action: 'content.draft_saved', targetId: type });
+  assert.equal(afterAuditCount, beforeAuditCount, 'a rejected draft-save must not record a new content.draft_saved audit entry');
+  const afterDoc = await ContentModel.findOne({ type }).lean();
+  assert.deepEqual(afterDoc.draftData, beforeDoc.draftData, 'the previously-saved valid draft must be completely untouched by the rejected request');
+});
+
+test('PUT /admin/content for pages/join-us does NOT change validation behavior for an unrelated content type (pages/about) with the same field shape', async () => {
+  const token = await adminToken('join-us-unrelated-type-unaffected');
+  const { res } = await saveDraft(token, 'pages/about', { INTERNSHIP_OPENINGS: [{ role: '', skill: '' }] });
+  assert.equal(res.status, 200, 'INTERNSHIP_OPENINGS-shaped data under an unrelated type must never be validated by this pages/join-us-only rule');
+});
+
+test('POST /admin/content/publish for pages/join-us rejects an invalid PENDING DRAFT with 422, before any mutation, revision, or audit write', async () => {
+  const token = await adminToken('join-us-publish-invalid-draft');
+  // Must be the real, exact JOIN_US_TYPE for the validation to run at all.
+  // A document for this type already exists by this point in the file (many
+  // earlier tests in this block saved drafts to it), so this writes directly
+  // via findOneAndUpdate+upsert (never `ContentModel.create`, which would
+  // throw on the type field's unique index) -- bypassing the (now-correct)
+  // PUT validation entirely, simulating either a document saved before this
+  // validation existed, or one written by some other direct path -- exactly
+  // the scenario "invalid existing draft rejected when publishing" calls for.
+  const type = JOIN_US_TYPE;
+  await ContentModel.findOneAndUpdate(
+    { type },
+    { $set: { data: null, draftData: openingsData([{ role: '', skill: 'Python', active: true }]), status: 'draft' } },
+    { upsert: true }
+  );
+  const beforeAuditCount = await AuditLogModel.countDocuments({ action: 'content.published', targetId: type });
+  const beforeRevisionCount = await ContentRevisionModel.countDocuments({ contentType: type });
+
+  const { res, body } = await publish(token, type);
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Internship opening 1: Role is required\./);
+
+  const doc = await ContentModel.findOne({ type }).lean();
+  assert.equal(doc.status, 'draft', 'status must remain draft -- the invalid draft must never be promoted to live data');
+  assert.notEqual(doc.draftData, null, 'the rejected draft must remain exactly as it was, never cleared');
+  assert.equal(await AuditLogModel.countDocuments({ action: 'content.published', targetId: type }), beforeAuditCount);
+  assert.equal(await ContentRevisionModel.countDocuments({ contentType: type }), beforeRevisionCount);
+});
+
+test('POST /admin/content/publish for pages/join-us rejects an invalid PUBLISHED-DATA FALLBACK (no pending draft) with 422', async () => {
+  const token = await adminToken('join-us-publish-invalid-published-fallback');
+  // Must be the real, exact JOIN_US_TYPE; findOneAndUpdate+upsert (not
+  // `ContentModel.create`) for the same reason as the PENDING DRAFT test
+  // above. No draftData at all -- publishContent's own `nextData` fallback
+  // must pick up `data` (the already-"published" value) and validate THAT.
+  const type = JOIN_US_TYPE;
+  await ContentModel.findOneAndUpdate(
+    { type },
+    { $set: { data: openingsData([{ role: 'Stale Intern', skill: '', active: true }]), draftData: null, status: 'published' } },
+    { upsert: true }
+  );
+
+  const { res, body } = await publish(token, type);
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Internship opening 1: Skill is required\./);
+});
+
+test('POST /admin/content/publish for pages/join-us succeeds for a valid draft, and the opening is then publicly visible', async () => {
+  const token = await adminToken('join-us-publish-valid');
+  // The real, exact JOIN_US_TYPE -- genuinely exercises the new validation's
+  // accept path, not just an ordinary unrelated type that happens to pass.
+  const type = JOIN_US_TYPE;
+  await saveDraft(token, type, openingsData([{ role: 'Published Intern', skill: 'Sanskrit', active: true }]));
+
+  const { res, body } = await publish(token, type);
+  assert.equal(res.status, 200);
+  assert.equal(body.data.status, 'published');
+
+  const pub = await getPublic(type);
+  assert.equal(pub.res.status, 200);
+  assert.equal(pub.body.data.INTERNSHIP_OPENINGS[0].role, 'Published Intern');
+});
+
+test('direct-API-bypass prevention: a PUT with an invalid internship opening is rejected with 422 exactly like it would be through the admin UI -- no path to save invalid content', async () => {
+  const token = await adminToken('join-us-direct-bypass');
+  const type = JOIN_US_TYPE;
+  // Seed a known-valid baseline first (a real document for this type
+  // already exists at this point in the file regardless), so the assertion
+  // below can prove the invalid payload was never written, rather than
+  // relying on the unrealistic premise that 'pages/join-us' has never been
+  // saved before.
+  await saveDraft(token, type, openingsData([{ role: 'Baseline Intern', skill: 'Baseline Skill', active: true }]));
+
+  const res = await fetch(`${env.baseUrl}/api/v1/admin/content`, {
+    method: 'PUT',
+    headers: { ...authHeader(token), 'content-type': 'application/json' },
+    body: JSON.stringify({ type, data: openingsData([{ role: null, skill: undefined, active: true }]) }),
+  });
+  const body = await res.json();
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Internship opening 1: Role and Skill are required\./);
+
+  const doc = await ContentModel.findOne({ type }).lean();
+  assert.equal(doc.draftData.INTERNSHIP_OPENINGS[0].role, 'Baseline Intern', 'the invalid payload must never have been written -- the known-valid baseline must remain exactly as seeded');
+});
+
 // --- POST /admin/content/unpublish ---
 
 test('POST /admin/content/unpublish returns 404 for a nonexistent type', async () => {
@@ -443,4 +657,136 @@ test('POST /admin/content/revisions/restore on success records a content.restore
   assert.equal(logs[0].actorEmail, user.email);
   assert.equal(logs[0].details.restoredFromVersion, 1);
   assert.equal(logs[0].details.newVersion, 3);
+});
+
+// --- pages/join-us: closing the Revision Restore validation bypass ------
+// restoreRevision republishes a past revision SNAPSHOT directly -- the only
+// remaining path (besides draft-save/publish, both already validated
+// above) that could make pages/join-us content public. A revision row
+// containing invalid INTERNSHIP_OPENINGS content can only exist here as a
+// historical artifact (one created before this validation existed, or
+// written by some other direct path) -- every NEW revision from this point
+// forward is already guaranteed valid, since publishContent itself now
+// validates before ever creating one. These tests simulate that historical
+// case by inserting a revision row directly via ContentRevisionModel.create
+// (bypassing the controller entirely), exactly mirroring how the
+// PENDING DRAFT / PUBLISHED-DATA FALLBACK tests above simulate
+// pre-existing invalid Content documents.
+
+async function seedJoinUsRevision(data, { version = 1 } = {}) {
+  return ContentRevisionModel.create({ contentType: JOIN_US_TYPE, version, data, action: 'publish' });
+}
+
+test('POST /admin/content/revisions/restore for pages/join-us rejects restoring an INVALID historical revision with 422', async () => {
+  const token = await adminToken('join-us-restore-invalid');
+  // A valid, real "current" document must exist for restoreRevision's own
+  // CONTENT_NOT_FOUND check to pass -- seeded via the normal, already-
+  // validated draft-save/publish path.
+  await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Current Intern', skill: 'Current Skill', active: true }]));
+  await publish(token, JOIN_US_TYPE);
+
+  const invalidRevision = await seedJoinUsRevision(openingsData([{ role: '', skill: 'Python', active: true }]), { version: 9001 });
+
+  const { res, body } = await restore(token, JOIN_US_TYPE, invalidRevision._id);
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Internship opening 1: Role is required\./);
+});
+
+test('POST /admin/content/revisions/restore for pages/join-us rejects an invalid INACTIVE opening in a historical revision exactly like an active one', async () => {
+  const token = await adminToken('join-us-restore-invalid-inactive');
+  await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Current Intern', skill: 'Current Skill', active: true }]));
+  await publish(token, JOIN_US_TYPE);
+
+  const invalidInactiveRevision = await seedJoinUsRevision(openingsData([{ role: 'Hidden Intern', skill: '', active: false }]), { version: 9002 });
+
+  const { res, body } = await restore(token, JOIN_US_TYPE, invalidInactiveRevision._id);
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Internship opening 1: Skill is required\./);
+});
+
+test('POST /admin/content/revisions/restore for pages/join-us rejects a malformed INTERNSHIP_OPENINGS container and a malformed individual entry in a historical revision', async () => {
+  const token = await adminToken('join-us-restore-malformed');
+  await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Current Intern', skill: 'Current Skill', active: true }]));
+  await publish(token, JOIN_US_TYPE);
+
+  const malformedContainerRevision = await seedJoinUsRevision({ CAREER_ROLES: [], INTERNSHIP_OPENINGS: 'not-an-array' }, { version: 9003 });
+  const containerResult = await restore(token, JOIN_US_TYPE, malformedContainerRevision._id);
+  assert.equal(containerResult.res.status, 422);
+  assert.match(containerResult.body.message, /INTERNSHIP_OPENINGS must be an array/);
+
+  const malformedEntryRevision = await seedJoinUsRevision(openingsData([42]), { version: 9004 });
+  const entryResult = await restore(token, JOIN_US_TYPE, malformedEntryRevision._id);
+  assert.equal(entryResult.res.status, 422);
+  assert.match(entryResult.body.message, /Internship opening 1 is malformed\./);
+});
+
+test('POST /admin/content/revisions/restore for pages/join-us: a REJECTED restore leaves current content, draft, status, revision count and audit state completely unchanged', async () => {
+  const token = await adminToken('join-us-restore-no-side-effects');
+  await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Current Intern', skill: 'Current Skill', active: true }]));
+  await publish(token, JOIN_US_TYPE);
+
+  const invalidRevision = await seedJoinUsRevision(openingsData([{ role: '', skill: '', active: true }]), { version: 9005 });
+
+  const beforeDoc = await ContentModel.findOne({ type: JOIN_US_TYPE }).lean();
+  const beforeRevisionCount = await ContentRevisionModel.countDocuments({ contentType: JOIN_US_TYPE });
+  const beforeAuditCount = await AuditLogModel.countDocuments({ action: 'content.restored', targetId: JOIN_US_TYPE });
+
+  const { res } = await restore(token, JOIN_US_TYPE, invalidRevision._id);
+  assert.equal(res.status, 422);
+
+  const afterDoc = await ContentModel.findOne({ type: JOIN_US_TYPE }).lean();
+  assert.equal(afterDoc.status, beforeDoc.status);
+  assert.deepEqual(afterDoc.data, beforeDoc.data, 'the currently-published content must be completely untouched by a rejected restore');
+  assert.deepEqual(afterDoc.draftData, beforeDoc.draftData);
+  assert.equal(await ContentRevisionModel.countDocuments({ contentType: JOIN_US_TYPE }), beforeRevisionCount, 'no new revision row may be created for a rejected restore');
+  assert.equal(await AuditLogModel.countDocuments({ action: 'content.restored', targetId: JOIN_US_TYPE }), beforeAuditCount, 'no content.restored audit entry may be recorded for a rejected restore');
+});
+
+test('POST /admin/content/revisions/restore for pages/join-us successfully restores a VALID historical revision', async () => {
+  const token = await adminToken('join-us-restore-valid');
+  await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Current Intern', skill: 'Current Skill', active: true }]));
+  await publish(token, JOIN_US_TYPE);
+
+  const validRevision = await seedJoinUsRevision(openingsData([{ role: 'Restored Intern', skill: 'Restored Skill', active: true }]), { version: 9006 });
+
+  const { res, body } = await restore(token, JOIN_US_TYPE, validRevision._id);
+  assert.equal(res.status, 200);
+  assert.equal(body.data.status, 'published');
+  assert.equal(body.data.data.INTERNSHIP_OPENINGS[0].role, 'Restored Intern');
+});
+
+test('POST /admin/content/revisions/restore for pages/join-us successfully restores a historical revision with ZERO openings, and one with INTERNSHIP_OPENINGS entirely absent (legacy)', async () => {
+  const token = await adminToken('join-us-restore-zero-and-absent');
+  await saveDraft(token, JOIN_US_TYPE, openingsData([{ role: 'Current Intern', skill: 'Current Skill', active: true }]));
+  await publish(token, JOIN_US_TYPE);
+
+  const zeroOpeningsRevision = await seedJoinUsRevision(openingsData([]), { version: 9007 });
+  const zeroResult = await restore(token, JOIN_US_TYPE, zeroOpeningsRevision._id);
+  assert.equal(zeroResult.res.status, 200);
+
+  const absentFieldRevision = await seedJoinUsRevision({ CAREER_ROLES: [], VOLUNTEER_APPLY_URL: '' }, { version: 9008 });
+  const absentResult = await restore(token, JOIN_US_TYPE, absentFieldRevision._id);
+  assert.equal(absentResult.res.status, 200);
+});
+
+test('POST /admin/content/revisions/restore for an UNRELATED content type is unaffected by the pages/join-us-only validation, even with the same invalid field shape', async () => {
+  const token = await adminToken('join-us-restore-unrelated-type');
+  const type = 'pages/about';
+  await saveDraft(token, type, { INTERNSHIP_OPENINGS: [{ role: 'irrelevant here', skill: 'irrelevant here' }] });
+  await publish(token, type);
+  const baselineRevisionId = (await listRevisions(token, type)).body.data[0]._id;
+
+  // Directly insert a revision with an INTERNSHIP_OPENINGS shape that would
+  // be rejected for pages/join-us, under a type this validation never
+  // applies to.
+  const unrelatedRevision = await ContentRevisionModel.create({
+    contentType: type,
+    version: 9009,
+    data: { INTERNSHIP_OPENINGS: [{ role: '', skill: '' }] },
+    action: 'publish',
+  });
+
+  const { res } = await restore(token, type, unrelatedRevision._id);
+  assert.equal(res.status, 200, 'restore for a type other than pages/join-us must never be validated by this rule');
+  assert.notEqual(baselineRevisionId, undefined, 'sanity check: a baseline revision exists for this type (pre-existing wrong-type-revisionId behavior is covered separately above, unaffected by this change)');
 });

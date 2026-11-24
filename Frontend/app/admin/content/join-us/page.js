@@ -69,6 +69,13 @@ function InternshipReasonsForm({ value, onChange }) {
   return <SimpleTextListForm value={value} onChange={onChange} placeholder="Reason to intern at Vyoma" />;
 }
 
+// Role and Skill are both mandatory (see validateJoinUs below) -- marked as
+// such via an explicit placeholder (SimpleRepeatableForm's own text-field
+// rendering falls back to `label` only when no `placeholder` is given, so
+// this is the existing UI convention available without touching that
+// shared component) rather than relying on the browser's native HTML
+// `required` attribute, which SimpleRepeatableForm's inputs don't set and
+// which wouldn't apply per-opening-in-a-list the way validateJoinUs does.
 function InternshipOpeningsForm({ value, onChange }) {
   return (
     <SimpleRepeatableForm
@@ -77,8 +84,8 @@ function InternshipOpeningsForm({ value, onChange }) {
       labelKey="role"
       newItemTemplate={{ role: '', skill: '', active: true }}
       fields={[
-        { key: 'role', type: 'text', label: 'Role' },
-        { key: 'skill', type: 'text', label: 'Skill required' },
+        { key: 'role', type: 'text', label: 'Role', placeholder: 'Role (required)' },
+        { key: 'skill', type: 'text', label: 'Skill required', placeholder: 'Skill (required)' },
       ]}
     />
   );
@@ -125,6 +132,16 @@ function CareerRolesForm({ value, onChange }) {
 // value must be a safe http(s) URL so CareersBoard.jsx can never be handed
 // a javascript:/data: URL or similar.
 const APPLY_URL_RE = /^https?:\/\/.+/i;
+
+// A required text field is valid only if it's a genuine, non-blank string
+// after trim() -- rejects missing/null/empty/whitespace-only values AND any
+// non-string value (a number, boolean, object, array) that could only ever
+// reach here via a direct API write or malformed import, never the admin
+// UI's own text input.
+function isBlankRequiredField(value) {
+  return typeof value !== 'string' || value.trim().length === 0;
+}
+
 function validateJoinUs(data) {
   const roles = data?.CAREER_ROLES || [];
   for (const r of roles) {
@@ -137,6 +154,44 @@ function validateJoinUs(data) {
   if (volunteerUrl && !APPLY_URL_RE.test(volunteerUrl)) {
     return 'Volunteer Apply URL must start with http:// or https:// (or be left blank).';
   }
+
+  // Internship Role/Skill required validation -- deliberately mirrors
+  // Backend/src/modules/content/content.admin.controller.js's own
+  // validateJoinUsContent() exactly (same acceptance/rejection rules, same
+  // wording) so a direct API request can never accept something the admin
+  // UI would have rejected, or vice versa. `undefined` (the key entirely
+  // absent from `data`) is the only tolerated non-array shape -- required
+  // for compatibility with content saved before this field, or this
+  // validation, existed. Anything else that isn't a real array (explicit
+  // null, a string, a number, a boolean, a plain object) is an outright
+  // rejection, not silently treated as "no openings" -- invalid data must
+  // never be ignored, removed or normalized away. Likewise, a malformed
+  // individual entry (null, a string, a number, a boolean, or an array,
+  // rather than a plain opening object) is rejected by its own one-based
+  // position, not quietly coerced into "both fields missing". Every
+  // opening is checked regardless of its own `active` ("Visible") flag --
+  // an inactive opening isn't shown on the public page today, but it can
+  // be flipped visible later with no further edit, so invalid content must
+  // never be allowed into the array at all. Returns the FIRST invalid
+  // opening only (same convention as the CAREER_ROLES check above).
+  const openingsRaw = data?.INTERNSHIP_OPENINGS;
+  if (openingsRaw !== undefined) {
+    if (!Array.isArray(openingsRaw)) {
+      return 'INTERNSHIP_OPENINGS must be an array of internship openings.';
+    }
+    for (let i = 0; i < openingsRaw.length; i += 1) {
+      const opening = openingsRaw[i];
+      if (opening === null || typeof opening !== 'object' || Array.isArray(opening)) {
+        return `Internship opening ${i + 1} is malformed.`;
+      }
+      const roleMissing = isBlankRequiredField(opening.role);
+      const skillMissing = isBlankRequiredField(opening.skill);
+      if (roleMissing && skillMissing) return `Internship opening ${i + 1}: Role and Skill are required.`;
+      if (roleMissing) return `Internship opening ${i + 1}: Role is required.`;
+      if (skillMissing) return `Internship opening ${i + 1}: Skill is required.`;
+    }
+  }
+
   return null;
 }
 

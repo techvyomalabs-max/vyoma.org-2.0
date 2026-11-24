@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { getJoinUsContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
@@ -52,11 +51,8 @@ export default async function InternshipPage() {
           <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">Current Internship Opportunities</h2>
           {INTERNSHIP_OPENINGS.length === 0 ? (
             <div className="rounded-md border border-[var(--border-subtle)] bg-white px-8 py-10 text-center font-sans text-base leading-normal text-charcoal">
-              No internships open right now. Check back soon, or{' '}
-              <Link href="/join-us/careers" className="font-bold text-vyoma-blue">
-                apply through Careers
-              </Link>
-              .
+              Vyoma welcomes internship applications throughout the year. We encourage interested candidates to
+              apply. Our team will review your application based on suitable opportunities.
             </div>
           ) : (
             <div className="flex flex-col gap-4">

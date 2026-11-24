@@ -138,6 +138,372 @@ test('GET /admin/forms filters by dateFrom/dateTo (inclusive range) on submitted
   assert.ok(!ids.includes(String(outOfRange._id)));
 });
 
+// --- dateToExclusive: the new, display-consistent date-range contract ---
+// (Admin Forms "To Date" QA fix — a bare calendar day must include every
+// submission on that day regardless of time-of-day, which the old
+// dateTo=$lte-on-UTC-midnight behavior did not.)
+
+test('GET /admin/forms: a same-day dateFrom/dateToExclusive window includes morning, afternoon and late-night submissions on that day', async () => {
+  const token = await adminToken('same-day-window');
+  const morning = await FormSubmissionModel.create(submissionFixture({ formKey: 'same-day-window-test' }));
+  const afternoon = await FormSubmissionModel.create(submissionFixture({ formKey: 'same-day-window-test' }));
+  const lateNight = await FormSubmissionModel.create(submissionFixture({ formKey: 'same-day-window-test' }));
+  const prevDay = await FormSubmissionModel.create(submissionFixture({ formKey: 'same-day-window-test' }));
+  const nextDay = await FormSubmissionModel.create(submissionFixture({ formKey: 'same-day-window-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: morning._id }, { $set: { submittedAt: new Date('2026-06-15T00:00:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: afternoon._id }, { $set: { submittedAt: new Date('2026-06-15T13:45:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: lateNight._id }, { $set: { submittedAt: new Date('2026-06-15T23:59:59.999Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: prevDay._id }, { $set: { submittedAt: new Date('2026-06-14T23:59:59.999Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: nextDay._id }, { $set: { submittedAt: new Date('2026-06-16T00:00:00.000Z') } });
+
+  const { res, body } = await listSubmissions(
+    token,
+    '?formKey=same-day-window-test&dateFrom=2026-06-15T00:00:00.000Z&dateToExclusive=2026-06-16T00:00:00.000Z'
+  );
+  assert.equal(res.status, 200);
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(morning._id)));
+  assert.ok(ids.includes(String(afternoon._id)));
+  assert.ok(ids.includes(String(lateNight._id)), 'the final millisecond before the exclusive boundary must be included');
+  assert.ok(!ids.includes(String(prevDay._id)));
+  assert.ok(!ids.includes(String(nextDay._id)), 'the exact exclusive boundary instant itself must be excluded');
+});
+
+test('GET /admin/forms: dateToExclusive excludes a submission at the exact boundary instant', async () => {
+  const token = await adminToken('exclusive-boundary');
+  const atBoundary = await FormSubmissionModel.create(submissionFixture({ formKey: 'exclusive-boundary-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: atBoundary._id }, { $set: { submittedAt: new Date('2026-06-16T00:00:00.000Z') } });
+
+  const { body } = await listSubmissions(token, '?formKey=exclusive-boundary-test&dateToExclusive=2026-06-16T00:00:00.000Z');
+  assert.ok(!body.data.map((s) => s._id).includes(String(atBoundary._id)));
+});
+
+test('GET /admin/forms: dateFrom alone (no upper bound) returns everything from that instant onward', async () => {
+  const token = await adminToken('from-only');
+  const inRange = await FormSubmissionModel.create(submissionFixture({ formKey: 'from-only-test' }));
+  const before = await FormSubmissionModel.create(submissionFixture({ formKey: 'from-only-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: inRange._id }, { $set: { submittedAt: new Date('2026-06-15T00:00:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: before._id }, { $set: { submittedAt: new Date('2020-01-01T00:00:00.000Z') } });
+
+  const { body } = await listSubmissions(token, '?formKey=from-only-test&dateFrom=2026-06-15T00:00:00.000Z');
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(inRange._id)));
+  assert.ok(!ids.includes(String(before._id)));
+});
+
+test('GET /admin/forms: dateToExclusive alone (no lower bound) returns everything before that instant', async () => {
+  const token = await adminToken('to-exclusive-only');
+  const inRange = await FormSubmissionModel.create(submissionFixture({ formKey: 'to-exclusive-only-test' }));
+  const after = await FormSubmissionModel.create(submissionFixture({ formKey: 'to-exclusive-only-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: inRange._id }, { $set: { submittedAt: new Date('2020-01-01T00:00:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: after._id }, { $set: { submittedAt: new Date('2026-06-16T00:00:00.000Z') } });
+
+  const { body } = await listSubmissions(token, '?formKey=to-exclusive-only-test&dateToExclusive=2026-06-16T00:00:00.000Z');
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(inRange._id)));
+  assert.ok(!ids.includes(String(after._id)));
+});
+
+test('GET /admin/forms: a legacy bare-date dateTo (e.g. "2026-06-15") is corrected to include the ENTIRE UTC calendar day, not just its first instant', async () => {
+  const token = await adminToken('legacy-date-only-dateto');
+  const lateInDay = await FormSubmissionModel.create(submissionFixture({ formKey: 'legacy-date-only-test' }));
+  const nextDay = await FormSubmissionModel.create(submissionFixture({ formKey: 'legacy-date-only-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: lateInDay._id }, { $set: { submittedAt: new Date('2026-06-15T23:59:59.999Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: nextDay._id }, { $set: { submittedAt: new Date('2026-06-16T00:00:00.000Z') } });
+
+  const { body } = await listSubmissions(token, '?formKey=legacy-date-only-test&dateTo=2026-06-15');
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(lateInDay._id)), 'this was the original bug: a late-in-day submission on the selected To Date was wrongly excluded');
+  assert.ok(!ids.includes(String(nextDay._id)));
+});
+
+test('GET /admin/forms: a legacy full ISO date-time dateTo keeps its exact prior $lte (inclusive) semantics unchanged', async () => {
+  const token = await adminToken('legacy-datetime-dateto');
+  const atInstant = await FormSubmissionModel.create(submissionFixture({ formKey: 'legacy-datetime-test' }));
+  const justAfter = await FormSubmissionModel.create(submissionFixture({ formKey: 'legacy-datetime-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: atInstant._id }, { $set: { submittedAt: new Date('2026-06-15T12:00:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: justAfter._id }, { $set: { submittedAt: new Date('2026-06-15T12:00:00.001Z') } });
+
+  const { body } = await listSubmissions(token, '?formKey=legacy-datetime-test&dateTo=2026-06-15T12:00:00.000Z');
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(atInstant._id)), 'a full ISO date-time dateTo must still be inclusive ($lte), exactly as before');
+  assert.ok(!ids.includes(String(justAfter._id)));
+});
+
+test('GET /admin/forms: a reversed range (dateFrom after the effective upper bound) returns zero results via plain Mongo range semantics, with no special rejection', async () => {
+  const token = await adminToken('reversed-range');
+  await FormSubmissionModel.create(submissionFixture({ formKey: 'reversed-range-test' }));
+
+  const { res, body } = await listSubmissions(
+    token,
+    '?formKey=reversed-range-test&dateFrom=2026-06-20T00:00:00.000Z&dateToExclusive=2026-06-15T00:00:00.000Z'
+  );
+  assert.equal(res.status, 200, 'a reversed range is not rejected as an error -- it is valid input that simply matches nothing');
+  assert.equal(body.data.length, 0);
+  assert.equal(body.meta.total, 0);
+});
+
+test('GET /admin/forms rejects dateTo and dateToExclusive supplied together with 422 (ambiguous conflicting upper bound)', async () => {
+  const token = await adminToken('conflicting-upper-bound');
+  const { res, body } = await listSubmissions(
+    token,
+    '?dateTo=2026-06-15&dateToExclusive=2026-06-16T00:00:00.000Z'
+  );
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms rejects an impossible calendar date dateFrom (e.g. "2026-02-30") with 422, not a silent JS Date rollover into March', async () => {
+  const token = await adminToken('impossible-datefrom');
+  const { res, body } = await listSubmissions(token, '?dateFrom=2026-02-30');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms rejects an impossible calendar date dateTo (e.g. "2026-02-30") with 422', async () => {
+  const token = await adminToken('impossible-dateto');
+  const { res, body } = await listSubmissions(token, '?dateTo=2026-02-30');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms accepts a valid leap-day dateFrom ("2028-02-29") without error', async () => {
+  const token = await adminToken('leap-day-datefrom');
+  const { res } = await listSubmissions(token, '?dateFrom=2028-02-29');
+  assert.equal(res.status, 200);
+});
+
+test('GET /admin/forms rejects an invalid dateToExclusive with 422', async () => {
+  const token = await adminToken('bad-date-to-exclusive');
+  const { res, body } = await listSubmissions(token, '?dateToExclusive=not-a-date');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+// --- Correction 1/2: strict calendar/time/offset validation, applied to
+// dateFrom, legacy dateTo AND dateToExclusive, and the explicit-timezone
+// requirement on dateToExclusive only ---------------------------------
+
+test('GET /admin/forms rejects an impossible calendar date in dateToExclusive (e.g. "2026-02-30T00:00:00.000Z") with 422, not a silent JS Date rollover into March', async () => {
+  const token = await adminToken('impossible-datetoexclusive');
+  const { res, body } = await listSubmissions(token, '?dateToExclusive=2026-02-30T00:00:00.000Z');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms rejects April 31st (a month with only 30 days) in all three date parameters with 422', async () => {
+  const fromResult = await listSubmissions(await adminToken('apr31-datefrom'), '?dateFrom=2026-04-31');
+  assert.equal(fromResult.res.status, 422);
+
+  const toResult = await listSubmissions(await adminToken('apr31-dateto'), '?dateTo=2026-04-31');
+  assert.equal(toResult.res.status, 422);
+
+  const toExclusiveResult = await listSubmissions(await adminToken('apr31-datetoexclusive'), '?dateToExclusive=2026-04-31T00:00:00.000Z');
+  assert.equal(toExclusiveResult.res.status, 422);
+});
+
+test('GET /admin/forms rejects February 29th in a non-leap year (2026) in all three date parameters with 422', async () => {
+  const fromResult = await listSubmissions(await adminToken('feb29-nonleap-datefrom'), '?dateFrom=2026-02-29');
+  assert.equal(fromResult.res.status, 422);
+
+  const toResult = await listSubmissions(await adminToken('feb29-nonleap-dateto'), '?dateTo=2026-02-29');
+  assert.equal(toResult.res.status, 422);
+
+  const toExclusiveResult = await listSubmissions(await adminToken('feb29-nonleap-datetoexclusive'), '?dateToExclusive=2026-02-29T00:00:00.000Z');
+  assert.equal(toExclusiveResult.res.status, 422);
+});
+
+test('GET /admin/forms accepts February 29th in a genuine leap year (2028) in all three date parameters', async () => {
+  const fromResult = await listSubmissions(await adminToken('feb29-leap-datefrom'), '?dateFrom=2028-02-29');
+  assert.equal(fromResult.res.status, 200);
+
+  const toResult = await listSubmissions(await adminToken('feb29-leap-dateto'), '?dateTo=2028-02-29');
+  assert.equal(toResult.res.status, 200);
+
+  const toExclusiveResult = await listSubmissions(await adminToken('feb29-leap-datetoexclusive'), '?dateToExclusive=2028-02-29T00:00:00.000Z');
+  assert.equal(toExclusiveResult.res.status, 200);
+});
+
+test('GET /admin/forms rejects invalid month/day/time/offset components in a full ISO date-time dateFrom with 422', async () => {
+  const invalidMonth = await listSubmissions(await adminToken('invalid-month'), '?dateFrom=2026-13-01T00:00:00.000Z');
+  assert.equal(invalidMonth.res.status, 422);
+
+  const invalidDay = await listSubmissions(await adminToken('invalid-day'), '?dateFrom=2026-06-32T00:00:00.000Z');
+  assert.equal(invalidDay.res.status, 422);
+
+  const invalidHour = await listSubmissions(await adminToken('invalid-hour'), '?dateFrom=2026-06-15T25:00:00.000Z');
+  assert.equal(invalidHour.res.status, 422);
+
+  const invalidMinute = await listSubmissions(await adminToken('invalid-minute'), '?dateFrom=2026-06-15T12:61:00.000Z');
+  assert.equal(invalidMinute.res.status, 422);
+
+  const invalidSecond = await listSubmissions(await adminToken('invalid-second'), '?dateFrom=2026-06-15T12:00:61.000Z');
+  assert.equal(invalidSecond.res.status, 422);
+
+  // '+' is percent-encoded as %2B -- an unescaped '+' in a query string is
+  // conventionally decoded back to a space by Express's query parser, which
+  // would make these exercise a generic regex-mismatch instead of the
+  // intended offset-range check (hour > 23 / minute > 59 in isValidOffset).
+  const invalidOffset = await listSubmissions(await adminToken('invalid-offset'), '?dateFrom=2026-06-15T12:00:00%2B25:00');
+  assert.equal(invalidOffset.res.status, 422);
+
+  const malformedOffset = await listSubmissions(await adminToken('malformed-offset'), '?dateFrom=2026-06-15T12:00:00%2B99:99');
+  assert.equal(malformedOffset.res.status, 422);
+});
+
+test('GET /admin/forms rejects a bare "YYYY-MM-DD" dateToExclusive with 422 -- it must be a complete date-time, never a date-only value', async () => {
+  const token = await adminToken('bare-date-datetoexclusive');
+  const { res, body } = await listSubmissions(token, '?dateToExclusive=2026-06-16');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms rejects a timezone-less (no Z, no offset) dateToExclusive with 422 -- it must be unambiguous', async () => {
+  const token = await adminToken('tz-less-datetoexclusive');
+  const { res, body } = await listSubmissions(token, '?dateToExclusive=2026-06-16T00:00:00.000');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms accepts a dateToExclusive with an explicit numeric offset (not just Z), and applies it correctly as the real UTC instant', async () => {
+  const token = await adminToken('offset-datetoexclusive');
+  // 2026-06-16T05:30:00+05:30 is the exact same instant as 2026-06-16T00:00:00Z.
+  const atThatInstant = await FormSubmissionModel.create(submissionFixture({ formKey: 'offset-datetoexclusive-test' }));
+  const justAfter = await FormSubmissionModel.create(submissionFixture({ formKey: 'offset-datetoexclusive-test' }));
+  await FormSubmissionModel.collection.updateOne({ _id: atThatInstant._id }, { $set: { submittedAt: new Date('2026-06-15T23:59:59.999Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: justAfter._id }, { $set: { submittedAt: new Date('2026-06-16T00:00:00.000Z') } });
+
+  const { res, body } = await listSubmissions(token, '?formKey=offset-datetoexclusive-test&dateToExclusive=2026-06-16T05:30:00%2B05:30');
+  assert.equal(res.status, 200);
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(atThatInstant._id)));
+  assert.ok(!ids.includes(String(justAfter._id)), 'the +05:30 offset must be correctly applied, resolving to the same instant as 2026-06-16T00:00:00Z');
+});
+
+test('GET /admin/forms: legacy dateFrom/dateTo full ISO date-time values with NO offset are still accepted (no new mandatory timezone requirement on legacy parameters)', async () => {
+  const fromResult = await listSubmissions(await adminToken('legacy-tz-less-datefrom'), '?dateFrom=2026-06-15T00:00:00.000');
+  assert.equal(fromResult.res.status, 200, 'dateFrom must not newly require an explicit offset -- only dateToExclusive does');
+
+  const toResult = await listSubmissions(await adminToken('legacy-tz-less-dateto'), '?dateTo=2026-06-15T23:59:59.999');
+  assert.equal(toResult.res.status, 200, 'legacy dateTo must not newly require an explicit offset either');
+});
+
+test('GET /admin/forms: a 4-digit year in 0000-0099 (e.g. "0026") is accepted literally, never silently reinterpreted as 1900-1999', async () => {
+  const token = await adminToken('year-0026');
+  const { res } = await listSubmissions(token, '?dateFrom=0026-06-15');
+  assert.equal(res.status, 200, 'year 26 must be accepted on its own terms, not rejected due to a false 1926 round-trip mismatch');
+});
+
+test('GET /admin/forms: year 0000 correctly follows the proleptic Gregorian leap-year rule (0000 is a leap year, since 0 % 400 === 0) -- February 29th is valid', async () => {
+  const token = await adminToken('year-0000-leap');
+  const { res } = await listSubmissions(token, '?dateFrom=0000-02-29');
+  assert.equal(res.status, 200);
+});
+
+test('GET /admin/forms: year 0001 is correctly NOT a leap year -- February 29th is rejected with 422, confirming leap-year arithmetic is correct even for very small years (independent of the 1900-shift quirk)', async () => {
+  const token = await adminToken('year-0001-nonleap');
+  const { res, body } = await listSubmissions(token, '?dateFrom=0001-02-29');
+  assert.equal(res.status, 422);
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+// --- Finding 1: maximum supported year boundary (legacy bare-date dateTo's
+// computed "following day" must never silently become an Invalid Date) ---
+
+test('GET /admin/forms: legacy bare-date dateTo="9999-12-30" (one day before the maximum boundary) is accepted -- its following day, 9999-12-31, is still a representable 4-digit year', async () => {
+  const token = await adminToken('year-9999-12-30');
+  const { res } = await listSubmissions(token, '?dateTo=9999-12-30');
+  assert.equal(res.status, 200, 'this is an ordinary, fully-supported date -- no unnecessary blanket cutoff before the real boundary');
+});
+
+test('GET /admin/forms: legacy bare-date dateTo="9999-12-31" (the exact maximum boundary) is rejected with a clean 422, never a silent Invalid Date passed to MongoDB', async () => {
+  const token = await adminToken('year-9999-12-31');
+  const { res, body } = await listSubmissions(token, '?dateTo=9999-12-31');
+  assert.equal(res.status, 422, 'its "following day" would require a 5-digit year (10000), which this feature does not support');
+  assert.equal(body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms: dateFrom="9999-12-31" (the maximum representable year itself, no day-after computation involved) is still accepted -- the boundary restriction applies only to dateTo\'s computed next-day rollover', async () => {
+  const token = await adminToken('year-9999-datefrom');
+  const { res } = await listSubmissions(token, '?dateFrom=9999-12-31');
+  assert.equal(res.status, 200);
+});
+
+// --- Finding 2: strict ISO-only date acceptance is an approved, intentional
+// contract narrowing relative to the true original implementation (which
+// accepted any string `new Date()` could parse, with no calendar
+// validation at all) -----------------------------------------------------
+
+test('GET /admin/forms: a non-ISO date format (MM/DD/YYYY) is rejected with 422 for dateFrom, dateTo and dateToExclusive -- intentional, approved contract narrowing (Finding 2)', async () => {
+  const fromResult = await listSubmissions(await adminToken('nonISO-slash-datefrom'), '?dateFrom=06/15/2026');
+  assert.equal(fromResult.res.status, 422);
+
+  const toResult = await listSubmissions(await adminToken('nonISO-slash-dateto'), '?dateTo=06/15/2026');
+  assert.equal(toResult.res.status, 422);
+
+  const toExclusiveResult = await listSubmissions(await adminToken('nonISO-slash-datetoexclusive'), '?dateToExclusive=06%2F15%2F2026');
+  assert.equal(toExclusiveResult.res.status, 422);
+});
+
+test('GET /admin/forms: an RFC 2822 date string is rejected with 422 for dateFrom -- intentional, approved contract narrowing (Finding 2)', async () => {
+  const token = await adminToken('nonISO-rfc2822');
+  const { res } = await listSubmissions(token, '?dateFrom=Mon%2C%2015%20Jun%202026%2012%3A00%3A00%20GMT');
+  assert.equal(res.status, 422);
+});
+
+test('GET /admin/forms: supported ISO formats continue to be accepted -- bare date, full Z timestamp, and (legacy only) an offset-less timestamp', async () => {
+  const bareDate = await listSubmissions(await adminToken('supported-bare-date'), '?dateFrom=2026-06-15');
+  assert.equal(bareDate.res.status, 200);
+
+  const fullZ = await listSubmissions(await adminToken('supported-full-z'), '?dateFrom=2026-06-15T12:00:00.000Z');
+  assert.equal(fullZ.res.status, 200);
+
+  const legacyOffsetLess = await listSubmissions(await adminToken('supported-legacy-offsetless'), '?dateTo=2026-06-15T23:59:59.999');
+  assert.equal(legacyOffsetLess.res.status, 200);
+});
+
+test('GET /admin/forms rejects an operator-shaped dateFrom/dateTo/dateToExclusive query parameter (NoSQL injection attempt) with 422', async () => {
+  const token = await adminToken('date-injection');
+  const fromInjection = await listSubmissions(token, '?dateFrom[$ne]=null');
+  assert.equal(fromInjection.res.status, 422);
+  assert.equal(fromInjection.body.code, 'VALIDATION_ERROR');
+
+  const toInjection = await listSubmissions(token, '?dateTo[$gt]=');
+  assert.equal(toInjection.res.status, 422);
+  assert.equal(toInjection.body.code, 'VALIDATION_ERROR');
+
+  const toExclusiveInjection = await listSubmissions(token, '?dateToExclusive[$gt]=');
+  assert.equal(toExclusiveInjection.res.status, 422);
+  assert.equal(toExclusiveInjection.body.code, 'VALIDATION_ERROR');
+});
+
+test('GET /admin/forms: dateToExclusive combined with category/formKey/status filters narrows results AND keeps an accurate total count', async () => {
+  const token = await adminToken('combined-date-exclusive');
+  const matching = await FormSubmissionModel.create(
+    submissionFixture({ formKey: 'combined-date-exclusive-test', status: 'new' })
+  );
+  const wrongStatus = await FormSubmissionModel.create(
+    submissionFixture({ formKey: 'combined-date-exclusive-test', status: 'handled' })
+  );
+  const outOfWindow = await FormSubmissionModel.create(
+    submissionFixture({ formKey: 'combined-date-exclusive-test', status: 'new' })
+  );
+  await FormSubmissionModel.collection.updateOne({ _id: matching._id }, { $set: { submittedAt: new Date('2026-06-15T10:00:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: wrongStatus._id }, { $set: { submittedAt: new Date('2026-06-15T10:00:00.000Z') } });
+  await FormSubmissionModel.collection.updateOne({ _id: outOfWindow._id }, { $set: { submittedAt: new Date('2026-06-16T00:00:00.000Z') } });
+
+  const { res, body } = await listSubmissions(
+    token,
+    '?formKey=combined-date-exclusive-test&status=new&dateFrom=2026-06-15T00:00:00.000Z&dateToExclusive=2026-06-16T00:00:00.000Z'
+  );
+  assert.equal(res.status, 200);
+  const ids = body.data.map((s) => s._id);
+  assert.ok(ids.includes(String(matching._id)));
+  assert.ok(!ids.includes(String(wrongStatus._id)));
+  assert.ok(!ids.includes(String(outOfWindow._id)));
+  assert.equal(body.meta.total, 1);
+});
+
 test('GET /admin/forms supports pagination', async () => {
   const token = await adminToken('paginate');
   for (let i = 0; i < 3; i += 1) await FormSubmissionModel.create(submissionFixture({ formKey: 'paginate-test' }));

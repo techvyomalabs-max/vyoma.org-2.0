@@ -84,10 +84,6 @@ export function ResourcesTable({ categories, rows }) {
           </tbody>
         </table>
       </div>
-
-      <p className="mt-4 font-sans text-[13px] text-charcoal/70">
-        Showing {visible.length} of {filtered.length} entries.
-      </p>
     </div>
   );
 }

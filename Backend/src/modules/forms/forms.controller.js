@@ -12,6 +12,58 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // name the UI itself would reject.
 const NAME_RE = /^\p{L}[\p{L}\s'’-]*$/u;
 const MAX_FIELD_LENGTH = 5000;
+
+// QA Bug 18 — Mobile Number (CSR Partner Enquiry only). Mirrors the
+// frontend's identical check (CSRProjectsBoard.jsx's isValidMobileNumber)
+// so the two never drift. Accepts digits with common international
+// formatting and nothing else: an optional SINGLE leading + immediately
+// followed by a digit, no + or hyphen leading/trailing the value, balanced
+// non-nested parentheses that each contain at least one digit (never
+// empty or separator-only), and (after stripping all formatting) between
+// 7 and 15 digits -- an application-specific basic format rule, not an
+// official universal E.164 minimum, chosen because Vyoma serves
+// international donors/partners and must not assume one country's fixed
+// length. This is a format check only; it does not claim the number is
+// assigned, reachable, or valid under any specific national numbering
+// plan. Checks typeof before calling any string method, so a
+// missing/null/non-string value (number, array, object) is rejected
+// safely, never thrown on.
+export function isValidMobileNumber(raw) {
+  if (typeof raw !== 'string') return false;
+  // Strips only surrounding ORDINARY spaces (ASCII U+0020) -- a tab,
+  // newline, or any other whitespace character is never stripped, even
+  // at the very start/end, so it still fails the character-class check
+  // below like any other unsupported character. (The separate "is this
+  // empty/whitespace-only" required-field check in validate() uses a
+  // normal .trim() and runs before this function is ever called, so an
+  // all-whitespace value never reaches here in the first place.)
+  const value = raw.replace(/^ +| +$/g, '');
+  if (!value) return false;
+  if (value.startsWith('-') || value.endsWith('-')) return false;
+  if (!/^\+?[0-9()\- ]*$/.test(value)) return false;
+  if (value[0] === '+' && !/[0-9]/.test(value[1] || '')) return false;
+
+  let depth = 0;
+  let parenHasDigit = false;
+  for (const ch of value) {
+    if (ch === '(') {
+      depth += 1;
+      if (depth > 1) return false;
+      parenHasDigit = false;
+    } else if (ch === ')') {
+      if (depth === 0) return false;
+      if (!parenHasDigit) return false;
+      depth -= 1;
+    } else if (depth === 1 && /[0-9]/.test(ch)) {
+      parenHasDigit = true;
+    }
+  }
+  if (depth !== 0) return false;
+
+  const digitCount = (value.match(/[0-9]/g) || []).length;
+  return digitCount >= 7 && digitCount <= 15;
+}
+
 // Mirrors the frontend's MESSAGE_MAX_LENGTH/COMMENT_MAX_LENGTH (ContactForm.jsx,
 // ContactPageForm.jsx, CSRProjectsBoard.jsx) — the message/comment textareas
 // specifically are capped tighter than the generic per-field 5000 guard above.
@@ -49,7 +101,7 @@ export function buildNotificationEmailHtml(values) {
 // email sign-up, not a name+message contact form — requiring name/message
 // for it would reject every real submission. Every other formKey keeps
 // the original, unchanged requirements.
-function validate(values, formKey) {
+export function validate(values, formKey) {
   const fieldErrors = {};
   if (typeof values !== 'object' || values === null) {
     return { name: 'Invalid submission.' };
@@ -77,6 +129,16 @@ function validate(values, formKey) {
       fieldErrors.message = 'Message is required.';
     } else if (values.message.length > MESSAGE_MAX_LENGTH) {
       fieldErrors.message = `Message must be ${MESSAGE_MAX_LENGTH} characters or fewer.`;
+    }
+  }
+  // QA Bug 18 — only the CSR Partner Enquiry form (CSRProjectsBoard.jsx)
+  // collects a mobile number; every other formKey's requirements are
+  // unchanged by this check.
+  if (formKey === 'csr-enquiry') {
+    if (typeof values.mobile !== 'string' || !values.mobile.trim()) {
+      fieldErrors.mobile = 'Mobile number is required.';
+    } else if (!isValidMobileNumber(values.mobile)) {
+      fieldErrors.mobile = 'Enter a valid mobile number.';
     }
   }
   return Object.keys(fieldErrors).length ? fieldErrors : null;

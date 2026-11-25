@@ -67,15 +67,19 @@ test('the outer <footer> no longer carries the flex/flex-col/items-end/gap-5 lay
   assert.doesNotMatch(jsx, /<footer className="[^"]*flex[^"]*">/, 'the outer <footer> tag itself must not be a flex container anymore');
 });
 
-// --- New inner wrapper: mx-auto + max-w-[1100px], contains both blocks --
+// --- New inner wrapper: mx-auto + max-w-[1600px], contains both blocks --
+// (QA Bug 14 reopened: widened from 1100px -- the standard page-content
+// width -- because this footer's own content is denser than a typical page
+// section and needs more room to sit on one row at desktop widths. 1600px
+// is an approved initial value, not a browser-verified measurement.)
 
-test('a new inner wrapper uses mx-auto and max-w-[1100px], carrying the flex-column layout the footer tag used to have', () => {
-  must('<div className="mx-auto flex max-w-[1100px] flex-col items-end gap-5">');
+test('a new inner wrapper uses mx-auto and max-w-[1600px], carrying the flex-column layout the footer tag used to have', () => {
+  must('<div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">');
 });
 
 test('the inner wrapper opens AFTER <footer> opens and BEFORE the platform-links row opens (real nesting, not just co-presence)', () => {
   const footerOpen = must('<footer className="bg-sky-mist px-8 py-7">');
-  const wrapperOpen = must('<div className="mx-auto flex max-w-[1100px] flex-col items-end gap-5">');
+  const wrapperOpen = must('<div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">');
   const rowOpen = must('<div className="flex w-full flex-wrap items-start justify-between gap-6">');
   assert.ok(footerOpen < wrapperOpen, '<footer> must open before the inner wrapper');
   assert.ok(wrapperOpen < rowOpen, 'the inner wrapper must open before the platform-links row');
@@ -85,7 +89,7 @@ test('the inner wrapper opens AFTER <footer> opens and BEFORE the platform-links
 // SAME wrapper (siblings of each other, both children of the wrapper) ----
 
 test('the platform-links row and the copyright block are both inside the new wrapper, as siblings, in their original order', () => {
-  const wrapperOpen = must('<div className="mx-auto flex max-w-[1100px] flex-col items-end gap-5">');
+  const wrapperOpen = must('<div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">');
   const rowOpen = must('<div className="flex w-full flex-wrap items-start justify-between gap-6">');
   const copyrightOpen = must('<div className="w-full self-start break-words font-sans text-sm text-charcoal">');
 
@@ -105,7 +109,7 @@ test('the copyright block is a sibling of the platform-links row (both direct ch
   // depth as the platform-links row, one level inside the wrapper -- not
   // one level deeper (which would mean it got nested inside the row by
   // mistake).
-  const wrapperOpenTag = '<div className="mx-auto flex max-w-[1100px] flex-col items-end gap-5">';
+  const wrapperOpenTag = '<div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">';
   const wrapperOpen = must(wrapperOpenTag);
   const rowOpenTag = '<div className="flex w-full flex-wrap items-start justify-between gap-6">';
   const rowOpen = must(rowOpenTag);
@@ -184,7 +188,27 @@ test('SOCIAL_PLATFORMS, SOCIAL_ICON_PATHS and the Settings-backed socialLinks fe
 test('existing flex-wrap responsive behavior is preserved on both the platform-links row and its two inner groups', () => {
   assert.match(jsx, /<div className="flex w-full flex-wrap items-start justify-between gap-6">/);
   assert.match(jsx, /<div className="flex flex-wrap gap-x-5 gap-y-2">/);
-  assert.match(jsx, /<div className="flex flex-wrap items-center justify-end gap-5">/);
+  assert.match(jsx, /<div className="ml-auto flex flex-wrap items-center justify-end gap-5">/);
+});
+
+// --- ml-auto on the right-hand group (QA Bug 14 reopened): keeps it
+// right-aligned even when flex-wrap pushes it onto its own second line,
+// where a lone flex item under justify-between would otherwise fall back
+// to flex-start (left-aligned) per the flexbox spec --------------------
+
+test('the right-hand group (footer links + social icons) carries ml-auto, preserving its existing justify-end and all its other classes unchanged', () => {
+  must('<div className="ml-auto flex flex-wrap items-center justify-end gap-5">');
+});
+
+test('ml-auto is on the right-hand group ONLY -- the platform-links (left) group and the row/wrapper are untouched', () => {
+  assert.doesNotMatch(jsx, /<div className="ml-auto flex flex-wrap gap-x-5 gap-y-2">/, 'ml-auto must not have been added to the left-hand platform-links group');
+  assert.doesNotMatch(jsx, /<div className="ml-auto flex w-full flex-wrap items-start justify-between gap-6">/, 'ml-auto must not have been added to the row itself');
+  assert.doesNotMatch(jsx, /<div className="ml-auto mx-auto flex max-w-\[1600px\]/, 'ml-auto must not have been added to the outer wrapper');
+});
+
+test('the row\'s existing justify-between and the right-hand group\'s own justify-end are both still present, unremoved, alongside the new ml-auto', () => {
+  assert.match(jsx, /<div className="flex w-full flex-wrap items-start justify-between gap-6">/, 'justify-between must still be present on the row (preserved, now redundant-but-harmless once ml-auto supplies right alignment)');
+  assert.match(jsx, /<div className="ml-auto flex flex-wrap items-center justify-end gap-5">/, 'justify-end must still be present on the right-hand group itself');
 });
 
 test('no viewport-specific breakpoint prefix (sm:/md:/lg:/xl:/2xl:) or hardcoded margin/left/right utility was introduced anywhere in this file', () => {
@@ -194,7 +218,8 @@ test('no viewport-specific breakpoint prefix (sm:/md:/lg:/xl:/2xl:) or hardcoded
 
 test('the component is still a single mx-auto max-w wrapper, not multiple competing width constraints that could cause horizontal overflow', () => {
   // Matches only an actual className attribute's max-w-[...], not the
-  // explanatory code comment above <footer> that also mentions max-w-[1100px].
+  // explanatory code comments elsewhere in the file that also mention
+  // max-w-[1600px]/max-w-[1100px] in prose.
   const maxWOccurrences = (source.match(/className="[^"]*max-w-\[/g) || []).length;
   assert.equal(maxWOccurrences, 1, 'expected exactly one max-w-[...] class in this file -- the new wrapper -- not several that could conflict');
 });

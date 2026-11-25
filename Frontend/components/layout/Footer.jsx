@@ -59,20 +59,24 @@ export async function Footer() {
   }
 
   return (
-    // QA Bug 14: the outer <footer> keeps the full-width bg-sky-mist
-    // background and existing px-8/py-7 edge padding (matching the nav bar
-    // above it) -- but its actual content is now centered at max-w-[1100px]
-    // via the inner wrapper below, the same outer-px-8/inner-mx-auto-max-w
-    // convention every page-content section already uses (see e.g.
-    // app/(public)/page.js's own sections, or PageHero.jsx). Previously the
-    // content had no width cap at all, so on a wide viewport it stretched
-    // to the true browser edge while the page's own content stayed capped
-    // and centered -- visibly misaligned. flex/flex-col/items-end/gap-5
-    // (previously on <footer> itself) move onto this new wrapper, since
-    // it's now the one laying out the two content blocks below it; every
-    // inner element's own classes are unchanged.
+    // QA Bug 14 (reopened): the outer <footer> keeps the full-width
+    // bg-sky-mist background and existing px-8/py-7 edge padding -- its
+    // actual content is centered via the inner mx-auto wrapper below, the
+    // same outer-px-8/inner-mx-auto-max-w shape every page-content section
+    // uses, but at a WIDER cap (max-w-[1600px], not the standard 1100px
+    // page-content width) because this footer's own content -- a left
+    // group (label + 4 platform links) AND a right group (6 footer links +
+    // up to 5 social icons) -- is denser than a typical page section and
+    // needs more horizontal room to actually sit on one row at desktop
+    // widths, which 1100px did not provide. 1600px is an approved initial
+    // value, not a measurement verified against the reference design or a
+    // real browser -- it is not guaranteed to keep both groups on one row
+    // at every desktop viewport width. flex/flex-col/items-end/gap-5
+    // (previously on <footer> itself) remain on this wrapper, laying out
+    // the two content blocks below it; every inner element's own classes
+    // are otherwise unchanged.
     <footer className="bg-sky-mist px-8 py-7">
-      <div className="mx-auto flex max-w-[1100px] flex-col items-end gap-5">
+      <div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">
         <div className="flex w-full flex-wrap items-start justify-between gap-6">
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {/* Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/60 measured 3.7:1
@@ -85,7 +89,21 @@ export async function Footer() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center justify-end gap-5">
+          {/* ml-auto (QA Bug 14 reopened): when the row's combined content
+              is too wide for one line, flex-wrap pushes this whole group
+              onto its own second line -- as the line's ONLY flex item,
+              `justify-between` on the parent row has nothing to distribute
+              space against on that line, so per the flexbox spec a lone
+              item under space-between falls back to flex-start (left-
+              aligned), not right-aligned. ml-auto fixes this directly: it
+              claims all remaining free space on ITS OWN line for its own
+              left margin, pushing the group flush right whether it's
+              sharing the row with the platform-links group or alone on a
+              wrapped second line -- `justify-end` (already present, for the
+              icons/links inside this group) and the parent's
+              `justify-between` are both preserved and remain harmless/
+              redundant once this group supplies its own right alignment. */}
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-5">
             {FOOTER_LINKS.map((l) => (
               <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
             ))}

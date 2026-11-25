@@ -1,6 +1,7 @@
 import { getPrivacyContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { pageMetadata } from '@/lib/seo';
+import { stripBlankLegalParagraphs } from '@/lib/stripBlankLegalParagraphs.mjs';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
 // (DNS failure, transient outage) cannot fail `next build` — see
@@ -34,8 +35,14 @@ export default async function PrivacyPage() {
           {/* BODY is sanitized server-side (Backend sanitizeLegalBody.js)
               before it is ever stored — same trust boundary as the blog
               post body field. Migrated verbatim from the WordPress source,
-              including its own numbering/formatting quirks. */}
-          <div className="prose-blog legal-content font-sans text-[17px] leading-normal text-charcoal" dangerouslySetInnerHTML={{ __html: BODY }} />
+              including its own numbering/formatting quirks.
+              QA Bug 15: stripBlankLegalParagraphs is a render-only
+              normalization -- it never touches the stored BODY value or
+              the Content document itself, only the copy rendered here. */}
+          <div
+            className="prose-blog legal-content font-sans text-[17px] leading-normal text-charcoal"
+            dangerouslySetInnerHTML={{ __html: stripBlankLegalParagraphs(BODY) }}
+          />
         </div>
       </section>
     </div>

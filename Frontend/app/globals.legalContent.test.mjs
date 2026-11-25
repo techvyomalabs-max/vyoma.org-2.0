@@ -34,17 +34,27 @@ function ruleBodyFor(selector, source) {
 // --- Both pages apply the identical legal-content class, alongside the
 // existing prose-blog class (never replacing it) --------------------------
 
-test('Privacy applies legal-content alongside the existing prose-blog class, with every other existing wrapper class unchanged', () => {
+// QA Bug 15 (second reopening): the wrapper div's class attribute is
+// unchanged, but the rendering line now reads BODY through the approved
+// render-only stripBlankLegalParagraphs() normalization (see
+// Frontend/lib/stripBlankLegalParagraphs.mjs and its own dedicated test
+// file for that function's full coverage) rather than BODY directly --
+// the div itself is also now written across multiple lines rather than
+// one. Both assertions below are updated to match exactly, confirming
+// both pages still use the SAME rendering mechanism (dangerouslySetInnerHTML),
+// the same shared normalization utility, and the same unchanged wrapper
+// classes -- no unrelated rendering or layout change was introduced.
+test('Privacy applies legal-content alongside the existing prose-blog class, with every other existing wrapper class unchanged, and renders BODY through the approved stripBlankLegalParagraphs normalization', () => {
   assert.match(
     privacySource,
-    /<div className="prose-blog legal-content font-sans text-\[17px\] leading-normal text-charcoal" dangerouslySetInnerHTML=\{\{ __html: BODY \}\} \/>/
+    /<div\s*\n\s*className="prose-blog legal-content font-sans text-\[17px\] leading-normal text-charcoal"\s*\n\s*dangerouslySetInnerHTML=\{\{ __html: stripBlankLegalParagraphs\(BODY\) \}\}\s*\n\s*\/>/
   );
 });
 
-test('Terms applies legal-content alongside the existing prose-blog class, with every other existing wrapper class unchanged', () => {
+test('Terms applies legal-content alongside the existing prose-blog class, with every other existing wrapper class unchanged, and renders BODY through the approved stripBlankLegalParagraphs normalization', () => {
   assert.match(
     termsSource,
-    /<div className="prose-blog legal-content font-sans text-\[17px\] leading-normal text-charcoal" dangerouslySetInnerHTML=\{\{ __html: BODY \}\} \/>/
+    /<div\s*\n\s*className="prose-blog legal-content font-sans text-\[17px\] leading-normal text-charcoal"\s*\n\s*dangerouslySetInnerHTML=\{\{ __html: stripBlankLegalParagraphs\(BODY\) \}\}\s*\n\s*\/>/
   );
 });
 
@@ -79,9 +89,13 @@ test('the shared PageHero is used identically on both pages, unchanged', () => {
   assert.match(termsSource, /<PageHero eyebrow="Legal" eyebrowSize="text-\[16px\]" title=\{TITLE\} \/>/);
 });
 
-test('dangerouslySetInnerHTML usage is unchanged on both pages (still the only HTML-rendering mechanism, still fed BODY directly)', () => {
-  assert.match(privacySource, /dangerouslySetInnerHTML=\{\{ __html: BODY \}\}/);
-  assert.match(termsSource, /dangerouslySetInnerHTML=\{\{ __html: BODY \}\}/);
+test('dangerouslySetInnerHTML is still the only HTML-rendering mechanism on both pages, now fed BODY through the approved render-only stripBlankLegalParagraphs normalization rather than directly', () => {
+  assert.match(privacySource, /dangerouslySetInnerHTML=\{\{ __html: stripBlankLegalParagraphs\(BODY\) \}\}/);
+  assert.match(termsSource, /dangerouslySetInnerHTML=\{\{ __html: stripBlankLegalParagraphs\(BODY\) \}\}/);
+  // Confirms both pages import the SAME shared utility -- never a
+  // per-page duplicate -- so they can never drift apart from each other.
+  assert.match(privacySource, /import \{ stripBlankLegalParagraphs \} from '@\/lib\/stripBlankLegalParagraphs\.mjs';/);
+  assert.match(termsSource, /import \{ stripBlankLegalParagraphs \} from '@\/lib\/stripBlankLegalParagraphs\.mjs';/);
 });
 
 // --- Heading typography and spacing -----------------------------------

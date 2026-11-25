@@ -35,7 +35,7 @@ export default async function PrivacyPage() {
               before it is ever stored — same trust boundary as the blog
               post body field. Migrated verbatim from the WordPress source,
               including its own numbering/formatting quirks. */}
-          <div className="prose-blog font-sans text-[17px] leading-normal text-charcoal" dangerouslySetInnerHTML={{ __html: BODY }} />
+          <div className="prose-blog legal-content font-sans text-[17px] leading-normal text-charcoal" dangerouslySetInnerHTML={{ __html: BODY }} />
         </div>
       </section>
     </div>

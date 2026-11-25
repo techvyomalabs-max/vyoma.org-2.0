@@ -195,4 +195,104 @@
     max-width: 100%;
     overflow-x: auto;
   }
+
+  /*
+   * QA Bug 15 — Privacy Policy / Terms & Conditions UI. Applied ALONGSIDE
+   * `.prose-blog` (never replacing it) on exactly two pages: app/(public)/
+   * privacy/page.js and app/(public)/terms/page.js. Scoped entirely under
+   * `.legal-content` so it can never reach the public blog page or either
+   * admin rich-text editor, all of which also use `.prose-blog` alone.
+   *
+   * Restores the heading/paragraph/list typography this site's own global
+   * reset otherwise removes for any legal/blog HTML: `h1, h2, h3, p { margin:
+   * 0 }` (see the @layer base block above) zeroes heading and paragraph
+   * spacing site-wide, and Tailwind's own preflight resets `ol`/`ul` to
+   * `list-style: none` with no padding -- neither is undone by `.prose-blog`
+   * itself (confirmed: it only ever touches text-align/overflow-wrap/table
+   * overflow). Left exactly as they are: the existing 820px container,
+   * 17px/1.6 body text, and `a` link styling (`@layer base` above) -- none
+   * of those needed restoring.
+   *
+   * Uses `list-style: decimal`/`disc` (never a CSS `counter`/`::marker`
+   * override) specifically because real migrated content relies on native
+   * <ol>/<ol start="N"> numbering for its own legal section numbers (e.g.
+   * Terms & Conditions has 24 separate `<ol start="N">` single-item lists,
+   * one per numbered section) -- a generated-counter approach would risk
+   * producing a second, conflicting number alongside each list's own
+   * browser-rendered one. Confirmed (Backend/scripts/seedData/privacy.js,
+   * terms.js): neither page's current stored content contains any genuine
+   * `<h1>`/`<h2>`/`<h3>` tag at all -- most section "headings" are plain
+   * `<p><strong><u>N. Heading text</u></strong></p>` runs, not semantic
+   * headings, so this heading ruleset is a forward-compatible restoration
+   * (correct the moment real heading tags are ever used) rather than
+   * something that visibly changes today's live content; see the
+   * accompanying report for the full analysis. No nested list (an <ol>/<ul>
+   * directly inside an <li>) exists in either page's current content either.
+   */
+  .legal-content :where(h1, h2, h3) {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    color: var(--text-heading);
+  }
+
+  /* Balances the first visible block against the effective-date line
+     above it, rather than leaving an unbalanced 24px gap before the very
+     first heading with nothing from a prior sibling to collapse against. */
+  .legal-content > :where(h1, h2, h3):first-child {
+    margin-top: 0;
+  }
+
+  .legal-content h1 {
+    font-size: 28px;
+    line-height: 1.3;
+  }
+
+  .legal-content h2 {
+    font-size: 24px;
+    line-height: 1.3;
+  }
+
+  .legal-content h3 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .legal-content p {
+    margin-bottom: 16px;
+  }
+
+  .legal-content ol {
+    list-style: decimal;
+  }
+
+  .legal-content ul {
+    list-style: disc;
+  }
+
+  /* Indentation lives on the list itself (so the marker sits inside it,
+     not flush against the page edge); item spacing lives on `li` only --
+     together these avoid the list ALSO carrying its own bottom margin on
+     top of its last item's, which would otherwise double the gap before
+     whatever block follows the list. */
+  .legal-content :where(ol, ul) {
+    margin-bottom: 16px;
+    padding-left: 24px;
+  }
+
+  .legal-content li {
+    margin-bottom: 8px;
+  }
+
+  /* Trims the very last content block's own bottom margin so the space
+     below the legal body (before the section/page ends) doesn't look
+     larger than the rhythm between every other block above it. */
+  .legal-content > :where(h1, h2, h3, p, ol, ul):last-child {
+    margin-bottom: 0;
+  }
+
+  .legal-content li:last-child {
+    margin-bottom: 0;
+  }
 }

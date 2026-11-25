@@ -78,7 +78,7 @@ export async function Footer() {
     <footer className="bg-sky-mist px-8 py-7">
       <div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">
         <div className="flex w-full flex-wrap items-start justify-between gap-6">
-          <div className="flex flex-wrap gap-x-5 gap-y-2">
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
             {/* Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/60 measured 3.7:1
                 against this footer's bg-sky-mist (axe-core, WCAG AA requires
                 4.5:1) -- /70 clears it with margin. This footer is shared

@@ -187,8 +187,26 @@ test('SOCIAL_PLATFORMS, SOCIAL_ICON_PATHS and the Settings-backed socialLinks fe
 
 test('existing flex-wrap responsive behavior is preserved on both the platform-links row and its two inner groups', () => {
   assert.match(jsx, /<div className="flex w-full flex-wrap items-start justify-between gap-6">/);
-  assert.match(jsx, /<div className="flex flex-wrap gap-x-5 gap-y-2">/);
+  assert.match(jsx, /<div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">/);
   assert.match(jsx, /<div className="ml-auto flex flex-wrap items-center justify-end gap-5">/);
+});
+
+// --- items-baseline on the left-hand platform group: the label (text-xs)
+// and platform links (text-base) are both plain text of mismatched line-
+// height, so baseline alignment anchors their text as if flowing inline,
+// fixing the label's default `align-items: stretch` top-anchoring that
+// made it sit visibly higher than the links --------------------------
+
+test('the left-hand platform-links group carries items-baseline, with every other existing class unchanged (gap-x-5 gap-y-2) and no new/removed class', () => {
+  must('<div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">');
+});
+
+test('items-baseline is on the left-hand platform-links group ONLY -- the right-hand group, row and wrapper keep their own existing alignment unchanged', () => {
+  assert.doesNotMatch(jsx, /<div className="ml-auto flex flex-wrap items-baseline justify-end gap-5">/, 'items-baseline must not have replaced items-center on the right-hand group');
+  assert.match(jsx, /<div className="ml-auto flex flex-wrap items-center justify-end gap-5">/, 'the right-hand group must still have items-center, not items-baseline');
+  assert.doesNotMatch(jsx, /<div className="flex w-full flex-wrap items-baseline justify-between gap-6">/, 'items-baseline must not have replaced items-start on the outer row');
+  assert.match(jsx, /<div className="flex w-full flex-wrap items-start justify-between gap-6">/, 'the outer row must still have items-start, not items-baseline');
+  assert.doesNotMatch(jsx, /<div className="mx-auto flex max-w-\[1600px\] items-baseline/, 'items-baseline must not have been added to the outer wrapper');
 });
 
 // --- ml-auto on the right-hand group (QA Bug 14 reopened): keeps it

@@ -59,43 +59,57 @@ export async function Footer() {
   }
 
   return (
-    <footer className="flex flex-col items-end gap-5 bg-sky-mist px-8 py-7">
-      <div className="flex w-full flex-wrap items-start justify-between gap-6">
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {/* Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/60 measured 3.7:1
-              against this footer's bg-sky-mist (axe-core, WCAG AA requires
-              4.5:1) -- /70 clears it with margin. This footer is shared
-              across every page, so this one change covers both findings. */}
-          <span className="mr-1 font-sans text-xs font-bold uppercase tracking-wide text-charcoal/70">Our Platforms</span>
-          {PLATFORM_LINKS.map((l) => (
-            <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-5">
-          {FOOTER_LINKS.map((l) => (
-            <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
-          ))}
-          <div className="ml-2 flex gap-3">
-            {SOCIAL_PLATFORMS.filter((p) => socialLinks[p.slug]).map((p) => (
-              <a
-                key={p.slug}
-                href={socialLinks[p.slug]}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={p.name}
-                className="block h-[18px] w-[18px]"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--color-vyoma-blue)">
-                  <path d={SOCIAL_ICON_PATHS[p.slug]} />
-                </svg>
-              </a>
+    // QA Bug 14: the outer <footer> keeps the full-width bg-sky-mist
+    // background and existing px-8/py-7 edge padding (matching the nav bar
+    // above it) -- but its actual content is now centered at max-w-[1100px]
+    // via the inner wrapper below, the same outer-px-8/inner-mx-auto-max-w
+    // convention every page-content section already uses (see e.g.
+    // app/(public)/page.js's own sections, or PageHero.jsx). Previously the
+    // content had no width cap at all, so on a wide viewport it stretched
+    // to the true browser edge while the page's own content stayed capped
+    // and centered -- visibly misaligned. flex/flex-col/items-end/gap-5
+    // (previously on <footer> itself) move onto this new wrapper, since
+    // it's now the one laying out the two content blocks below it; every
+    // inner element's own classes are unchanged.
+    <footer className="bg-sky-mist px-8 py-7">
+      <div className="mx-auto flex max-w-[1100px] flex-col items-end gap-5">
+        <div className="flex w-full flex-wrap items-start justify-between gap-6">
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {/* Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/60 measured 3.7:1
+                against this footer's bg-sky-mist (axe-core, WCAG AA requires
+                4.5:1) -- /70 clears it with margin. This footer is shared
+                across every page, so this one change covers both findings. */}
+            <span className="mr-1 font-sans text-xs font-bold uppercase tracking-wide text-charcoal/70">Our Platforms</span>
+            {PLATFORM_LINKS.map((l) => (
+              <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
             ))}
           </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-5">
+            {FOOTER_LINKS.map((l) => (
+              <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
+            ))}
+            <div className="ml-2 flex gap-3">
+              {SOCIAL_PLATFORMS.filter((p) => socialLinks[p.slug]).map((p) => (
+                <a
+                  key={p.slug}
+                  href={socialLinks[p.slug]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={p.name}
+                  className="block h-[18px] w-[18px]"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--color-vyoma-blue)">
+                    <path d={SOCIAL_ICON_PATHS[p.slug]} />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="w-full self-start break-words font-sans text-sm text-charcoal">
-        © 2026 Vyoma Linguistic Labs Foundation. All rights reserved.
+        <div className="w-full self-start break-words font-sans text-sm text-charcoal">
+          © 2026 Vyoma Linguistic Labs Foundation. All rights reserved.
+        </div>
       </div>
     </footer>
   );

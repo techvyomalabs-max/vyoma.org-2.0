@@ -24,7 +24,7 @@ test('is a Client Component, kept isolated from the surrounding Server Component
 
 test('reuses TestimonialCard rather than reimplementing card rendering', () => {
   assert.match(source, /import \{ TestimonialCard \} from '\.\/TestimonialCard';/);
-  assert.match(source, /<TestimonialCard key=\{item\.name\} item=\{item\} \/>/);
+  assert.match(source, /<TestimonialCard key=\{item\.id \?\? item\.name\} item=\{item\} \/>/);
 });
 
 test('imports the real pure reveal-logic functions from testimonialLoadMore.mjs, never reimplementing the pagination math inline', () => {
@@ -58,4 +58,10 @@ test('the Load more button renders only when showLoadMore is true, as a real nat
 
 test('the All Testimonials grid keeps the existing responsive column styling unchanged', () => {
   assert.match(source, /gridTemplateColumns: 'repeat\(auto-fit,minmax\(280px,1fr\)\)'/);
+});
+
+// --- QA Bug 19 Stage 5C: stable key, now that real data can share names ---
+
+test('QA Bug 19 Stage 5C: list key prefers the stable id over item.name, so two different real people sharing the same name are never conflated by React', () => {
+  assert.match(source, /key=\{item\.id \?\? item\.name\}/);
 });

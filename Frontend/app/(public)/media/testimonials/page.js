@@ -46,7 +46,11 @@ export default async function TestimonialsPage() {
           <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">Featured</h2>
           <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>
             {activeFeatured.map((item) => (
-              <TestimonialCard key={item.name} item={{ type: 'text', ...item }} featured />
+              // QA Bug 19 Stage 5C: prefers the Stage 5B stable `id` when
+              // present, same reasoning as TestimonialsAllGrid.jsx's
+              // matching key -- falls back to `item.name` for a legacy
+              // entry that has no `id` yet.
+              <TestimonialCard key={item.id ?? item.name} item={{ type: 'text', ...item }} featured />
             ))}
           </div>
         </div>

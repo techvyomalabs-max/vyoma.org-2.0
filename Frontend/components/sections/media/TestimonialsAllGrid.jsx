@@ -24,7 +24,14 @@ export function TestimonialsAllGrid({ items }) {
     <>
       <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
         {visible.map((item) => (
-          <TestimonialCard key={item.name} item={item} />
+          // QA Bug 19 Stage 5C: prefers the Stage 5B stable `id` when
+          // present -- genuine real-world data can have two different
+          // people sharing the same name (e.g. two distinct "Meenakshi"
+          // Endorsal testimonials, confirmed during this migration's own
+          // investigation), which `item.name` alone cannot disambiguate as
+          // a React list key. Falls back to `item.name` only for a legacy
+          // entry that has no `id` yet.
+          <TestimonialCard key={item.id ?? item.name} item={item} />
         ))}
       </div>
       {showLoadMore && (

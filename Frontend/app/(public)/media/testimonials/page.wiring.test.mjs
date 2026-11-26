@@ -48,3 +48,10 @@ test('the All Testimonials section delegates to the isolated TestimonialsAllGrid
 test('the "Submit your testimonial" CTA at the bottom of the page is unchanged', () => {
   assert.match(source, /<ContactCta subject="Testimonial submission">Submit your testimonial<\/ContactCta>/);
 });
+
+// --- QA Bug 19 Stage 5C: stable key for Featured, same reasoning as the
+// All Testimonials grid -----------------------------------------------------
+
+test('QA Bug 19 Stage 5C: the Featured list key prefers the stable id over item.name', () => {
+  assert.match(source, /key=\{item\.id \?\? item\.name\}/);
+});

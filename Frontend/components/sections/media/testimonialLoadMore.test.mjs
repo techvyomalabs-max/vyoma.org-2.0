@@ -224,3 +224,74 @@ test('all entries inactive: the active-filtered array is empty, and this module 
   assert.equal(visibleCount, 0);
   assert.equal(hasMoreTestimonials(active, visibleCount), false);
 });
+
+// --- QA Bug 19 Stage 5C: the approved 88-item migration-scale fixture -----
+// (58 Endorsal text + 2 Endorsal video + 7 homepage text + 6 Learner image +
+// 5 Teacher image + 10 Volunteer image = 88), confirming this pagination
+// logic needs no change for the real, full-scale migrated dataset.
+
+function makeMigrationScaleFixture() {
+  const items = [];
+  for (let i = 0; i < 58; i++) items.push({ id: `endorsal-text-${i}`, type: 'text', name: `Endorsal Learner ${i}`, quote: `Quote ${i}` });
+  for (let i = 0; i < 2; i++) items.push({ id: `endorsal-video-${i}`, type: 'video', name: `Endorsal Video Person ${i}`, url: 'https://res.cloudinary.com/endorsal-io/video/upload/videos/example.mp4' });
+  for (let i = 0; i < 7; i++) items.push({ id: `homepage-text-${i}`, type: 'text', name: `Homepage Person ${i}`, quote: `Quote ${i}` });
+  for (let i = 0; i < 6; i++) items.push({ id: `learner-image-${i}`, type: 'image', name: null, testimonialImage: { url: `https://vyoma.org/wp-content/uploads/2023/03/Learner-Testimonial-${i + 1}.jpg` } });
+  for (let i = 0; i < 5; i++) items.push({ id: `teacher-image-${i}`, type: 'image', name: null, testimonialImage: { url: `https://vyoma.org/wp-content/uploads/2023/03/Teacher-Testimonial-${i + 1}.jpg` } });
+  for (let i = 0; i < 10; i++) items.push({ id: `volunteer-image-${i}`, type: 'image', name: null, testimonialImage: { url: `https://example.com/volunteer-${i + 1}.jpg` } });
+  return items;
+}
+
+test('the 88-item migration-scale fixture: all 88 are active (no active field set -- legacy-compatible), initial reveal is 6, and repeated clicks correctly progress to full exhaustion with a final partial batch of 4', () => {
+  const items = makeMigrationScaleFixture();
+  assert.equal(items.length, 88);
+  const active = toActiveContentArray(items);
+  assert.equal(active.length, 88, 'every entry with no active field must remain active, regardless of type');
+
+  let visibleCount = initialVisibleCount(active.length);
+  assert.equal(visibleCount, 6);
+  let clicks = 0;
+  while (hasMoreTestimonials(active, visibleCount)) {
+    visibleCount = nextVisibleCount(visibleCount, active.length);
+    clicks += 1;
+  }
+  assert.equal(visibleCount, 88);
+  assert.equal(clicks, 14, 'initial 6 + 13 clicks of 6 each (84) + 1 final partial-batch click of 4 (88) -- 14 clicks total');
+  assert.equal(hasMoreTestimonials(active, visibleCount), false);
+  assert.deepEqual(getVisibleItems(active, visibleCount), active, 'every one of the 88 is eventually visible, in original order');
+});
+
+test('no duplicate items are ever introduced across the full 88-item reveal sequence', () => {
+  const items = makeMigrationScaleFixture();
+  const active = toActiveContentArray(items);
+  let visibleCount = initialVisibleCount(active.length);
+  const seenIds = new Set();
+  while (true) {
+    const visible = getVisibleItems(active, visibleCount);
+    const ids = visible.map((item) => item.id);
+    assert.equal(new Set(ids).size, ids.length, 'no duplicate within a single visible slice');
+    for (const id of ids) seenIds.add(id);
+    if (!hasMoreTestimonials(active, visibleCount)) break;
+    visibleCount = nextVisibleCount(visibleCount, active.length);
+  }
+  assert.equal(seenIds.size, 88);
+});
+
+test('a mixed text/video/image collection (with some entries explicitly inactive) is paginated correctly -- type is completely irrelevant to this module\'s own logic', () => {
+  const raw = [
+    { id: '1', type: 'text', name: 'A', quote: 'q', active: true },
+    { id: '2', type: 'video', name: 'B', url: 'https://example.com/b.mp4', active: false },
+    { id: '3', type: 'image', name: null, testimonialImage: { url: 'https://example.com/c.jpg' } },
+    { id: '4', type: 'text', name: 'D', quote: 'q' },
+    { id: '5', type: 'video', name: 'E', url: 'https://example.com/e.mp4', active: true },
+    { id: '6', type: 'image', name: null, testimonialImage: { url: 'https://example.com/f.jpg' } },
+    { id: '7', type: 'text', name: 'G', quote: 'q', active: false },
+  ];
+  const active = toActiveContentArray(raw);
+  assert.deepEqual(
+    active.map((i) => i.id),
+    ['1', '3', '4', '5', '6']
+  );
+  const visibleCount = initialVisibleCount(active.length);
+  assert.equal(visibleCount, 5);
+  assert.equal(hasMoreTestimonials(active, visibleCount), false);
+});

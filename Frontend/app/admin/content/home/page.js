@@ -13,6 +13,7 @@ import { TopicsForm } from '@/components/admin/cms/home/TopicsForm';
 import { ComplianceStripForm } from '@/components/admin/cms/home/ComplianceStripForm';
 import { ActivitiesForm } from '@/components/admin/cms/home/ActivitiesForm';
 import { TestimonialsForm } from '@/components/admin/cms/home/TestimonialsForm';
+import { validateHomeTestimonialsContent } from '@/lib/testimonialCms.mjs';
 import { CsrForm } from '@/components/admin/cms/home/CsrForm';
 import { SponsorsForm } from '@/components/admin/cms/home/SponsorsForm';
 import { SeoForm } from '@/components/admin/cms/home/SeoForm';
@@ -37,7 +38,11 @@ function findLinkError(link, where) {
   return null;
 }
 
-function validateHomeContent(data) {
+// QA Bug 19 Stage 5D — `baselineData` is the already-published `doc.data`
+// this edit is replacing (or null for a brand-new type), forwarded by
+// handleSaveDraft/handlePublish below from this component's own `doc` state
+// -- same baseline-diffing reasoning as validateTestimonialsContent().
+function validateHomeContent(data, baselineData) {
   for (const slide of data.HERO_SLIDES || []) {
     const err = findLinkError(slide.cta, `Hero Carousel "${slide.heading || 'Untitled'}"`);
     if (err) return err;
@@ -46,6 +51,8 @@ function validateHomeContent(data) {
     const err = findLinkError(a.link, `Vyoma's Activities "${a.title || 'Untitled'}"`);
     if (err) return err;
   }
+  const testimonialsError = validateHomeTestimonialsContent(data, baselineData);
+  if (testimonialsError) return testimonialsError;
   return null;
 }
 
@@ -114,7 +121,7 @@ function HomeCmsContent() {
   };
 
   const handleSaveDraft = () => {
-    const validationError = validateHomeContent(draftValue);
+    const validationError = validateHomeContent(draftValue, doc?.data ?? null);
     if (validationError) return toast.error(validationError);
     return runAction(
       'draft',
@@ -127,7 +134,7 @@ function HomeCmsContent() {
   };
 
   const handlePublish = () => {
-    const validationError = validateHomeContent(draftValue);
+    const validationError = validateHomeContent(draftValue, doc?.data ?? null);
     if (validationError) return toast.error(validationError);
     return runAction(
       'publish',

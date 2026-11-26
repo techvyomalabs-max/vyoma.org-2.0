@@ -105,8 +105,28 @@ export function useContentEditor(typeOrTypes) {
   const mirrorDraftToSecondaries = (data) =>
     Promise.all(secondaryTypes.map((t) => apiFetch('/admin/content', { method: 'PUT', body: { type: t, data } })));
 
+  // QA Bug 19 Stage 5D — `validate` may now optionally take a second
+  // argument: the baseline this edit is replacing, so a validator can
+  // distinguish an unchanged, pre-existing (legacy) value from a genuinely
+  // new or modified one — the same baseline-diffing the Backend's
+  // equivalent validation performs (see lib/testimonialCms.mjs's
+  // validateTestimonialsContent() and Backend/.../validateTestimonialContent.js's
+  // own header comment for the full per-operation policy this mirrors).
+  // Purely additive: every existing `validate` function here (validateJoinUs,
+  // etc.) takes only one parameter and simply ignores the second —
+  // unchanged behavior for all of them.
+  //
+  // Save Draft's baseline is `doc?.draftData ?? doc?.data ?? null` — the
+  // existing persisted draft if one exists, else the currently published
+  // data — deliberately NOT `draftValue` itself (the in-progress, unsaved
+  // candidate this very call is about to save): using the candidate as its
+  // own baseline would let any item exempt itself from completeness simply
+  // by existing in the thing being validated, which is not a legacy
+  // exemption at all. Publish's baseline is `doc?.data ?? null` only — the
+  // currently published data — since publish always promotes whatever is
+  // already the server's stored draftData, never draftValue directly.
   const saveDraft = (validate) => {
-    const validationError = validate?.(draftValue);
+    const validationError = validate?.(draftValue, doc?.draftData ?? doc?.data ?? null);
     if (validationError) return toast.error(validationError);
     return runAction(
       'draft',
@@ -120,7 +140,7 @@ export function useContentEditor(typeOrTypes) {
   };
 
   const publish = (validate) => {
-    const validationError = validate?.(draftValue);
+    const validationError = validate?.(draftValue, doc?.data ?? null);
     if (validationError) return toast.error(validationError);
     return runAction(
       'publish',

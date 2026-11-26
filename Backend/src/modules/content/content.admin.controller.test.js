@@ -790,3 +790,245 @@ test('POST /admin/content/revisions/restore for an UNRELATED content type is una
   assert.equal(res.status, 200, 'restore for a type other than pages/join-us must never be validated by this rule');
   assert.notEqual(baselineRevisionId, undefined, 'sanity check: a baseline revision exists for this type (pre-existing wrong-type-revisionId behavior is covered separately above, unaffected by this change)');
 });
+
+// --- QA Bug 19 Stage 5D: testimonial content validation (pages/media, its
+// bare 'media' twin, and pages/home) ---------------------------------------
+// Mirrors the structure of the pages/join-us block above (narrow per-type
+// scoping, first-error-wins reporting), but with two tiers instead of one:
+// Tier A (format/safety -- type/category/rating/active shape, URL/image-
+// reference safety, duplicate ids) is always enforced, with NO legacy
+// exemption of any kind, for any operation. Tier B (completeness -- a
+// new/modified testimonial must actually have its defining content) is
+// exempted only for an item that is provably unchanged (one-to-one, never
+// many-to-one -- see validateTestimonialContent.js) from the operation's own
+// baseline: Save Draft's existing persisted draft (or published data if
+// none), Publish's and Restore's currently published data. Restore gets the
+// SAME two tiers as Publish -- it is never automatically exempt from
+// completeness just because an item appears in history. See
+// Backend/src/modules/content/validateTestimonialContent.js's own header
+// comment for the full reasoning, and validateTestimonialContent.test.js for
+// exhaustive isolated coverage of every rule. These tests focus on the
+// HTTP-level wiring (draft/publish/restore, no-write-on-rejection, the
+// legacy-baseline exemption actually working end-to-end) rather than
+// restating every rule already proven in isolation.
+//
+// IMPORTANT: like every other test in this file, these were NOT executed as
+// part of QA Bug 19 Stage 5D's own verification -- this file requires
+// setupTestEnv()'s ambient database connection, which remains blocked under
+// this engagement's standing safety rules. Only
+// validateTestimonialContent.test.js (genuinely isolated, zero DB
+// dependency) was actually run. See the Stage 5D implementation report's own
+// "Isolated backend test results" section for the exact, honest accounting.
+
+const MEDIA_TYPE = 'pages/media';
+const HOME_TYPE = 'pages/home';
+
+function mediaTestimonialsData({ featured = [], all = [] } = {}) {
+  return { TESTIMONIALS_FEATURED: featured, TESTIMONIALS_ALL: all };
+}
+
+test('PUT /admin/content for pages/media accepts a valid new text/video/image testimonial', async () => {
+  const token = await adminToken('testimonials-valid-put');
+  const { res } = await saveDraft(
+    token,
+    MEDIA_TYPE,
+    mediaTestimonialsData({
+      all: [
+        { type: 'text', quote: 'Wonderful experience.' },
+        { type: 'video', url: 'https://www.youtube.com/watch?v=abc123' },
+        { type: 'image', testimonialImage: { url: '/uploads/t1.jpg' } },
+      ],
+    })
+  );
+  assert.equal(res.status, 200);
+});
+
+test('PUT /admin/content for pages/media rejects a new text/video/image testimonial missing its defining content, with a clear one-based message', async () => {
+  const token = await adminToken('testimonials-missing-content');
+
+  const blankQuote = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'text', quote: '' }] }));
+  assert.equal(blankQuote.res.status, 422);
+  assert.match(blankQuote.body.message, /Testimonial 1: a quote is required for a new text testimonial\./);
+
+  const noVideoUrl = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'video' }] }));
+  assert.equal(noVideoUrl.res.status, 422);
+  assert.match(noVideoUrl.body.message, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+
+  const noImage = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'image' }] }));
+  assert.equal(noImage.res.status, 422);
+  assert.match(noImage.body.message, /Testimonial 1: a testimonial image is required for a new image testimonial\./);
+});
+
+test('PUT /admin/content for pages/media rejects an unsafe video URL regardless of legacy status', async () => {
+  const token = await adminToken('testimonials-unsafe-url');
+  const { res, body } = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'video', url: 'javascript:alert(1)' }] }));
+  assert.equal(res.status, 422);
+  assert.match(body.message, /video URL must be a safe, absolute http:\/\/ or https:\/\/ link\./);
+});
+
+test('PUT /admin/content for pages/media rejects TESTIMONIALS_FEATURED using a video/image type -- text-only by design', async () => {
+  const token = await adminToken('testimonials-featured-text-only');
+  const { res, body } = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ featured: [{ type: 'video', quote: 'x' }] }));
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Featured testimonial 1: type "video" is not supported here\./);
+});
+
+test('PUT /admin/content for pages/media rejects a duplicate id within TESTIMONIALS_ALL', async () => {
+  const token = await adminToken('testimonials-dup-id');
+  const { res, body } = await saveDraft(
+    token,
+    MEDIA_TYPE,
+    mediaTestimonialsData({ all: [{ type: 'text', quote: 'a', id: 'dup' }, { type: 'text', quote: 'b', id: 'dup' }] })
+  );
+  assert.equal(res.status, 422);
+  assert.match(body.message, /duplicate id "dup" at entry 2\./);
+});
+
+test('legacy compatibility: an UNCHANGED legacy video testimonial (no url) can still be saved again untouched, alongside a brand-new valid entry', async () => {
+  const token = await adminToken('testimonials-legacy-unchanged');
+  const legacyVideo = { type: 'video', name: 'Ravi Menon', role: 'Chennai, India' };
+  // Seeds the legacy baseline directly, bypassing validation -- simulating
+  // content that predates this validation existing, exactly like the
+  // pages/join-us PENDING DRAFT precedent above.
+  await ContentModel.findOneAndUpdate(
+    { type: MEDIA_TYPE },
+    { $set: { data: mediaTestimonialsData({ all: [legacyVideo] }), draftData: null, status: 'published' } },
+    { upsert: true }
+  );
+
+  const { res } = await saveDraft(
+    token,
+    MEDIA_TYPE,
+    mediaTestimonialsData({ all: [legacyVideo, { type: 'text', quote: 'A brand-new, complete entry.' }] })
+  );
+  assert.equal(res.status, 200, 'the untouched legacy video entry must never block saving an unrelated new valid entry alongside it');
+});
+
+test('legacy compatibility: MODIFYING a legacy video testimonial without adding a url is rejected -- it is no longer "unchanged"', async () => {
+  const token = await adminToken('testimonials-legacy-modified');
+  const legacyVideo = { type: 'video', name: 'Lakshmi Narayanan', role: 'Singapore' };
+  await ContentModel.findOneAndUpdate(
+    { type: MEDIA_TYPE },
+    { $set: { data: mediaTestimonialsData({ all: [legacyVideo] }), draftData: null, status: 'published' } },
+    { upsert: true }
+  );
+
+  const { res, body } = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ ...legacyVideo, role: 'Singapore (updated)' }] }));
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+});
+
+test('POST /admin/content/publish for pages/media validates nextData against the currently-live doc.data baseline, accepting an unchanged legacy entry and rejecting a modified one', async () => {
+  const token = await adminToken('testimonials-publish-baseline');
+  const legacyVideo = { type: 'video', name: 'Legacy Person', role: 'Legacy Role' };
+  await ContentModel.findOneAndUpdate(
+    { type: MEDIA_TYPE },
+    { $set: { data: mediaTestimonialsData({ all: [legacyVideo] }), draftData: mediaTestimonialsData({ all: [legacyVideo] }), status: 'published' } },
+    { upsert: true }
+  );
+
+  const unchanged = await publish(token, MEDIA_TYPE);
+  assert.equal(unchanged.res.status, 200);
+
+  // Direct DB write of a modified draft -- bypassing draft-save validation
+  // entirely, so publishContent's OWN check is what's actually exercised
+  // here (same reasoning as the pages/join-us PENDING DRAFT test above).
+  await ContentModel.findOneAndUpdate(
+    { type: MEDIA_TYPE },
+    { $set: { draftData: mediaTestimonialsData({ all: [{ ...legacyVideo, role: 'Legacy Role (edited)' }] }) } }
+  );
+  const modified = await publish(token, MEDIA_TYPE);
+  assert.equal(modified.res.status, 422);
+  assert.match(modified.body.message, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+});
+
+test('POST /admin/content/revisions/restore for pages/media restores a historical revision containing a legacy video testimonial with no url, when that EXACT entry is still part of the currently published data', async () => {
+  const token = await adminToken('testimonials-restore-legacy-still-live');
+  const legacyVideo = { type: 'video', name: 'Historical Person', role: 'Nowhere' };
+  // The currently-published data (doc.data, restore's own baseline) already
+  // contains this exact legacy entry -- same baseline rule Publish uses.
+  await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [legacyVideo] }));
+  await publish(token, MEDIA_TYPE);
+
+  const legacyRevision = await ContentRevisionModel.create({
+    contentType: MEDIA_TYPE,
+    version: 9101,
+    data: mediaTestimonialsData({ all: [legacyVideo] }),
+    action: 'publish',
+  });
+
+  const { res, body } = await restore(token, MEDIA_TYPE, legacyRevision._id);
+  assert.equal(res.status, 200);
+  assert.equal(body.data.data.TESTIMONIALS_ALL[0].name, 'Historical Person');
+});
+
+test('POST /admin/content/revisions/restore for pages/media REJECTS an older incomplete revision whose item is no longer part of the current published data -- restore is never automatically exempt just because it is historical', async () => {
+  const token = await adminToken('testimonials-restore-legacy-no-longer-live');
+  // Current published data no longer contains the historical incomplete
+  // item at all (it was since edited/removed).
+  await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'text', quote: 'Only this is live now.' }] }));
+  await publish(token, MEDIA_TYPE);
+
+  const staleRevision = await ContentRevisionModel.create({
+    contentType: MEDIA_TYPE,
+    version: 9103,
+    data: mediaTestimonialsData({ all: [{ type: 'video', name: 'Historical Person', role: 'Nowhere' }] }),
+    action: 'publish',
+  });
+
+  const { res, body } = await restore(token, MEDIA_TYPE, staleRevision._id);
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+
+  const doc = await ContentModel.findOne({ type: MEDIA_TYPE }).lean();
+  assert.equal(doc.data.TESTIMONIALS_ALL[0].quote, 'Only this is live now.', 'a rejected restore must leave the currently published data completely untouched');
+});
+
+test('POST /admin/content/revisions/restore for pages/media still rejects an unsafe video URL in a historical revision -- Tier A safety is never skipped', async () => {
+  const token = await adminToken('testimonials-restore-unsafe');
+  await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'text', quote: 'Current.' }] }));
+  await publish(token, MEDIA_TYPE);
+
+  const unsafeRevision = await ContentRevisionModel.create({
+    contentType: MEDIA_TYPE,
+    version: 9102,
+    data: mediaTestimonialsData({ all: [{ type: 'video', url: 'javascript:alert(1)' }] }),
+    action: 'publish',
+  });
+
+  const { res, body } = await restore(token, MEDIA_TYPE, unsafeRevision._id);
+  assert.equal(res.status, 422);
+  assert.match(body.message, /video URL must be a safe, absolute http:\/\/ or https:\/\/ link\./);
+});
+
+test('a REJECTED pages/media draft-save leaves content and audit state completely unchanged (no write, no audit entry)', async () => {
+  const token = await adminToken('testimonials-rejected-no-side-effects');
+  await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'text', quote: 'Baseline.' }] }));
+  const beforeAuditCount = await AuditLogModel.countDocuments({ action: 'content.draft_saved', targetId: MEDIA_TYPE });
+  const beforeDoc = await ContentModel.findOne({ type: MEDIA_TYPE }).lean();
+
+  const { res } = await saveDraft(token, MEDIA_TYPE, mediaTestimonialsData({ all: [{ type: 'video' }] }));
+  assert.equal(res.status, 422);
+
+  assert.equal(await AuditLogModel.countDocuments({ action: 'content.draft_saved', targetId: MEDIA_TYPE }), beforeAuditCount);
+  const afterDoc = await ContentModel.findOne({ type: MEDIA_TYPE }).lean();
+  assert.deepEqual(afterDoc.draftData, beforeDoc.draftData);
+});
+
+test('the bare "media" twin is validated exactly the same way as pages/media', async () => {
+  const token = await adminToken('testimonials-bare-media-type');
+  const { res, body } = await saveDraft(token, 'media', mediaTestimonialsData({ all: [{ type: 'video' }] }));
+  assert.equal(res.status, 422);
+  assert.match(body.message, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+});
+
+test('PUT /admin/content for pages/home validates HOME_TESTIMONIALS independently, and does not affect an unrelated type with the same field shape', async () => {
+  const token = await adminToken('home-testimonials-valid-invalid');
+
+  const invalid = await saveDraft(token, HOME_TYPE, { HOME_TESTIMONIALS: [{ quote: '' }] });
+  assert.equal(invalid.res.status, 422);
+  assert.match(invalid.body.message, /Home testimonial 1: a quote is required for a new text testimonial\./);
+
+  const unaffected = await saveDraft(token, 'pages/about', { HOME_TESTIMONIALS: [{ quote: '' }] });
+  assert.equal(unaffected.res.status, 200, 'HOME_TESTIMONIALS-shaped data under an unrelated type must never be validated by this rule');
+});

@@ -1,76 +1,16 @@
 import { ImagePlaceholder } from '@/components/common/ImagePlaceholder';
 import { SmartImage } from '@/components/common/SmartImage';
 import { resolveVideoTestimonialMedia } from '@/lib/videoTestimonial';
+import { isUsableImageUrl } from '@/lib/testimonialImage';
 
-// QA Bug 19 Stage 5C final correction — a bare http(s)-prefix-or-leading-
-// slash check (the prior version of this function) is not enough once a
-// testimonial image is also used as a clickable href (the "view full
-// size" link below), not just an <img src>. This reuses the same hardened
-// approach already proven for the video URL resolver
-// (videoTestimonial.js's own isSafeAbsoluteVideoUrl(), left completely
-// untouched — this is an independent, file-local duplicate of its
-// control-character/backslash/explicit-scheme/credentials checks, not an
-// import, since that module stays unmodified per instruction), extended
-// with one additional accepted shape videos never needed: a single
-// leading "/" (never "//", which is protocol-relative) — the existing CMS
-// convention for an already-managed, root-relative media reference (see
-// MediaPicker.jsx's own External URL tab, which accepts exactly this shape
-// alongside an absolute https URL). Both regexes are declared inside the
-// function body (not at module scope) so this function is fully
-// self-contained -- directly extractable and executable in this file's
-// own test file without depending on anything outside itself. Kept local
-// to this file rather than exported from MediaPicker.jsx or
-// videoTestimonial.js — neither shared component needs to change for
-// this. No network request is ever made. The validated return value
-// (never the raw, unvalidated string) is what every caller below actually
-// uses for both the <img src> and the clickable href.
-function isUsableImageUrl(raw) {
-  const CONTROL_CHAR_RE = /[\x00-\x1F\x7F]/;
-  const EXPLICIT_HTTP_SCHEME_RE = /^https?:\/\/[^\/\\\s]/i;
-  if (typeof raw !== 'string') return false;
-  // Checked on the RAW string, before any trimming/parsing -- same reason
-  // as the video resolver: the WHATWG URL parser silently strips an
-  // embedded tab/newline/carriage-return during parsing, so relying on it
-  // alone would let one slip through unnoticed.
-  if (CONTROL_CHAR_RE.test(raw)) return false;
-  const value = raw.replace(/^ +| +$/g, '');
-  if (!value) return false;
-  // A literal backslash is rejected outright, never parsed -- the WHATWG
-  // parser treats a backslash exactly like a forward slash for a
-  // "special" scheme such as http/https, so a value using one could
-  // resolve to an authority other than what it visually appears to name.
-  if (value.includes('\\')) return false;
-  // Explicit, documented rejection of a protocol-relative URL, checked
-  // BEFORE the single-leading-slash acceptance below (a value starting
-  // with "//" must never be mistaken for the root-relative path shape).
-  if (value.startsWith('//')) return false;
-  // The existing CMS convention for an already-managed, root-relative
-  // media reference. Control characters and backslashes were already
-  // rejected above, so this path is reached only by a genuinely clean
-  // relative reference.
-  if (value.startsWith('/')) return true;
-  // Requires an explicit http(s) scheme followed by EXACTLY two literal
-  // forward slashes, then an authority that starts immediately -- the
-  // WHATWG URL parser is deliberately lenient for "special" schemes and
-  // would otherwise silently normalize a malformed value like
-  // "https:example.com" or "https:///example.com" into a well-formed
-  // absolute URL instead of rejecting it.
-  if (!EXPLICIT_HTTP_SCHEME_RE.test(value)) return false;
-  let parsed;
-  try {
-    parsed = new URL(value);
-  } catch {
-    return false;
-  }
-  // `parsed.protocol` is already lower-cased by the URL parser regardless
-  // of input casing, so this rejects javascript:/data:/file:/vbscript:/
-  // blob:/ftp: etc. case-insensitively by construction.
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
-  if (!parsed.hostname) return false;
-  if (parsed.username || parsed.password) return false;
-  return true;
-}
-
+// QA Bug 19 Stage 5D — isUsableImageUrl moved out to lib/testimonialImage.js
+// (a plain, JSX-free, directly-importable module — see its own header
+// comment) so the new backend-mirroring CMS validation (testimonialCms.mjs)
+// can reuse the exact same check instead of a second, independently-
+// maintained copy. Behavior is completely unchanged; only its location
+// moved. The validated return value (never the raw, unvalidated string) is
+// what every caller below actually uses for both the <img src> and the
+// clickable href.
 // Manual-testing bug report (video testimonials not playing): this "video"
 // branch previously rendered a placeholder image plus a bare, decorative
 // play-button icon -- no <a>/<button> wrapper, no onClick, no reference to

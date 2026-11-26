@@ -12,7 +12,10 @@ import { SectionEditorHeader } from '@/components/admin/cms/SectionEditorHeader'
 // `pageLabel`: shown as the H1. `type`: the Content type key.
 // `sections`: [{ key, label, description, publicPath, Form }] — `key` is
 // the field within this type's data object; `Form` gets {value, onChange}.
-// `validate(data)`: optional, returns an error string or null.
+// `validate(data, baseline)`: optional, returns an error string or null.
+// `baseline` (QA Bug 19 Stage 5D) is supplied by useContentEditor's own
+// saveDraft/publish, each with its own operation-specific value — see that
+// hook's own header comment on saveDraft for the exact policy.
 export function ContentEditorShell({ pageLabel, type, sections, validate }) {
   const { doc, draftValue, setSectionValue, revisions, loading, error, busy, saveDraft, publish, unpublish, restore } =
     useContentEditor(type);

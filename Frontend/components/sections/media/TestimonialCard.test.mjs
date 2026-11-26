@@ -25,38 +25,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveVideoTestimonialMedia } from '../../../lib/videoTestimonial.js';
+import { isUsableImageUrl } from '../../../lib/testimonialImage.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const source = fs.readFileSync(path.join(__dirname, 'TestimonialCard.jsx'), 'utf8');
 
-// QA Bug 19 Stage 5C final correction — isUsableImageUrl() is a small,
-// local, unexported helper inside this .jsx file (kept there deliberately,
-// rather than in its own new module, to stay within this stage's approved
-// file scope). `node --test` cannot `import` a bare .jsx file at all, so
-// its exact source is extracted here (brace-counted from its opening
-// function body to the matching closing brace) and executed for real via
-// the `Function` constructor — the same technique already established
-// elsewhere in this project for testing a function embedded in an
-// otherwise-untestable JSX file. This is genuine executable-logic
-// coverage of the real production function, not a reimplementation and
-// not a source-string guess at its behavior.
-function extractBalancedExpression(src, startMarker) {
-  const start = src.indexOf(startMarker);
-  if (start === -1) throw new Error(`marker not found: ${startMarker}`);
-  const braceOpen = src.indexOf('{', start);
-  let depth = 0;
-  for (let i = braceOpen; i < src.length; i++) {
-    if (src[i] === '{') depth++;
-    else if (src[i] === '}') {
-      depth--;
-      if (depth === 0) return src.slice(start, i + 1);
-    }
-  }
-  throw new Error('unbalanced braces');
-}
-
-const isUsableImageUrlSource = extractBalancedExpression(source, 'function isUsableImageUrl(raw) {');
-const isUsableImageUrl = new Function(`return (${isUsableImageUrlSource});`)();
+// QA Bug 19 Stage 5D — isUsableImageUrl() moved out of this .jsx file into
+// lib/testimonialImage.js (a plain, JSX-free module) so lib/testimonialCms.mjs's
+// new CMS validation can reuse it too. It's now directly importable — the
+// brace-extraction-and-Function-constructor technique this file previously
+// needed (the same one still used elsewhere in this project for logic that
+// genuinely has nowhere else to live) is no longer necessary for this
+// specific function. Every test below still executes the real, production
+// implementation; only how it's obtained changed.
 
 // --- resolveVideoTestimonialMedia() (pure logic) ----------------------------
 
@@ -318,6 +299,11 @@ test('card dimensions, layout and colours are unchanged: same 200px media height
 test('the video-media decision is reused from the shared lib, not reimplemented inline', () => {
   assert.match(source, /import \{ resolveVideoTestimonialMedia \} from '@\/lib\/videoTestimonial'/);
   assert.doesNotMatch(source, /function extractYouTubeId/, 'must not reintroduce a duplicate copy of the YouTube-id-extraction logic');
+});
+
+test('QA Bug 19 Stage 5D: isUsableImageUrl is imported from the shared lib, not reimplemented inline', () => {
+  assert.match(source, /import \{ isUsableImageUrl \} from '@\/lib\/testimonialImage'/);
+  assert.doesNotMatch(source, /function isUsableImageUrl/, 'must not reintroduce a second, independently-maintained copy');
 });
 
 test('the text-testimonial branch is untouched: still renders the quote, name, role, and optional photo exactly as before', () => {

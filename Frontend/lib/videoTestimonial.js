@@ -56,7 +56,13 @@ const EXPLICIT_HTTP_SCHEME_RE = /^https?:\/\/[^\/\\\s]/i;
 // username/password. It does not, and cannot, verify that the URL is
 // reachable, that the linked video actually exists or plays, or that the
 // hosting provider is trustworthy -- no network request is ever made here.
-function isSafeAbsoluteVideoUrl(raw) {
+// QA Bug 19 Stage 5D — exported (previously module-private) so
+// lib/testimonialCms.mjs's new frontend CMS validation can reuse this exact
+// same safety check for video testimonials, instead of a second,
+// independently-maintained copy living inside the same Frontend package.
+// resolveVideoTestimonialMedia()'s own rendering behavior below is
+// completely unchanged.
+export function isSafeAbsoluteVideoUrl(raw) {
   if (typeof raw !== 'string') return false;
   if (CONTROL_CHAR_RE.test(raw)) return false;
   const value = raw.replace(/^ +| +$/g, '');

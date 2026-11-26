@@ -14,6 +14,8 @@ import {
   RATING_OPTIONS,
   applyRatingSelection,
   isTestimonialVisible,
+  validateTestimonialsContent,
+  validateHomeTestimonialsContent,
 } from './testimonialCms.mjs';
 
 test('NEW_TESTIMONIAL_ID_SENTINEL is the empty string', () => {
@@ -424,4 +426,159 @@ test('matches the exact same convention as the public toActiveContentArray() uti
   const expected = items.map((i) => i.active !== false);
   const actual = items.map((i) => isTestimonialVisible(i));
   assert.deepEqual(actual, expected);
+});
+
+// --- QA Bug 19 Stage 5D: validateTestimonialsContent() / -------------------
+// validateHomeTestimonialsContent() -- mirrors
+// Backend/src/modules/content/validateTestimonialContent.test.js's own
+// scenarios; see that file and testimonialCms.mjs's own header comment for
+// the full Tier A/Tier B reasoning. Not re-testing every URL-safety edge
+// case already covered directly for isSafeAbsoluteVideoUrl/isUsableImageUrl
+// in their own test files -- just that this validator actually calls them.
+
+function mediaData({ featured = [], all = [] } = {}) {
+  return { TESTIMONIALS_FEATURED: featured, TESTIMONIALS_ALL: all };
+}
+
+test('accepts a valid new anonymous text testimonial, and a valid new video/image testimonial', () => {
+  assert.equal(validateTestimonialsContent(mediaData({ all: [{ type: 'text', quote: 'Anonymous but real.' }] }), null), null);
+  assert.equal(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'video', url: 'https://www.youtube.com/watch?v=abc123' }] }), null),
+    null
+  );
+  assert.equal(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'image', testimonialImage: { url: '/uploads/t1.jpg' } }] }), null),
+    null
+  );
+});
+
+test('rejects a new text/video/image testimonial missing its defining content', () => {
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'text', quote: '' }] }), null),
+    /Testimonial 1: a quote is required for a new text testimonial\./
+  );
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'video' }] }), null),
+    /Testimonial 1: a valid video URL is required for a new video testimonial\./
+  );
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'image' }] }), null),
+    /Testimonial 1: a testimonial image is required for a new image testimonial\./
+  );
+});
+
+test('rejects an unsafe video URL / image reference even when other fields look complete', () => {
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'video', url: 'javascript:alert(1)' }] }), null),
+    /Testimonial 1: video URL must be a safe, absolute http:\/\/ or https:\/\/ link\./
+  );
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'image', testimonialImage: { url: '//evil.example.com/x.jpg' } }] }), null),
+    /Testimonial 1 testimonial image must be a safe http\(s\) URL or an existing managed media reference\./
+  );
+});
+
+test('TESTIMONIALS_FEATURED rejects a video/image type -- text-only by design', () => {
+  const err = validateTestimonialsContent(mediaData({ featured: [{ type: 'video', quote: 'x' }] }), null);
+  assert.match(err, /Featured testimonial 1: type "video" is not supported here\./);
+});
+
+test('rejects an invalid category/rating/active value, accepts each valid one and an absent value', () => {
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'text', quote: 'x', category: 'bogus' }] }), null),
+    /category must be one of learner, teacher, volunteer, other\./
+  );
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'text', quote: 'x', rating: '3' }] }), null),
+    /rating must be a whole number from 1 to 5\./
+  );
+  assert.match(
+    validateTestimonialsContent(mediaData({ all: [{ type: 'text', quote: 'x', active: 'true' }] }), null),
+    /active must be true or false\./
+  );
+  assert.equal(validateTestimonialsContent(mediaData({ all: [{ type: 'text', quote: 'x' }] }), null), null);
+});
+
+test('rejects a duplicate id within the same array, and never flags the same id shared across TESTIMONIALS_FEATURED/TESTIMONIALS_ALL', () => {
+  const dup = validateTestimonialsContent(
+    mediaData({ all: [{ type: 'text', quote: 'a', id: 'dup' }, { type: 'text', quote: 'b', id: 'dup' }] }),
+    null
+  );
+  assert.match(dup, /duplicate id "dup" at entry 2\./);
+
+  const crossArray = validateTestimonialsContent(
+    mediaData({ featured: [{ quote: 'a', id: 'shared' }], all: [{ type: 'text', quote: 'b', id: 'shared' }] }),
+    null
+  );
+  assert.equal(crossArray, null);
+});
+
+const LEGACY_VIDEO_NO_URL = { type: 'video', name: 'Ravi Menon', role: 'Chennai, India' };
+
+test('an existing, UNCHANGED legacy video testimonial with no url is accepted when the baseline already contains it byte-for-byte', () => {
+  const baseline = mediaData({ all: [LEGACY_VIDEO_NO_URL] });
+  const err = validateTestimonialsContent(mediaData({ all: [LEGACY_VIDEO_NO_URL] }), baseline);
+  assert.equal(err, null);
+});
+
+test('a MODIFIED legacy entry (any field changed from baseline) is validated as if new -- rejected for the still-missing url', () => {
+  const baseline = mediaData({ all: [LEGACY_VIDEO_NO_URL] });
+  const modified = { ...LEGACY_VIDEO_NO_URL, role: 'Chennai, India (updated)' };
+  const err = validateTestimonialsContent(mediaData({ all: [modified] }), baseline);
+  assert.match(err, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+});
+
+test('a newly ADDED entry that happens to look like the legacy shape is still rejected when the baseline does not already contain it', () => {
+  const err = validateTestimonialsContent(mediaData({ all: [LEGACY_VIDEO_NO_URL] }), mediaData({ all: [] }));
+  assert.match(err, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+});
+
+test('non-destructive type switching: switching an existing valid text testimonial to video without adding a url is rejected as modified+invalid', () => {
+  const originalText = { type: 'text', quote: 'Was valid text.', name: 'X', role: 'Y' };
+  const baseline = mediaData({ all: [originalText] });
+  const switched = { ...originalText, type: 'video' };
+  const err = validateTestimonialsContent(mediaData({ all: [switched] }), baseline);
+  assert.match(err, /Testimonial 1: a valid video URL is required for a new video testimonial\./);
+});
+
+// --- one-to-one legacy-baseline matching (Section 3 correction) -----------
+
+test('a baseline entry can exempt at most one candidate: two identical copies of one incomplete legacy entry are not both grandfathered', () => {
+  const baseline = mediaData({ all: [LEGACY_VIDEO_NO_URL] });
+  const err = validateTestimonialsContent(mediaData({ all: [LEGACY_VIDEO_NO_URL, LEGACY_VIDEO_NO_URL] }), baseline);
+  assert.match(err, /Testimonial 2: a valid video URL is required for a new video testimonial\./);
+});
+
+test('a baseline that genuinely contains the same incomplete entry TWICE exempts up to two matching candidates, but not a third', () => {
+  const baseline = mediaData({ all: [LEGACY_VIDEO_NO_URL, LEGACY_VIDEO_NO_URL] });
+  const twoOk = validateTestimonialsContent(mediaData({ all: [LEGACY_VIDEO_NO_URL, LEGACY_VIDEO_NO_URL] }), baseline);
+  assert.equal(twoOk, null);
+
+  const thirdRejected = validateTestimonialsContent(
+    mediaData({ all: [LEGACY_VIDEO_NO_URL, LEGACY_VIDEO_NO_URL, LEGACY_VIDEO_NO_URL] }),
+    baseline
+  );
+  assert.match(thirdRejected, /Testimonial 3: a valid video URL is required for a new video testimonial\./);
+});
+
+test('an unrelated-shaped data object (no TESTIMONIALS_FEATURED/TESTIMONIALS_ALL at all) is accepted -- legacy compatibility', () => {
+  assert.equal(validateTestimonialsContent({}, null), null);
+  assert.equal(validateTestimonialsContent(null, null), null);
+});
+
+test('validateHomeTestimonialsContent validates HOME_TESTIMONIALS independently, with the same rules', () => {
+  const err = validateHomeTestimonialsContent({ HOME_TESTIMONIALS: [{ quote: '' }] }, null);
+  assert.match(err, /Home testimonial 1: a quote is required for a new text testimonial\./);
+
+  const ok = validateHomeTestimonialsContent({ HOME_TESTIMONIALS: [{ quote: 'Real impact story.', name: 'Z' }] }, null);
+  assert.equal(ok, null);
+
+  const videoRejected = validateHomeTestimonialsContent({ HOME_TESTIMONIALS: [{ type: 'video', quote: 'x' }] }, null);
+  assert.match(videoRejected, /Home testimonial 1: type "video" is not supported here\./);
+});
+
+test('validateHomeTestimonialsContent accepts an unchanged legacy entry with no type/id/active at all', () => {
+  const legacy = { quote: 'A genuine legacy quote.', name: 'Anjali Rao', role: 'Bengaluru, India' };
+  const err = validateHomeTestimonialsContent({ HOME_TESTIMONIALS: [legacy] }, { HOME_TESTIMONIALS: [legacy] });
+  assert.equal(err, null);
 });

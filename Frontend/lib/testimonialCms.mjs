@@ -7,6 +7,20 @@
 // already-established convention), and so the one genuinely non-trivial
 // piece of logic (safe stable-id assignment) is written and tested once,
 // not duplicated three times across the forms.
+//
+// QA Bug 19 Stage 5D — validateTestimonialsContent()/validateHomeTestimonialsContent()
+// below are this module's frontend half of the new testimonial validation.
+// They deliberately mirror (never import — two separate deployable
+// packages, same reasoning as every other Backend/Frontend validator pair
+// in this project) Backend/src/modules/content/validateTestimonialContent.js
+// rule-for-rule: same two tiers (format/safety always enforced; completeness
+// only for an item that isn't provably unchanged from the baseline the
+// editor loaded), same messages where practical. The Backend copy remains
+// the mandatory, authoritative check — this one exists purely so an admin
+// sees the same rejection in the browser, before ever making the request,
+// instead of only after a round-trip.
+import { isSafeAbsoluteVideoUrl } from './videoTestimonial.js';
+import { isUsableImageUrl } from './testimonialImage.js';
 
 // QA Bug 19 Stage 5B final safety correction — exactly two tiers remain,
 // both standard, dependency-free Web Crypto APIs (never an npm package):
@@ -179,4 +193,185 @@ export function applyRatingSelection(item, rawValue) {
 // is hidden.
 export function isTestimonialVisible(item) {
   return item?.active !== false;
+}
+
+// --- QA Bug 19 Stage 5D: frontend testimonial content validation -----------
+// See this file's own header comment for the Tier A/Tier B design and why
+// this mirrors, rather than imports, the Backend's equivalent module.
+
+function isBlankRequiredField(value) {
+  return typeof value !== 'string' || value.trim().length === 0;
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function deepEqual(a, b) {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((v, i) => deepEqual(v, b[i]));
+  }
+  if (isPlainObject(a) || isPlainObject(b)) {
+    if (!isPlainObject(a) || !isPlainObject(b)) return false;
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every((k) => Object.prototype.hasOwnProperty.call(b, k) && deepEqual(a[k], b[k]));
+  }
+  return false;
+}
+
+// One-to-one: removes and returns the matched baseline item's index so it
+// can never be matched again by a later candidate in the same array -- see
+// Backend/.../validateTestimonialContent.js's own header comment (QA Bug 19
+// Stage 5D correction) for why a many-to-one match would let a duplicated
+// incomplete legacy entry multiply itself for free. `pool` is a mutable
+// working copy the caller creates once per array field.
+function consumeMatchingBaselineItem(item, pool) {
+  const idx = pool.findIndex((b) => deepEqual(item, b));
+  if (idx === -1) return false;
+  pool.splice(idx, 1);
+  return true;
+}
+
+const TESTIMONIAL_TYPES = new Set(['text', 'video', 'image']);
+const TESTIMONIAL_CATEGORY_SET = new Set(TESTIMONIAL_CATEGORIES);
+const TEXT_ONLY_TYPES = new Set(['text']);
+const ALL_TESTIMONIAL_TYPES = new Set(['text', 'video', 'image']);
+
+function validateImageRef(ref, label) {
+  if (ref === null || ref === undefined) return null;
+  if (!isPlainObject(ref) || !isUsableImageUrl(ref.url)) {
+    return `${label} must be a safe http(s) URL or an existing managed media reference.`;
+  }
+  return null;
+}
+
+function validateTestimonialItemFormat(item, i, { allowedTypes, label }) {
+  if (!isPlainObject(item)) return `${label} ${i + 1} is malformed.`;
+
+  if (item.id !== undefined && isBlankRequiredField(item.id)) {
+    return `${label} ${i + 1}: id must be a non-blank string.`;
+  }
+  if (item.type !== undefined) {
+    if (typeof item.type !== 'string' || !TESTIMONIAL_TYPES.has(item.type)) {
+      return `${label} ${i + 1}: type must be one of text, video, image.`;
+    }
+    if (!allowedTypes.has(item.type)) {
+      return `${label} ${i + 1}: type "${item.type}" is not supported here.`;
+    }
+  }
+  if (item.category !== undefined && (typeof item.category !== 'string' || !TESTIMONIAL_CATEGORY_SET.has(item.category))) {
+    return `${label} ${i + 1}: category must be one of learner, teacher, volunteer, other.`;
+  }
+  if (item.rating !== undefined && item.rating !== null) {
+    if (!Number.isInteger(item.rating) || item.rating < 1 || item.rating > 5) {
+      return `${label} ${i + 1}: rating must be a whole number from 1 to 5.`;
+    }
+  }
+  if (item.active !== undefined && typeof item.active !== 'boolean') {
+    return `${label} ${i + 1}: active must be true or false.`;
+  }
+  if (item.quote !== undefined && item.quote !== null && typeof item.quote !== 'string') {
+    return `${label} ${i + 1}: quote must be text.`;
+  }
+  if (item.url !== undefined && item.url !== null && item.url !== '' && !isSafeAbsoluteVideoUrl(item.url)) {
+    return `${label} ${i + 1}: video URL must be a safe, absolute http:// or https:// link.`;
+  }
+
+  return (
+    validateImageRef(item.image, `${label} ${i + 1} photo`) ||
+    validateImageRef(item.videoThumbnail, `${label} ${i + 1} video thumbnail`) ||
+    validateImageRef(item.testimonialImage, `${label} ${i + 1} testimonial image`) ||
+    null
+  );
+}
+
+function findDuplicateIdError(items, label) {
+  const seen = new Set();
+  for (let i = 0; i < items.length; i += 1) {
+    const id = items[i]?.id;
+    if (typeof id === 'string' && id.trim()) {
+      if (seen.has(id)) return `${label}: duplicate id "${id}" at entry ${i + 1}.`;
+      seen.add(id);
+    }
+  }
+  return null;
+}
+
+function validateTestimonialCompleteness(item, i, label) {
+  const effectiveType = item.type ?? 'text';
+  if (effectiveType === 'text') {
+    if (isBlankRequiredField(item.quote)) return `${label} ${i + 1}: a quote is required for a new text testimonial.`;
+  } else if (effectiveType === 'video') {
+    if (!isSafeAbsoluteVideoUrl(item.url)) return `${label} ${i + 1}: a valid video URL is required for a new video testimonial.`;
+  } else if (effectiveType === 'image') {
+    if (!isPlainObject(item.testimonialImage) || !isUsableImageUrl(item.testimonialImage.url)) {
+      return `${label} ${i + 1}: a testimonial image is required for a new image testimonial.`;
+    }
+  }
+  return null;
+}
+
+function validateTestimonialArrayField(items, { label, allowedTypes, baselineItems }) {
+  if (items === undefined) return null;
+  if (!Array.isArray(items)) return `${label} must be an array of testimonials.`;
+
+  for (let i = 0; i < items.length; i += 1) {
+    const err = validateTestimonialItemFormat(items[i], i, { allowedTypes, label });
+    if (err) return err;
+  }
+
+  const dupErr = findDuplicateIdError(items, label);
+  if (dupErr) return dupErr;
+
+  // A fresh, per-call working copy -- consumed (spliced) as candidates
+  // match it, in candidate order, so each baseline slot exempts at most one
+  // candidate and an earlier identical candidate always wins the slot over
+  // a later duplicate of it.
+  const pool = Array.isArray(baselineItems) ? [...baselineItems] : [];
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    if (consumeMatchingBaselineItem(item, pool)) continue;
+    const err = validateTestimonialCompleteness(item, i, label);
+    if (err) return err;
+  }
+
+  return null;
+}
+
+// For TestimonialsFeaturedForm.jsx/TestimonialsAllForm.jsx (pages/media,
+// data.TESTIMONIALS_FEATURED + data.TESTIMONIALS_ALL). `baselineData` is the
+// already-published `doc.data` the editor loaded, or null/undefined for a
+// brand-new type with nothing published yet.
+export function validateTestimonialsContent(data, baselineData) {
+  if (!isPlainObject(data)) return null;
+  const baseline = isPlainObject(baselineData) ? baselineData : {};
+  return (
+    validateTestimonialArrayField(data.TESTIMONIALS_FEATURED, {
+      label: 'Featured testimonial',
+      allowedTypes: TEXT_ONLY_TYPES,
+      baselineItems: baseline.TESTIMONIALS_FEATURED,
+    }) ||
+    validateTestimonialArrayField(data.TESTIMONIALS_ALL, {
+      label: 'Testimonial',
+      allowedTypes: ALL_TESTIMONIAL_TYPES,
+      baselineItems: baseline.TESTIMONIALS_ALL,
+    }) ||
+    null
+  );
+}
+
+// For components/admin/cms/home/TestimonialsForm.jsx (pages/home,
+// data.HOME_TESTIMONIALS).
+export function validateHomeTestimonialsContent(data, baselineData) {
+  if (!isPlainObject(data)) return null;
+  const baseline = isPlainObject(baselineData) ? baselineData : {};
+  return validateTestimonialArrayField(data.HOME_TESTIMONIALS, {
+    label: 'Home testimonial',
+    allowedTypes: TEXT_ONLY_TYPES,
+    baselineItems: baseline.HOME_TESTIMONIALS,
+  });
 }

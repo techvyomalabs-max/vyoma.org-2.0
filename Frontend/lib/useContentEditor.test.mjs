@@ -88,6 +88,83 @@ test('saveDraft short-circuits on a validation error: no apiFetch call, toast.er
   assert.deepEqual(getToastCalls(), [{ type: 'error', message: 'heading is required' }]);
 });
 
+// QA Bug 19 Stage 5D — `validate` now also receives a baseline as a second
+// argument, so a validator can distinguish an unchanged legacy value from a
+// genuinely new/modified one (see lib/testimonialCms.mjs's
+// validateTestimonialsContent()). Purely additive: every test above already
+// proves a single-argument validate function keeps working unchanged.
+//
+// saveDraft and publish deliberately use DIFFERENT baselines (Stage 5D
+// correction -- see useContentEditor.js's own header comment on saveDraft):
+// saveDraft's is the existing persisted draft if one exists, else the
+// published data (`doc.draftData ?? doc.data`); publish's is always the
+// published data alone (`doc.data`). Neither is ever the in-progress
+// draftValue itself.
+
+test('saveDraft calls validate with (draftValue, doc.draftData) when a persisted draft already exists -- never doc.data while a draft is pending', async () => {
+  const harness = await setup('about', { data: { heading: 'Published baseline' }, draftData: { heading: 'Draft in progress' } });
+  const received = [];
+
+  await harness.act(() => harness.result.saveDraft((data, baseline) => {
+    received.push({ data, baseline });
+    return null;
+  }));
+
+  assert.equal(received.length, 1);
+  assert.deepEqual(received[0].data, { heading: 'Draft in progress' });
+  assert.deepEqual(received[0].baseline, { heading: 'Draft in progress' }, 'the existing persisted draft must win over the published data as the baseline');
+});
+
+test('saveDraft falls back to doc.data as the baseline when no persisted draft exists', async () => {
+  const harness = await setup('about', { data: { heading: 'Published only' }, draftData: null });
+  const received = [];
+
+  await harness.act(() => harness.result.saveDraft((data, baseline) => {
+    received.push(baseline);
+    return null;
+  }));
+
+  assert.deepEqual(received[0], { heading: 'Published only' });
+});
+
+test('saveDraft calls validate with a null baseline for a brand-new type with no published data or draft at all', async () => {
+  const harness = await setup('about', { data: null, draftData: null });
+  const received = [];
+
+  await harness.act(() => harness.result.saveDraft((data, baseline) => {
+    received.push(baseline);
+    return null;
+  }));
+
+  assert.equal(received[0], null);
+});
+
+test('publish calls validate with (draftValue, doc.data) -- the published baseline only, even while a different persisted draft also exists', async () => {
+  const harness = await setup('about', { data: { heading: 'Published baseline' }, draftData: { heading: 'Draft in progress' } });
+  const received = [];
+
+  await harness.act(() => harness.result.publish((data, baseline) => {
+    received.push({ data, baseline });
+    return null;
+  }));
+
+  assert.equal(received.length, 1);
+  assert.deepEqual(received[0].data, { heading: 'Draft in progress' }, 'validate is still given the current draftValue being published');
+  assert.deepEqual(received[0].baseline, { heading: 'Published baseline' }, 'publish\'s baseline must be doc.data, never doc.draftData');
+});
+
+test('publish calls validate with a null baseline for a brand-new type with no published data at all', async () => {
+  const harness = await setup('about', { data: null, draftData: null });
+  const received = [];
+
+  await harness.act(() => harness.result.publish((data, baseline) => {
+    received.push(baseline);
+    return null;
+  }));
+
+  assert.equal(received[0], null);
+});
+
 // --- The regression this task exists to protect: publish() must always PUT
 // the current draftValue BEFORE calling the publish endpoint, regardless of
 // whether "Save draft" was clicked first. ---

@@ -3,6 +3,7 @@ import { ContentRevisionModel } from './contentRevision.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
 import { recordAudit } from '../audit/audit.service.js';
 import { sanitizeLegalBody } from './sanitizeLegalBody.js';
+import { validateTestimonialContent, isTestimonialContentType } from './validateTestimonialContent.js';
 
 const MAX_REVISIONS_PER_TYPE = 20;
 
@@ -151,6 +152,18 @@ export async function upsertDraftContent(req, res, next) {
       const validationError = validateJoinUsContent(data);
       if (validationError) throw new ApiError(422, 'VALIDATION_ERROR', validationError);
     }
+    if (isTestimonialContentType(type)) {
+      // Baseline is whatever this draft save is actually replacing (the
+      // pending draft if one exists, else the already-published data) --
+      // the same `draftData ?? data` fallback the editor itself loads from
+      // (see useContentEditor.js's own load()), so an item that is
+      // completely unchanged from what the admin started editing is never
+      // blocked by Tier B's completeness check, no matter how old it is.
+      const existing = await ContentModel.findOne({ type }).lean();
+      const baseline = existing?.draftData ?? existing?.data ?? null;
+      const validationError = validateTestimonialContent(type, data, baseline);
+      if (validationError) throw new ApiError(422, 'VALIDATION_ERROR', validationError);
+    }
 
     const doc = await ContentModel.findOneAndUpdate(
       { type },
@@ -204,6 +217,15 @@ export async function publishContent(req, res, next) {
       // document that predates it, in addition to the ordinary case of a
       // draft that was already rejected at save time.
       const validationError = validateJoinUsContent(nextData);
+      if (validationError) throw new ApiError(422, 'VALIDATION_ERROR', validationError);
+    }
+    if (isTestimonialContentType(type)) {
+      // Baseline is `doc.data` -- whatever is ACTUALLY still live right
+      // before this publish overwrites it -- so Tier B's completeness
+      // check never blocks re-publishing an item that is already public
+      // and unchanged, while still catching a genuinely new/modified
+      // incomplete entry in `nextData`.
+      const validationError = validateTestimonialContent(type, nextData, doc.data);
       if (validationError) throw new ApiError(422, 'VALIDATION_ERROR', validationError);
     }
 
@@ -293,6 +315,22 @@ export async function restoreRevision(req, res, next) {
     // restored, exactly like an invalid draft cannot be published.
     if (type === JOIN_US_TYPE) {
       const validationError = validateJoinUsContent(revision.data);
+      if (validationError) throw new ApiError(422, 'VALIDATION_ERROR', validationError);
+    }
+    if (isTestimonialContentType(type)) {
+      // Baseline is `doc.data` -- whatever is ACTUALLY still live right
+      // before this restore overwrites it -- the exact same baseline and
+      // the exact same two tiers publishContent uses above. An item in the
+      // revision being restored is exempt from Tier B's completeness check
+      // only if it is genuinely unchanged from what's live right now, never
+      // merely because it appears somewhere in history. An older revision
+      // whose incomplete item has since been removed/changed in the
+      // current published data is correctly rejected here, with a clear
+      // validation error, rather than silently restored. See
+      // validateTestimonialContent.js's own header comment for the full
+      // baseline policy and why restore intentionally diverges from
+      // pages/join-us's restore behavior (no baseline/exemption at all).
+      const validationError = validateTestimonialContent(type, revision.data, doc.data);
       if (validationError) throw new ApiError(422, 'VALIDATION_ERROR', validationError);
     }
 

@@ -3,6 +3,8 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { TestimonialCard } from '@/components/sections/media/TestimonialCard';
+import { TestimonialsAllGrid } from '@/components/sections/media/TestimonialsAllGrid';
+import { toActiveContentArray } from '@/lib/contentArrays';
 import { pageMetadata } from '@/lib/seo';
 
 // Task 7R.1: deferred to request time so a build-time-unreachable backend
@@ -19,6 +21,16 @@ export const metadata = pageMetadata({
 
 export default async function TestimonialsPage() {
   const { featured, all } = await getTestimonials();
+  // QA Bug 19 Stage 5A: an `active: false` entry (admin-hidden) is excluded
+  // from both sections; a legacy entry with no `active` field at all (every
+  // entry in both arrays today) remains visible -- toActiveContentArray()'s
+  // own `item.active !== false` convention, reused unmodified here, not
+  // reimplemented. Filtering happens once, server-side, before either array
+  // reaches a render path -- the Featured section (plain, unconditional
+  // .map(), no client state) is therefore already fully independent of
+  // whatever the All Testimonials section's Load More interaction does.
+  const activeFeatured = toActiveContentArray(featured);
+  const activeAll = toActiveContentArray(all);
 
   return (
     <div className="font-sans">
@@ -33,7 +45,7 @@ export default async function TestimonialsPage() {
         <div className="mx-auto max-w-[1100px]">
           <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">Featured</h2>
           <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))' }}>
-            {featured.map((item) => (
+            {activeFeatured.map((item) => (
               <TestimonialCard key={item.name} item={{ type: 'text', ...item }} featured />
             ))}
           </div>
@@ -43,17 +55,7 @@ export default async function TestimonialsPage() {
       <section className="bg-sky-mist px-8 py-14">
         <div className="mx-auto max-w-[1100px]">
           <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">All Testimonials</h2>
-          <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))' }}>
-            {all.map((item) => (
-              <TestimonialCard key={item.name} item={item} />
-            ))}
-          </div>
-          {/* "Load more" removed — it had no onClick/pagination logic, and
-              `all.map()` above already renders every available testimonial
-              unconditionally; the button was decorative and hid nothing.
-              If a future batch adds enough testimonials that pagination is
-              genuinely needed, implement real slicing + an onClick handler
-              here rather than restoring a non-functional button. */}
+          <TestimonialsAllGrid items={activeAll} />
         </div>
       </section>
 

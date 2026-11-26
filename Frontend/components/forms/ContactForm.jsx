@@ -15,6 +15,18 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NAME_RE = /^\p{L}[\p{L}\s'’-]*$/u;
 const MESSAGE_MAX_LENGTH = 2000;
 
+// QA Bug 19 follow-up: the exact subject the Testimonials page's "Submit
+// your testimonial" CTA passes in (ContactCta subject="Testimonial
+// submission" — see app/(public)/media/testimonials/page.js), matched
+// literally against this component's own `subject` prop, never derived by
+// parsing it -- every other subject (Careers, Internships, CSR, Press,
+// Volunteering, Corpus Fund, General Inquiry, …) is unaffected and keeps the
+// original generic success message below.
+const TESTIMONIAL_SUBMISSION_SUBJECT = 'Testimonial submission';
+const GENERIC_SUCCESS_MESSAGE = 'Thanks for reaching out — our team will follow up by email.';
+const TESTIMONIAL_SUCCESS_MESSAGE =
+  'Thank you for sharing your testimonial with Vyoma. We appreciate your feedback and your support.';
+
 // `showRoleBanner`/`roleLabel`: optional, default-off context for a
 // specific CMS-driven role (e.g. an Internship vacancy) -- passed
 // explicitly by the caller (see InternshipApplyButton.jsx/ModalProvider.jsx),
@@ -82,7 +94,7 @@ export function ContactForm({ subject = 'General inquiry', showRoleBanner = fals
   if (submitted) {
     return (
       <div className="font-sans text-base text-charcoal text-center py-5">
-        Thanks for reaching out — our team will follow up by email.
+        {subject === TESTIMONIAL_SUBMISSION_SUBJECT ? TESTIMONIAL_SUCCESS_MESSAGE : GENERIC_SUCCESS_MESSAGE}
       </div>
     );
   }

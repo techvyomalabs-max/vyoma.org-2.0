@@ -55,11 +55,17 @@ test('a non-YouTube (but otherwise valid) video URL is still playable, just with
   assert.equal(result.thumbnail, null);
 });
 
-test('a garbage/invalid video URL string never throws, and is still treated as "has a value to link to"', () => {
+// QA Bug 19 follow-up: a garbage/malformed string is no longer treated as
+// "has a value to link to" -- it is not an absolute http(s) URL, so the
+// tightened resolver (see lib/videoTestimonial.js's own, much more
+// extensive fixture matrix in videoTestimonial.test.mjs) now correctly
+// rejects it. Never throwing remains an invariant either way.
+test('a garbage/invalid video URL string never throws, and is now correctly treated as "nothing safe to link to"', () => {
   assert.doesNotThrow(() => resolveVideoTestimonialMedia({ url: 'not a url at all', name: 'Test' }));
   const result = resolveVideoTestimonialMedia({ url: 'not a url at all', name: 'Test' });
-  assert.equal(result.hasPlayableVideo, true);
+  assert.equal(result.hasPlayableVideo, false);
   assert.equal(result.thumbnail, null);
+  assert.equal(result.url, null);
 });
 
 test('resolveVideoTestimonialMedia never throws on a completely missing item', () => {
@@ -70,13 +76,71 @@ test('resolveVideoTestimonialMedia never throws on a completely missing item', (
 
 test('FIXED: the video card wraps its media in a real, functional link only when a video URL is present', () => {
   assert.match(source, /\{hasPlayableVideo \? \(/, 'the clickable wrapper must be conditional on hasPlayableVideo');
-  assert.match(source, /<a href=\{item\.url\}/, 'the wrapper must link to the real item.url, not an invented one');
+  assert.match(source, /<a href=\{url\}/, 'the wrapper must link to the resolver\'s validated url, not item.url directly');
   assert.match(source, /target="_blank"/);
   assert.match(source, /rel="noopener noreferrer"/);
 });
 
-test('the play-button icon itself is unchanged visually (same svg path), now sitting inside the conditional link instead of being decorative-only', () => {
+// QA Bug 19 follow-up: the href must come from the resolver's own
+// validated/trimmed `url`, never the raw, unvalidated `item.url` -- this is
+// what actually prevents a whitespace-only or unsafe-scheme value from
+// ever reaching the DOM, even if hasPlayableVideo were somehow computed
+// independently elsewhere in the future.
+test('FIXED: the rendered href is the resolver\'s validated url, never the raw, unvalidated item.url', () => {
+  assert.doesNotMatch(source, /href=\{item\.url\}/, 'must not fall back to rendering the raw, unvalidated item.url');
+  assert.match(source, /const \{ hasPlayableVideo, thumbnail, url \} = resolveVideoTestimonialMedia\(item\);/);
+});
+
+test('the play-button icon itself is unchanged visually (same svg path)', () => {
   assert.match(source, /<path d="M8 5v14l11-7z" \/>/);
+});
+
+// --- QA Bug 19 follow-up: the play icon must not render for a testimonial
+// with no playable video. Source-assertion coverage -- TestimonialCard.jsx
+// is a 'use client' JSX component with no rendering harness available in
+// this project (see this file's own header comment); the underlying
+// hasPlayableVideo/thumbnail decision these assertions key off of is
+// covered with genuine execution by the resolveVideoTestimonialMedia()
+// tests above. ------------------------------------------------------------
+
+test('FIXED: the play-icon overlay is gated on hasPlayableVideo, not rendered unconditionally', () => {
+  assert.match(
+    source,
+    /\{hasPlayableVideo && \(\s*\n\s*<div className="absolute inset-0 flex items-center justify-center">/,
+    'the play-icon overlay div must itself be conditional on hasPlayableVideo, not just its <a> wrapper'
+  );
+});
+
+test('a missing video URL renders the non-interactive "Video unavailable" caption instead of the generic "Video" caption', () => {
+  assert.match(source, /caption=\{hasPlayableVideo \? 'Video' : 'Video unavailable'\}/);
+});
+
+test('a valid video URL retains the existing play icon and link-out behaviour -- the <a> wrapper and the play-icon overlay share the exact same hasPlayableVideo condition, so they can never disagree', () => {
+  const aWrapperIndex = source.indexOf('{hasPlayableVideo ? (');
+  const overlayIndex = source.indexOf('{hasPlayableVideo && (');
+  assert.ok(aWrapperIndex !== -1 && overlayIndex !== -1);
+  // The overlay (inside `media`) is defined before `media` is referenced by
+  // the <a>-wrapper ternary later in the same render -- confirming both
+  // reference the one hasPlayableVideo value computed once per render via
+  // resolveVideoTestimonialMedia(item), never two independently-derived
+  // booleans that could drift apart.
+  assert.ok(overlayIndex < aWrapperIndex);
+});
+
+test('existing YouTube thumbnail handling is unchanged: a real thumbnail still renders via <img>, independent of hasPlayableVideo', () => {
+  assert.match(source, /\{thumbnail \? \(/);
+  assert.match(source, /<img src=\{thumbnail\} alt=\{item\.name\} className="h-full w-full object-cover" \/>/);
+});
+
+test('no embedded video player, iframe, or new dependency was introduced', () => {
+  assert.doesNotMatch(source, /<video/);
+  assert.doesNotMatch(source, /<iframe/);
+  assert.doesNotMatch(source, /import\(['"]react-player/);
+});
+
+test('card dimensions, layout and colours are unchanged: same 200px media height, same amber-gold divider, same rounded card shell', () => {
+  assert.match(source, /className="relative h-\[200px\] border-b-\[3px\] border-b-amber-gold"/);
+  assert.match(source, /className="overflow-hidden rounded-md border border-\[var\(--border-subtle\)\] bg-white"/);
 });
 
 test('the video-media decision is reused from the shared lib, not reimplemented inline', () => {

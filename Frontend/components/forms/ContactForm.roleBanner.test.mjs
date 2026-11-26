@@ -32,12 +32,45 @@ test('the role is rendered as plain React text interpolation ({roleLabel}), neve
   assert.doesNotMatch(source, /dangerouslySetInnerHTML/);
 });
 
-test('the full subject is still submitted unchanged -- existing submission logic, fields, validation, success message and formKey are untouched', () => {
+test('the full subject is still submitted unchanged -- existing submission logic, fields, validation and formKey are untouched', () => {
   assert.match(source, /await submitForm\('contact', \{ values: \{ \.\.\.values, subject \} \}\);/);
-  assert.match(source, /Thanks for reaching out — our team will follow up by email\./);
   assert.match(source, /Organization/);
   assert.match(source, /Full name/);
   assert.match(source, /Message/);
+});
+
+// QA Bug 19 follow-up: the success message is now conditional on `subject`
+// (a prop this component already received -- no new prop was added). Source-
+// assertion coverage only -- ContactForm.jsx is a 'use client' component
+// with no rendering harness available in this project (see this file's own
+// header comment).
+test('the generic success message is preserved exactly, unchanged, as the non-testimonial branch', () => {
+  assert.match(source, /const GENERIC_SUCCESS_MESSAGE = 'Thanks for reaching out — our team will follow up by email\.';/);
+});
+
+test('the testimonial-specific success message is shown when, and only when, subject is exactly the testimonial-submission subject', () => {
+  assert.match(source, /const TESTIMONIAL_SUBMISSION_SUBJECT = 'Testimonial submission';/);
+  assert.match(
+    source,
+    /const TESTIMONIAL_SUCCESS_MESSAGE =\s*\n?\s*'Thank you for sharing your testimonial with Vyoma\. We appreciate your feedback and your support\.';/
+  );
+  assert.match(
+    source,
+    /\{subject === TESTIMONIAL_SUBMISSION_SUBJECT \? TESTIMONIAL_SUCCESS_MESSAGE : GENERIC_SUCCESS_MESSAGE\}/
+  );
+});
+
+test('the success message is only ever rendered inside the existing `if (submitted)` early return -- a failed or not-yet-attempted submission can never show either success message', () => {
+  const submittedBlockIndex = source.indexOf('if (submitted) {');
+  const ternaryIndex = source.indexOf('TESTIMONIAL_SUBMISSION_SUBJECT ? TESTIMONIAL_SUCCESS_MESSAGE : GENERIC_SUCCESS_MESSAGE');
+  const formIndex = source.indexOf('<form onSubmit={handleSubmit}');
+  assert.ok(submittedBlockIndex !== -1 && ternaryIndex !== -1 && formIndex !== -1);
+  // The success-message ternary sits inside the `if (submitted)` block,
+  // which itself `return`s before the real <form> markup is ever reached --
+  // so the two are mutually exclusive renders, exactly as before this
+  // change (this component had exactly one `submitted`-gated return prior
+  // to this fix too).
+  assert.ok(submittedBlockIndex < ternaryIndex && ternaryIndex < formIndex);
 });
 
 test('the banner markup sits above the existing fields, inside the same form, so it stays visible for the whole time the applicant is filling it in (not just before typing, unlike the pre-existing placeholder text)', () => {

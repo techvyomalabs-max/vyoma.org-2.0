@@ -20,9 +20,21 @@ import { resolveVideoTestimonialMedia } from '@/lib/videoTestimonial';
 // functional-looking play button with nothing behind it, and never an
 // invented URL.
 //
+// QA Bug 19 follow-up: the play-icon overlay previously rendered
+// unconditionally, so a testimonial with no video URL still showed a
+// circular "play button" graphic even though nothing was clickable behind
+// it -- a misleading affordance. The icon is now gated on hasPlayableVideo,
+// same as the <a> wrapper, and the placeholder caption reads "Video
+// unavailable" (rather than the generic "Video") specifically when there is
+// no URL at all, so a non-interactive card reads as such at a glance.
 export function TestimonialCard({ item, featured = false }) {
   if (item.type === 'video') {
-    const { hasPlayableVideo, thumbnail } = resolveVideoTestimonialMedia(item);
+    // QA Bug 19 follow-up: `url` here is the resolver's own validated,
+    // trimmed value (or null) -- never item.url directly -- so a
+    // whitespace-only, malformed, or unsafe-scheme value can never reach
+    // the rendered href even if hasPlayableVideo were ever computed
+    // separately in the future.
+    const { hasPlayableVideo, thumbnail, url } = resolveVideoTestimonialMedia(item);
 
     const media = (
       <div className="relative h-[200px] border-b-[3px] border-b-amber-gold">
@@ -30,22 +42,24 @@ export function TestimonialCard({ item, featured = false }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={thumbnail} alt={item.name} className="h-full w-full object-cover" />
         ) : (
-          <ImagePlaceholder shape="rect" caption="Video" />
+          <ImagePlaceholder shape="rect" caption={hasPlayableVideo ? 'Video' : 'Video unavailable'} />
         )}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/80">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--color-vyoma-blue)">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </span>
-        </div>
+        {hasPlayableVideo && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/80">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--color-vyoma-blue)">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </div>
+        )}
       </div>
     );
 
     return (
       <div className="overflow-hidden rounded-md border border-[var(--border-subtle)] bg-white">
         {hasPlayableVideo ? (
-          <a href={item.url} target="_blank" rel="noopener noreferrer" className="block" aria-label={`Watch ${item.name}'s video testimonial`}>
+          <a href={url} target="_blank" rel="noopener noreferrer" className="block" aria-label={`Watch ${item.name}'s video testimonial`}>
             {media}
           </a>
         ) : (

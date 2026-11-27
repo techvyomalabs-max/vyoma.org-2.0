@@ -157,3 +157,40 @@ export function assertAllowedRestoreTargetUri(uri, { label = 'target' } = {}) {
   }
   return dbName;
 }
+
+// QA Bug 19 — Stage 9.3A: the one additional Atlas identity check restore/
+// recovery tooling needs beyond database-name allowlisting alone (a gap
+// confirmed during the Stage 9.2C review: neither assertAllowedRestoreTargetUri
+// above nor anything else in this file ever inspected the URI's HOSTNAME).
+// Shared by both restoreDatabase.mjs (normal restore) and
+// restoreCheckSelfRecovery.mjs (self-recovery) -- same constant, same
+// function, never duplicated, so the two tools can never silently drift on
+// which cluster they consider "the approved TEST cluster".
+//
+// EXACT hostname equality only -- deliberately not .includes()/.endsWith(),
+// which a deceptive hostname like
+// "vyoma-test-cluster.ctnt2ww.mongodb.net.attacker.example" or
+// "evil-vyoma-test-cluster.ctnt2ww.mongodb.net" could otherwise satisfy.
+// Pure string/URL parsing, no network -- fails closed (throws) on a
+// malformed/unparseable URI or unsupported scheme the same way
+// extractDatabaseName() fails closed to null, rather than assuming safety.
+// Never logs the raw URI -- only the parsed hostname, which (like a parsed
+// database name elsewhere in this file) is not itself a credential.
+export const APPROVED_RESTORE_CLUSTER_HOST = 'vyoma-test-cluster.ctnt2ww.mongodb.net';
+
+export function assertExpectedRestoreClusterHost(uri, { label = 'target', expectedHost = APPROVED_RESTORE_CLUSTER_HOST } = {}) {
+  let parsed;
+  try {
+    parsed = new URL(uri);
+  } catch {
+    throw new Error(`Refusing to proceed: the ${label} connection string could not be parsed as a valid URI -- its cluster host cannot be verified.`);
+  }
+  const host = parsed.hostname;
+  if (!host || host !== expectedHost) {
+    throw new Error(
+      `Refusing to proceed: the ${label} resolves to cluster host "${host || '(none)'}", not the expected "${expectedHost}" ` +
+        '(exact match required, not a substring/suffix match). Aborting before any connection.'
+    );
+  }
+  return host;
+}

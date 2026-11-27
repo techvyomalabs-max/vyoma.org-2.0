@@ -107,8 +107,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { assertNotProtectedDbUri, assertAllowedRestoreTargetUri, BACKUP_SOURCE_DB_NAME } from './protectedDbGuard.mjs';
-import { MONGODB_URI_ENV_VAR } from './backupDatabase.mjs';
+import {
+  assertNotProtectedDbUri,
+  assertAllowedRestoreTargetUri,
+  assertExpectedRestoreClusterHost,
+  APPROVED_RESTORE_CLUSTER_HOST,
+  BACKUP_SOURCE_DB_NAME,
+} from './protectedDbGuard.mjs';
+import { MONGODB_URI_ENV_VAR, buildChildEnvWithoutMongoUri, validateTestBackupManifestForRestore } from './backupDatabase.mjs';
 
 // Task 7P-SEC16 — the restore-side counterpart to backupDatabase.mjs's own
 // resolveBackupUri(): explicit --uri wins when given; otherwise MONGODB_URI
@@ -155,7 +161,7 @@ function redact(text, uri) {
 // Checking for real dump files specifically, not just "any subdirectory",
 // is what catches that mistake here instead of downstream in mongorestore's
 // own silent-no-op.
-function looksLikeAMongodumpDirectory(dir) {
+export function looksLikeAMongodumpDirectory(dir) {
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return false;
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   return entries.some((e) => e.isFile() && (e.name.endsWith('.bson') || e.name.endsWith('.metadata.json')));
@@ -174,11 +180,23 @@ function looksLikeAMongodumpDirectory(dir) {
 //     the documented, expected case where `--from` is pointed at the
 //     nested `<backupPath>/<dbName>` directory one level below it.
 // Pure filesystem read, no network, no mutation of anything it finds.
+// QA Bug 19 — Stage 9.3A: a second marker filename, `INCOMPLETE` (a plain,
+// typically zero-byte flag file), was found in practice alongside
+// `INCOMPLETE_BACKUP.txt` -- backups produced by directly invoking
+// mongodump (not through backupDatabase.mjs's own markBackupIncomplete())
+// use this bare name instead. Both are now checked, in both locations,
+// additively: this can only ever cause MORE backups to be correctly
+// refused, never fewer -- no existing fail-closed behavior is weakened, and
+// there is no bypass/ignore-marker option of any kind.
+export const INCOMPLETE_MARKER_FILENAMES = ['INCOMPLETE_BACKUP.txt', 'INCOMPLETE'];
+
 export function findIncompleteBackupMarker(dir) {
   const candidates = [dir, path.dirname(dir)];
   for (const candidate of candidates) {
-    const markerPath = path.join(candidate, 'INCOMPLETE_BACKUP.txt');
-    if (fs.existsSync(markerPath) && fs.statSync(markerPath).isFile()) return markerPath;
+    for (const filename of INCOMPLETE_MARKER_FILENAMES) {
+      const markerPath = path.join(candidate, filename);
+      if (fs.existsSync(markerPath) && fs.statSync(markerPath).isFile()) return markerPath;
+    }
   }
   return null;
 }
@@ -367,9 +385,20 @@ export function buildMongorestoreArgs({ configPath, from, dbName, drop, username
 export const DEFAULT_STARTUP_TIMEOUT_MS = 15000;
 export const DEFAULT_IDLE_TIMEOUT_MS = 120000;
 
-export function runRestoreProcess(bin, args, { startupTimeoutMs = DEFAULT_STARTUP_TIMEOUT_MS, idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS } = {}) {
+// QA Bug 19 — Stage 9.3C: `env` is injectable (defaults to `process.env`,
+// unchanged behavior for any caller that doesn't pass one) so a caller can
+// supply a SCRUBBED copy instead of the raw environment — see
+// restoreDatabase()/restoreCheckSelfRecovery.mjs's own call sites below,
+// which delete MONGODB_URI from the copy they build before passing it
+// here. mongorestore itself never reads MONGODB_URI (it receives its
+// connection info exclusively via `--config`/`--username`, built by
+// buildMongorestoreArgs/buildRestoreConfigYaml above) — this env var only
+// ever existed in the child's environment by accident, as Node's default
+// "inherit everything" spawn behavior when no `env` option is given at
+// all, confirmed during Stage 9.3B's review.
+export function runRestoreProcess(bin, args, { startupTimeoutMs = DEFAULT_STARTUP_TIMEOUT_MS, idleTimeoutMs = DEFAULT_IDLE_TIMEOUT_MS, env = process.env } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(bin, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(bin, args, { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env });
     let stdout = '';
     let stderr = '';
     let settled = false;
@@ -449,6 +478,11 @@ export async function restoreDatabase({ uri, from, toolsDir, drop, commit, confi
   uri = resolvedUri;
   if (!from) throw new Error('--from <backup-directory> is required.');
   const dbName = assertNotProtectedDbUri(uri, { label: 'restore target' });
+  // QA Bug 19 — Stage 9.3A: validated alongside the existing database-name
+  // checks, before any filesystem check on `from` or any connection --
+  // exact hostname equality, see assertExpectedRestoreClusterHost's own
+  // comment for why this is not a substring/suffix check.
+  assertExpectedRestoreClusterHost(uri, { label: 'restore target' });
   // Task 7P-SEC4 — validated before any filesystem check on `from`, any
   // connection, or any mongorestore execution: the two checks are
   // independent (neither supersedes the other), and both must pass.
@@ -468,16 +502,32 @@ export async function restoreDatabase({ uri, from, toolsDir, drop, commit, confi
   } catch {
     sourceNamespaceOk = false;
   }
+  // QA Bug 19 — Stage 9.6D: a TEST backup is only restore-eligible once its
+  // completion manifest exists, is valid, identifies the approved cluster
+  // and source database, recorded a clean (exit-0, error-free,
+  // "completed-and-integrity-verified") finalization, and its file
+  // hashes/sizes/counts still match what the manifest recorded -- never
+  // trusted without being recomputed live. Computed here (never throws)
+  // alongside the other from-related checks above, reported in the same
+  // block, and enforced right after them below.
+  let manifestCheck;
+  try {
+    manifestCheck = validateTestBackupManifestForRestore(from);
+  } catch (e) {
+    manifestCheck = { ok: false, reason: `Manifest validation threw an unexpected error: ${e.message}` };
+  }
 
   const isProduction = process.env.NODE_ENV === 'production';
 
   console.log('='.repeat(72));
   console.log(`Database restore — mode: ${commit ? 'COMMIT (will run mongorestore)' : 'DRY-RUN (validation only)'}`);
   console.log(`Target database name (never the URI): ${dbName || '(unknown — URI has no path segment)'}`);
+  console.log(`Target cluster host (never the URI): confirmed exactly "${APPROVED_RESTORE_CLUSTER_HOST}"`);
   console.log(`Backup source directory: ${from}`);
   console.log(`Backup directory looks like a real mongodump output: ${validBackupShape ? 'yes' : 'NO -- this does not look like a valid backup'}`);
   console.log(`Marked INCOMPLETE by a prior failed backup: ${incompleteMarker ? `YES -- ${incompleteMarker}` : 'no'}`);
   console.log(`Source namespace ("${BACKUP_SOURCE_DB_NAME}") confirmed from --from's directory name: ${sourceNamespaceOk ? 'yes' : 'NO'}`);
+  console.log(`Completion manifest valid and restore-eligible: ${manifestCheck.ok ? 'yes' : `NO -- ${manifestCheck.reason}`}`);
   console.log(`Target environment: ${process.env.NODE_ENV || '(unset)'}${isProduction ? ' — PRODUCTION' : ''}`);
   console.log(`--drop (replace existing collections): ${drop ? 'yes' : 'no (mongorestore\'s own safe default: merge into existing data)'}`);
   console.log('='.repeat(72));
@@ -503,6 +553,13 @@ export async function restoreDatabase({ uri, from, toolsDir, drop, commit, confi
   // error message, naming exactly what was expected vs. found, is what
   // propagates to the caller.
   assertExpectedSourceNamespace(from);
+  // QA Bug 19 — Stage 9.6D: enforced here too (same ordering convention as
+  // every other refusal above) so a dry-run reports the exact same
+  // refusal a commit attempt would hit, and no mongorestore spawn is ever
+  // reachable when this fails.
+  if (!manifestCheck.ok) {
+    throw new Error(`Refusing to proceed: completion manifest validation failed -- ${manifestCheck.reason}`);
+  }
 
   if (!commit) {
     console.log('\n--- DRY-RUN complete: no restore was performed, no process was spawned. ---');
@@ -520,6 +577,18 @@ export async function restoreDatabase({ uri, from, toolsDir, drop, commit, confi
     );
   }
 
+  // QA Bug 19 — Stage 9.6D: re-validated a SECOND time, immediately before
+  // mongorestore is spawned, narrowing (not eliminating -- see this
+  // project's README for the stated limitation) the time-of-check-to-
+  // time-of-use window between the earlier validation above and the
+  // backup files actually being read by mongorestore. Any failure here
+  // prevents mongorestore from ever being spawned, exactly like the
+  // earlier check.
+  const finalManifestCheck = validateTestBackupManifestForRestore(from);
+  if (!finalManifestCheck.ok) {
+    throw new Error(`Refusing to proceed: completion manifest re-validation (immediately before restore) failed -- ${finalManifestCheck.reason}`);
+  }
+
   const mongorestoreBin = toolsDir ? path.join(toolsDir, process.platform === 'win32' ? 'mongorestore.exe' : 'mongorestore') : 'mongorestore';
   // Task 7P-SEC14 — credentials now flow through a temporary --config YAML
   // file, never a CLI argument, never mongorestore's stdin. configDir is
@@ -530,7 +599,7 @@ export async function restoreDatabase({ uri, from, toolsDir, drop, commit, confi
   const execArgs = buildMongorestoreArgs({ configPath, from, dbName, drop, username });
 
   try {
-    const { stdout, stderr } = await runRestoreProcess(mongorestoreBin, execArgs);
+    const { stdout, stderr } = await runRestoreProcess(mongorestoreBin, execArgs, { env: buildChildEnvWithoutMongoUri() });
     // Redaction kept as defense in depth even though the password is never
     // a CLI argument or in the --config file's own path/name: if
     // mongorestore's own output ever echoed back anything password-shaped

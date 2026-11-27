@@ -1,9 +1,16 @@
-import Link from 'next/link';
 import { getJoinUsContent } from '@/services/pageService';
 import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
+import { InternshipApplyButton } from '@/components/sections/joinUs/InternshipApplyButton';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray, toContentArray } from '@/lib/contentArrays';
+
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
 
 export const metadata = pageMetadata({
   path: '/join-us/internship',
@@ -12,13 +19,15 @@ export const metadata = pageMetadata({
 });
 
 export default async function InternshipPage() {
-  const { INTERNSHIP_REASONS, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
-  const INTERNSHIP_OPENINGS = OPENINGS_ALL.filter((o) => o.active !== false);
+  const { INTERNSHIP_REASONS: REASONS_ALL, INTERNSHIP_OPENINGS: OPENINGS_ALL } = await getJoinUsContent();
+  const INTERNSHIP_REASONS = toContentArray(REASONS_ALL);
+  const INTERNSHIP_OPENINGS = toActiveContentArray(OPENINGS_ALL);
 
   return (
     <div className="font-sans">
       <PageHero
         eyebrow="Join Us"
+        eyebrowSize="text-[16px]"
         title="Internship"
         body="Work on real projects at the meeting point of Sanskrit, Indian Knowledge Systems, education, and technology."
         maxWidth="max-w-[720px]"
@@ -43,11 +52,8 @@ export default async function InternshipPage() {
           <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">Current Internship Opportunities</h2>
           {INTERNSHIP_OPENINGS.length === 0 ? (
             <div className="rounded-md border border-[var(--border-subtle)] bg-white px-8 py-10 text-center font-sans text-base leading-normal text-charcoal">
-              No internships open right now. Check back soon, or{' '}
-              <Link href="/join-us/careers" className="font-bold text-vyoma-blue">
-                apply through Careers
-              </Link>
-              .
+              Vyoma welcomes internship applications throughout the year. We encourage interested candidates to
+              apply. Our team will review your application based on suitable opportunities.
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -60,7 +66,7 @@ export default async function InternshipPage() {
                     <div className="font-sans text-[17px] font-bold text-vyoma-blue">{o.role}</div>
                     <div className="mt-[3px] font-sans text-sm text-charcoal">Skill required: {o.skill}</div>
                   </div>
-                  <span className="flex-shrink-0 font-sans text-sm font-bold text-vyoma-blue">Apply →</span>
+                  <InternshipApplyButton role={o.role} />
                 </div>
               ))}
             </div>

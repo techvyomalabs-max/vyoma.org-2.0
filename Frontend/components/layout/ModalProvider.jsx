@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { computeContactModalState, CLOSED_CONTACT_ROLE_STATE } from './modalContactState.mjs';
 
 // Contact modal is mounted once at the (public) layout level and triggered
 // from anywhere (nav, page CTAs) via this context — replacing the source
@@ -29,16 +30,36 @@ export function ModalProvider({ children }) {
   const router = useRouter();
   const [contactOpen, setContactOpen] = useState(false);
   const [contactSubject, setContactSubject] = useState('General inquiry');
+  // Optional, backward-compatible: only ever set to a non-default value by
+  // an explicit opts.showRoleBanner/opts.role on openContact() (see
+  // InternshipApplyButton.jsx) -- every pre-existing single-argument caller
+  // (CareersBoard.jsx, every <ContactCta subject="...">) is unaffected,
+  // since computeContactModalState() resolves both to false/'' whenever
+  // `opts` is omitted, exactly as before this feature existed.
+  const [contactShowRoleBanner, setContactShowRoleBanner] = useState(false);
+  const [contactRole, setContactRole] = useState('');
 
   const value = {
     openDonate: () => router.push('/donate'),
     contactOpen,
     contactSubject,
-    openContact: (subject) => {
-      setContactSubject(subject || 'General inquiry');
+    contactShowRoleBanner,
+    contactRole,
+    openContact: (subject, opts = {}) => {
+      const next = computeContactModalState(subject, opts);
+      setContactSubject(next.subject);
+      setContactShowRoleBanner(next.showRoleBanner);
+      setContactRole(next.role);
       setContactOpen(true);
     },
-    closeContact: () => setContactOpen(false),
+    closeContact: () => {
+      setContactOpen(false);
+      // Defensive reset in addition to openContact()'s own fresh-every-call
+      // computation above -- closing (and any stray re-render before a
+      // fresh open) can never leave a previous role/banner state readable.
+      setContactShowRoleBanner(CLOSED_CONTACT_ROLE_STATE.showRoleBanner);
+      setContactRole(CLOSED_CONTACT_ROLE_STATE.role);
+    },
   };
 
   return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>;

@@ -50,9 +50,20 @@ export const metadata = {
 // configured URL (e.g. LinkedIn while null) is simply omitted from the
 // Organization JSON-LD's `sameAs`, exactly like the Footer's own existing
 // behavior.
+//
+// Every single page goes through this root layout, so an unguarded fetch
+// failure here would take down the ENTIRE site build/render, not just one
+// route — caught and treated the same as "no social links configured"
+// rather than failing the page; the Organization JSON-LD still renders
+// correctly with an empty/omitted `sameAs`.
 export default async function RootLayout({ children }) {
-  const settings = await getPublicSettings();
-  const socialLinks = settings.socialLinks || {};
+  let socialLinks = {};
+  try {
+    const settings = await getPublicSettings();
+    socialLinks = settings.socialLinks || {};
+  } catch (err) {
+    console.error('[layout] getPublicSettings failed, rendering Organization JSON-LD without sameAs:', err.message);
+  }
 
   return (
     <html lang="en" className={`${sourceSans.variable} ${notoDevanagari.variable}`}>

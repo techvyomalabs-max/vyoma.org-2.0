@@ -4,6 +4,7 @@ import { RequireAdminAuth } from '@/components/admin/RequireAdminAuth';
 import { ContentEditorShell } from '@/components/admin/cms/ContentEditorShell';
 import { TestimonialsFeaturedForm } from '@/components/admin/cms/media/TestimonialsFeaturedForm';
 import { TestimonialsAllForm } from '@/components/admin/cms/media/TestimonialsAllForm';
+import { validateTestimonialsContent } from '@/lib/testimonialCms.mjs';
 
 // Both 'pages/media' and its bare 'media' twin are seeded from the same
 // Backend/scripts/seedData/media.js module (see CONTENT_SEED in
@@ -19,7 +20,9 @@ const SECTIONS = [
 ];
 
 function TestimonialsCmsContent() {
-  return <ContentEditorShell pageLabel="Testimonials" type={TYPE} sections={SECTIONS} />;
+  return (
+    <ContentEditorShell pageLabel="Testimonials" type={TYPE} sections={SECTIONS} validate={validateTestimonialsContent} />
+  );
 }
 
 export default function TestimonialsCmsPage() {

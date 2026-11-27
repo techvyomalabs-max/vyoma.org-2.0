@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/lib/AdminAuthContext';
 
@@ -8,21 +8,49 @@ const inputClass =
   'w-full box-border rounded-md border border-[var(--border-subtle)] px-3.5 py-2.5 font-sans text-base text-charcoal';
 
 export default function AdminLoginPage() {
-  const { status, login, verifyMfa } = useAdminAuth();
+  const { status, login, verifyMfa, enrollMfaSetup, enrollMfaVerify } = useAdminAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [mfaToken, setMfaToken] = useState(null);
+  const [enrollmentToken, setEnrollmentToken] = useState(null);
+  const [enrollment, setEnrollment] = useState(null); // { otpauthUri, secret }
+  const [recoveryCodes, setRecoveryCodes] = useState(null);
   const [error, setError] = useState(null);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
-    if (status === 'authenticated') router.replace('/admin/dashboard');
-  }, [status, router]);
+  // Bug fix (Task 7D.11, confirmed via real browser testing): enrollMfaVerify()
+  // (AdminAuthContext) sets the shared `status` to 'authenticated', which
+  // used to make AdminShell (the /admin layout's shared chrome) switch from
+  // rendering this page bare to wrapping it in a brand new header/sidebar
+  // tree -- a root-element-type change that made React tear down and
+  // remount this whole page, wiping its `recoveryCodes` state before it
+  // ever rendered. That remount is what's fixed, in AdminShell itself (see
+  // its comment). This ref is kept as defense-in-depth: `status` and this
+  // page's own `recoveryCodes` state are still two separate state updates
+  // that are not guaranteed to land in the same React commit, so without
+  // it a render could still observe "authenticated, no recovery codes yet"
+  // and redirect to the dashboard before the recovery-codes screen has a
+  // chance to show. Set the instant enrollment verification starts, and
+  // only cleared once a render has actually observed recoveryCodes set
+  // (i.e. once the recovery-codes screen itself is already showing, so
+  // clearing it then is always safe).
+  const suppressAutoRedirectRef = useRef(false);
 
-  if (status === 'loading' || status === 'authenticated') return null;
+  // Recovery codes are shown exactly once, right after enrollment -- the
+  // user must see and save them before this redirects to the dashboard, so
+  // the auto-redirect is held off while they're on screen.
+  useEffect(() => {
+    if (status === 'authenticated' && !recoveryCodes && !suppressAutoRedirectRef.current) router.replace('/admin/dashboard');
+  }, [status, router, recoveryCodes]);
+
+  useEffect(() => {
+    if (recoveryCodes) suppressAutoRedirectRef.current = false;
+  }, [recoveryCodes]);
+
+  if (status === 'loading' || (status === 'authenticated' && !recoveryCodes && !suppressAutoRedirectRef.current)) return null;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -32,6 +60,10 @@ export default function AdminLoginPage() {
       const result = await login(email, password);
       if (result.mfaRequired) {
         setMfaToken(result.mfaToken);
+      } else if (result.mfaEnrollmentRequired) {
+        setEnrollmentToken(result.enrollmentToken);
+        const setup = await enrollMfaSetup(result.enrollmentToken);
+        setEnrollment(setup);
       } else {
         router.replace('/admin/dashboard');
       }
@@ -55,6 +87,86 @@ export default function AdminLoginPage() {
       setPending(false);
     }
   };
+
+  const handleEnrollVerify = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setPending(true);
+    // Set synchronously, before the async call below -- a ref mutation
+    // takes effect immediately, with no render/commit delay, so it is
+    // already true by the time ANY resulting re-render happens, regardless
+    // of whether `status` and `recoveryCodes` end up updating in the same
+    // commit or not.
+    suppressAutoRedirectRef.current = true;
+    try {
+      const result = await enrollMfaVerify(enrollmentToken, code);
+      setRecoveryCodes(result.recoveryCodes);
+    } catch (err) {
+      suppressAutoRedirectRef.current = false;
+      setError(err.message || 'Invalid code.');
+    } finally {
+      setPending(false);
+    }
+  };
+
+  if (recoveryCodes) {
+    return (
+      <div className="mx-auto mt-24 max-w-sm px-4">
+        <h1 className="mb-1.5 font-sans text-h2 font-bold text-vyoma-blue">Save your recovery codes</h1>
+        <p className="mb-5 font-sans text-sm text-charcoal">
+          Two-factor authentication is now enabled. Store these codes somewhere safe — each can be used once if you lose
+          access to your authenticator app. They will not be shown again.
+        </p>
+        <ul className="mb-5 grid grid-cols-2 gap-2 rounded-md border border-[var(--border-subtle)] p-3.5 font-mono text-sm text-charcoal">
+          {recoveryCodes.map((rc) => (
+            <li key={rc}>{rc}</li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          onClick={() => router.replace('/admin/dashboard')}
+          className="rounded-md bg-vyoma-blue px-4 py-2.5 font-sans font-semibold text-white"
+        >
+          I've saved these — Continue
+        </button>
+      </div>
+    );
+  }
+
+  if (enrollment) {
+    return (
+      <div className="mx-auto mt-24 max-w-sm px-4">
+        <h1 className="mb-1.5 font-sans text-h2 font-bold text-vyoma-blue">Set up two-factor authentication</h1>
+        <p className="mb-3 font-sans text-sm text-charcoal">
+          This account requires two-factor authentication. Add it to an authenticator app (Google Authenticator, Authy,
+          1Password, etc.) using this key, then enter the 6-digit code it generates.
+        </p>
+        <p className="mb-5 break-all rounded-md border border-[var(--border-subtle)] bg-[var(--surface-subtle,#f5f5f5)] p-3 font-mono text-sm text-charcoal">
+          {enrollment.secret}
+        </p>
+        <form onSubmit={handleEnrollVerify} className="flex flex-col gap-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="123456"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className={inputClass}
+            required
+          />
+          {error && <p className="font-sans text-sm text-red-600">{error}</p>}
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-md bg-vyoma-blue px-4 py-2.5 font-sans font-semibold text-white disabled:opacity-60"
+          >
+            {pending ? 'Verifying…' : 'Enable two-factor authentication'}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   if (mfaToken) {
     return (

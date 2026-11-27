@@ -2,7 +2,7 @@
 // Produced by Backend/scripts/deploy/generate-redirect-manifest.mjs from the
 // MongoDB Redirect collection (the authoring source of truth; edit redirects
 // there, via the existing admin screen, then regenerate this file).
-// Generated at: 2026-10-06T06:10:38.352Z
+// Generated at: 2026-10-23T07:11:32.392Z
 // Rule count: 51
 //
 // Intended target: a CloudFront Function associated with the viewer-request
@@ -12,9 +12,14 @@
 //
 // Matching semantics (must not be "improved" without re-approving the
 // underlying decision — see infra/cloudfront/README.md):
-//   - Exact pathname match only, case-sensitive, no trailing-slash
-//     normalization — identical semantics to the existing Express
-//     redirectMiddleware (Backend/src/middleware/redirectMiddleware.js).
+//   - Case-sensitive exact pathname match, with one normalization: if
+//     the exact path misses, the other trailing-slash form is tried
+//     (slash added if absent, stripped if present) — identical
+//     semantics to the existing Express redirectMiddleware
+//     (Backend/src/middleware/redirectMiddleware.js), since both
+//     embed/call the exact same resolveRedirect() function (see
+//     Backend/src/modules/redirects/resolveRedirect.js — its source is
+//     copied verbatim below via .toString(), not reimplemented).
 //   - Percent-encoded legacy paths are matched literally (CloudFront
 //     delivers event.request.uri already percent-encoded as received;
 //     this function does not decode or re-encode it).
@@ -230,10 +235,22 @@ var REDIRECT_MAP = {
   }
 };
 
+function resolveRedirect(uri, map) {
+  var rule = map[uri];
+  if (rule) return rule;
+
+  var altUri = uri.charAt(uri.length - 1) === '/' ? uri.slice(0, -1) : uri + '/';
+  var altRule = map[altUri];
+  if (!altRule) return null;
+  if (altRule.toPath === uri) return null;
+
+  return altRule;
+}
+
 function handler(event) {
   var request = event.request;
   var uri = request.uri;
-  var rule = REDIRECT_MAP[uri];
+  var rule = resolveRedirect(uri, REDIRECT_MAP);
   if (!rule) {
     return request;
   }

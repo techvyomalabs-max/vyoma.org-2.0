@@ -32,6 +32,29 @@ export const PRESS_CLIPPINGS = [
   { pub: 'Vijaya Karnataka', date: '30 Apr 2026', note: 'Note on Vyoma’s volunteer network.' },
 ];
 
+// Task 7D.32 — Frontend/services/mediaService.js's getPressCoverage() reads
+// PRESS_CLIPPING_SECTIONS (grouped { heading, items: [{ title, image, ... }] }),
+// not the two flat arrays above — this seed never had that field at all, so
+// a freshly seeded database's /media/press page silently rendered an empty
+// clippings section despite 9 real placeholder items sitting right above,
+// unread under their old field names. Reconciled here by regrouping those
+// same 9 items (PRESS_FEATURED and PRESS_CLIPPINGS are left fully intact,
+// unchanged, immediately above) into the shape the page actually consumes --
+// `pub` -> `title` (matches app/(public)/media/press/page.js's
+// `item.title`), `note` -> `caption` (PressCard.jsx's optional caption),
+// `date` carried over as-is (not currently rendered by PressCard, but not
+// dropped either), `image: null` (no photo exists for any of these, exactly
+// like Leadership/Core Team -- never fabricated). No information from
+// either source array is lost; nothing here replaces or deletes them.
+function toClippingItem(row) {
+  return { title: row.pub, date: row.date, caption: row.note, image: null, active: true };
+}
+
+export const PRESS_CLIPPING_SECTIONS = [
+  { heading: 'Featured Coverage', items: PRESS_FEATURED.map(toClippingItem) },
+  { heading: 'In the Press', items: PRESS_CLIPPINGS.map(toClippingItem) },
+];
+
 export const PRESS_RADIO = [
   { title: 'Benefits and Courses of Learning Sanskrit', duration: '3:07' },
   { title: 'Introduction to Vyoma Labs', duration: '2:24' },

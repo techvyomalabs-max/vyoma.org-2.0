@@ -33,6 +33,11 @@ export const OTHER_WAYS = {
   subscriptionHeading: 'Annual Subscription Plan',
   subscriptionBody: 'Give regularly through the year.',
   subscriptionCtaLabel: 'Set up a plan',
+  // Real, verified, currently-live Razorpay payment link for this exact
+  // button ("Annual Subscription Plan - Donate Now") on the live
+  // WordPress donation hub (https://vyoma.org/donors/) — not a new
+  // recurring-payment system, just restoring the existing destination.
+  subscriptionCtaHref: 'https://rzp.io/l/QY77Y4TDc',
   csrHeading: 'CSR & Corpus',
   csrBody: 'For companies and endowment gifts.',
 };

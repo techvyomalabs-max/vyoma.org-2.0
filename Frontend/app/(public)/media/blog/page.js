@@ -6,6 +6,12 @@ import { pageMetadata } from '@/lib/seo';
 
 const PAGE_SIZE = 9;
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/media/blog',
   title: 'Blog',
@@ -31,6 +37,7 @@ export default async function BlogPage({ searchParams }) {
     <div className="font-sans">
       <PageHero
         eyebrow="Media"
+        eyebrowSize="text-[16px]"
         title="Blog"
         body="Long-form stories and updates from classrooms, research, and the field."
       />

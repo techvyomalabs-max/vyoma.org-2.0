@@ -155,36 +155,50 @@ export const CORE_TEAMS = [
   ] },
 ];
 
-export const PATRON_TIERS = [
-  { sanskrit: 'Prayojakas', meaning: 'Initiators', note: "Those who helped set Vyoma's mission in motion.", active: true },
-  { sanskrit: 'Rakshakas', meaning: 'Protectors', note: 'Supporters who safeguard and strengthen our work.', active: true },
-  { sanskrit: 'Samrakshakas', meaning: 'Sustainers', note: 'Patrons whose steady support keeps our mission alive.', active: true },
-  { sanskrit: 'Poshakas', meaning: 'Nourishers', note: 'Those who help our work grow and flourish.', active: true },
-  { sanskrit: 'Mahaposhakas', meaning: 'Major Supporters', note: 'Patrons whose generosity powers Vyoma at scale.', active: true },
-  { sanskrit: 'Paripalakas', meaning: 'Caretakers', note: 'Our all-round supporters, who stand with Vyoma across every need.', active: true },
+// Task 7D.30 — flattened from the previous separate PATRON_TIERS +
+// PATRON_TIER_ROWS (a fixed tier-metadata array plus a parallel lookup
+// object keyed by sanskrit name) into one nested shape, each category
+// carrying its own `rows` array directly. This matches the shape the
+// Frontend has already moved to (Frontend/lib/mockData/about.js's own
+// PATRON_CATEGORIES, itself the result of
+// Backend/scripts/wordpress/import/patron-categories-unify-migration.mjs
+// unifying the real, live content the same way) — this generic
+// empty-database seed had simply never been updated to match, which is
+// exactly what left PATRON_CATEGORIES undefined for any database bootstrapped
+// from this seed, crashing the Patrons page's
+// `CATEGORIES_ALL.filter(...)` with "Cannot read properties of undefined
+// (reading 'filter')". Same 6 tiers, same note/meaning text, same 5
+// Prayojakas rows, same empty rows for the other 5 tiers — no information
+// invented or dropped, only reshaped. hasProductField is true only for
+// Prayojakas, matching the live site (the other 5 tiers have never had a
+// "Product Sponsored" column).
+//
+// The client-side "staff login" (a hardcoded password unlocking add/remove
+// rows, persisted to localStorage) from the source design system was NOT
+// ported here either: it is an insecure pattern — unauthenticated client
+// code should never gate writes — superseded by the real Admin Portal (this
+// CMS) now that auth exists.
+export const PATRON_CATEGORIES = [
+  {
+    sanskrit: 'Prayojakas',
+    meaning: 'Initiators',
+    note: "Those who helped set Vyoma's mission in motion.",
+    hasProductField: true,
+    active: true,
+    rows: [
+      { name: 'Sandhya N S', place: 'Bangalore', product: 'Sahasranama', active: true },
+      { name: 'Rajesh A', place: 'Bangalore', product: '', active: true },
+      { name: 'Rama Sivaraman', place: 'Chennai', product: 'Grammar Products', active: true },
+      { name: 'Krishnamurthy B', place: 'Bangalore', product: 'Saptāhastotra Sāṅgrahaṇya & iOS App', active: true },
+      { name: 'Sumanth Suresh', place: 'USA', product: 'Replenishment of old products', active: true },
+    ],
+  },
+  { sanskrit: 'Rakshakas', meaning: 'Protectors', note: 'Supporters who safeguard and strengthen our work.', hasProductField: false, active: true, rows: [] },
+  { sanskrit: 'Samrakshakas', meaning: 'Sustainers', note: 'Patrons whose steady support keeps our mission alive.', hasProductField: false, active: true, rows: [] },
+  { sanskrit: 'Poshakas', meaning: 'Nourishers', note: 'Those who help our work grow and flourish.', hasProductField: false, active: true, rows: [] },
+  { sanskrit: 'Mahaposhakas', meaning: 'Major Supporters', note: 'Patrons whose generosity powers Vyoma at scale.', hasProductField: false, active: true, rows: [] },
+  { sanskrit: 'Paripalakas', meaning: 'Caretakers', note: 'Our all-round supporters, who stand with Vyoma across every need.', hasProductField: false, active: true, rows: [] },
 ];
-
-// Read-only seed for the patron tier table. The source design system's
-// client-side "staff login" (a hardcoded password unlocking add/remove rows,
-// persisted to localStorage) was NOT ported: it is an insecure pattern —
-// unauthenticated client code should never gate writes — superseded by the
-// real Admin Portal (this CMS) now that auth exists. Kept as a fixed set of
-// 6 tier keys (matching PATRON_TIERS) rather than a repeatable list of tiers
-// themselves, since the tier names are a fixed taxonomy, not admin-editable.
-export const PATRON_TIER_ROWS = {
-  Prayojakas: [
-    { name: 'Sandhya N S', place: 'Bangalore', product: 'Sahasranama', active: true },
-    { name: 'Rajesh A', place: 'Bangalore', product: '', active: true },
-    { name: 'Rama Sivaraman', place: 'Chennai', product: 'Grammar Products', active: true },
-    { name: 'Krishnamurthy B', place: 'Bangalore', product: 'Saptāhastotra Sāṅgrahaṇya & iOS App', active: true },
-    { name: 'Sumanth Suresh', place: 'USA', product: 'Replenishment of old products', active: true },
-  ],
-  Rakshakas: [],
-  Samrakshakas: [],
-  Poshakas: [],
-  Mahaposhakas: [],
-  Paripalakas: [],
-};
 
 export const GOLDEN_WALL = [
   'Shri. B Krishnamurthy — Coimbatore',
@@ -203,6 +217,19 @@ export const PATRON_TESTIMONIALS = [
   { name: 'Patron Name', location: 'City, Country', quote: 'Quote placeholder — what this patron would say about supporting Vyoma.', active: true },
   { name: 'Patron Name', location: 'City, Country', quote: 'Quote placeholder — what this patron would say about supporting Vyoma.', active: true },
 ];
+
+// Task 7D.30 — the Patrons page's photo-based testimonial gallery and
+// matching-gift partner strip (Frontend/app/(public)/about/patrons/page.js's
+// PATRON_TESTIMONIAL_GALLERY and PATRON_MATCHING_PARTNERS) have no real
+// backend-seed equivalent today — PATRON_TESTIMONIALS above is a distinct,
+// older, quote-based concept (no photo), not a substitute. No photo/partner
+// data is invented here: these are genuinely empty until real images/
+// partners are added through the Admin CMS, exactly like BOARD/ADVISORS/
+// COMMITTEE's image field above. Still exported (rather than left absent)
+// so a database bootstrapped from this seed has the field the Patrons page
+// now requires, instead of leaving it undefined.
+export const PATRON_TESTIMONIAL_GALLERY = [];
+export const PATRON_MATCHING_PARTNERS = [];
 
 export const EXPLORE_MORE_LINKS = [
   { label: 'Our Story', href: '/about/our-story', text: 'From a single self-learning product in 2010 to a global Sanskrit ecosystem. See how Vyoma grew, year by year.', active: true },

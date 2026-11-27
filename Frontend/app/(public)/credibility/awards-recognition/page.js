@@ -5,6 +5,12 @@ import { ContactCta } from '@/components/sections/CtaButtons';
 import { AwardBlocks } from '@/components/sections/credibility/AwardBlocks';
 import { pageMetadata } from '@/lib/seo';
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/credibility/awards-recognition',
   title: 'Awards & Recognition',
@@ -18,6 +24,7 @@ export default async function AwardsRecognitionPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Awards & Recognition"
+        eyebrowSize="text-[16px]"
         title="Awards & Recognition"
         body="More than ten years of Saṃskṛta-Saṃskṛti-Saṃskāra seva, recognised by universities, institutions, and peers."
       />

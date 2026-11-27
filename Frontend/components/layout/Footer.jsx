@@ -46,44 +46,88 @@ function FooterLink({ label, href, external }) {
 
 // Server Component — reads socialLinks from Settings (same source of truth
 // the Contact page already uses) rather than any hardcoded/duplicated URL.
+// Rendered on every public page, so a fetch failure here must not take down
+// the whole page/build — falls back to showing no social icons rather than
+// erroring, same as root layout's identical Settings fetch.
 export async function Footer() {
-  const settings = await getPublicSettings();
-  const socialLinks = settings.socialLinks || {};
+  let socialLinks = {};
+  try {
+    const settings = await getPublicSettings();
+    socialLinks = settings.socialLinks || {};
+  } catch (err) {
+    console.error('[Footer] getPublicSettings failed, rendering without social links:', err.message);
+  }
 
   return (
-    <footer className="flex flex-col items-end gap-5 bg-sky-mist px-8 py-7">
-      <div className="flex w-full flex-wrap items-start justify-between gap-6">
-        <div className="flex flex-wrap gap-x-5 gap-y-2">
-          <span className="mr-1 font-sans text-xs font-bold uppercase tracking-wide text-charcoal/60">Our Platforms</span>
-          {PLATFORM_LINKS.map((l) => (
-            <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center justify-end gap-5">
-          {FOOTER_LINKS.map((l) => (
-            <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
-          ))}
-          <div className="ml-2 flex gap-3">
-            {SOCIAL_PLATFORMS.filter((p) => socialLinks[p.slug]).map((p) => (
-              <a
-                key={p.slug}
-                href={socialLinks[p.slug]}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={p.name}
-                className="block h-[18px] w-[18px]"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--color-vyoma-blue)">
-                  <path d={SOCIAL_ICON_PATHS[p.slug]} />
-                </svg>
-              </a>
+    // QA Bug 14 (reopened): the outer <footer> keeps the full-width
+    // bg-sky-mist background and existing px-8/py-7 edge padding -- its
+    // actual content is centered via the inner mx-auto wrapper below, the
+    // same outer-px-8/inner-mx-auto-max-w shape every page-content section
+    // uses, but at a WIDER cap (max-w-[1600px], not the standard 1100px
+    // page-content width) because this footer's own content -- a left
+    // group (label + 4 platform links) AND a right group (6 footer links +
+    // up to 5 social icons) -- is denser than a typical page section and
+    // needs more horizontal room to actually sit on one row at desktop
+    // widths, which 1100px did not provide. 1600px is an approved initial
+    // value, not a measurement verified against the reference design or a
+    // real browser -- it is not guaranteed to keep both groups on one row
+    // at every desktop viewport width. flex/flex-col/items-end/gap-5
+    // (previously on <footer> itself) remain on this wrapper, laying out
+    // the two content blocks below it; every inner element's own classes
+    // are otherwise unchanged.
+    <footer className="bg-sky-mist px-8 py-7">
+      <div className="mx-auto flex max-w-[1600px] flex-col items-end gap-5">
+        <div className="flex w-full flex-wrap items-start justify-between gap-6">
+          <div className="flex flex-wrap items-baseline gap-x-5 gap-y-2">
+            {/* Task 7D.12 (A11Y-01/A11Y-02): text-charcoal/60 measured 3.7:1
+                against this footer's bg-sky-mist (axe-core, WCAG AA requires
+                4.5:1) -- /70 clears it with margin. This footer is shared
+                across every page, so this one change covers both findings. */}
+            <span className="mr-1 font-sans text-xs font-bold uppercase tracking-wide text-charcoal/70">Our Platforms</span>
+            {PLATFORM_LINKS.map((l) => (
+              <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
             ))}
           </div>
+
+          {/* ml-auto (QA Bug 14 reopened): when the row's combined content
+              is too wide for one line, flex-wrap pushes this whole group
+              onto its own second line -- as the line's ONLY flex item,
+              `justify-between` on the parent row has nothing to distribute
+              space against on that line, so per the flexbox spec a lone
+              item under space-between falls back to flex-start (left-
+              aligned), not right-aligned. ml-auto fixes this directly: it
+              claims all remaining free space on ITS OWN line for its own
+              left margin, pushing the group flush right whether it's
+              sharing the row with the platform-links group or alone on a
+              wrapped second line -- `justify-end` (already present, for the
+              icons/links inside this group) and the parent's
+              `justify-between` are both preserved and remain harmless/
+              redundant once this group supplies its own right alignment. */}
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-5">
+            {FOOTER_LINKS.map((l) => (
+              <FooterLink key={l.label} label={l.label} href={l.href} external={l.external} />
+            ))}
+            <div className="ml-2 flex gap-3">
+              {SOCIAL_PLATFORMS.filter((p) => socialLinks[p.slug]).map((p) => (
+                <a
+                  key={p.slug}
+                  href={socialLinks[p.slug]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={p.name}
+                  className="block h-[18px] w-[18px]"
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="var(--color-vyoma-blue)">
+                    <path d={SOCIAL_ICON_PATHS[p.slug]} />
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="w-full self-start break-words font-sans text-sm text-charcoal">
-        © 2026 Vyoma Linguistic Labs Foundation. All rights reserved.
+        <div className="w-full self-start break-words font-sans text-sm text-charcoal">
+          © 2026 Vyoma Linguistic Labs Foundation. All rights reserved.
+        </div>
       </div>
     </footer>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { hasRealLink } from './platformLink.mjs';
 
 function cwPositions(list, radiusPct) {
   return list.map((_, i) => {
@@ -59,7 +60,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
   const platPos = cwPositions(platforms, 28);
   const progPos = cwPositions(programmes, 42);
   const openLink = (u) => {
-    if (u && u !== '#') window.open(u, '_blank', 'noopener');
+    if (hasRealLink(u)) window.open(u, '_blank', 'noopener');
   };
 
   const Node = ({ it, kind, pos }) => (
@@ -84,11 +85,11 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
         .cw-ring{position:absolute;left:50%;top:50%;border-radius:50%;transform:translate(-50%,-50%);border:1.5px dashed rgba(15,98,179,.28)}
         .cw-ring.in{width:56%;height:56%;animation:cwSpin 70s linear infinite}
         .cw-ring.out{width:84%;height:84%;border-color:rgba(201,146,42,.32);animation:cwSpin 120s linear infinite reverse}
-        .cw-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:30%;height:30%;min-width:200px;min-height:200px;border-radius:50%;background:radial-gradient(circle at 50% 40%,var(--color-vyoma-blue) 0%,var(--color-vyoma-blue-deep) 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px;box-shadow:0 18px 50px rgba(15,98,179,.35);z-index:5}
-        .cw-hub .ey{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.75;margin-bottom:8px}
-        .cw-hub h2{font-size:22px;font-weight:800;margin:0;line-height:1.2}
-        .cw-hub .d{font-size:13.5px;line-height:1.5;margin:10px 0 0;opacity:.92}
-        .cw-hub a{color:#fff;font-weight:800;font-size:13px;margin-top:12px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.6)}
+        .cw-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:31.58%;height:31.58%;min-width:200px;min-height:200px;border-radius:50%;background:radial-gradient(circle at 50% 40%,var(--color-vyoma-blue) 0%,var(--color-vyoma-blue-deep) 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:clamp(16px,3.5vw,26px);box-shadow:0 18px 50px rgba(15,98,179,.35);z-index:5}
+        .cw-hub .ey{font-size:clamp(9.5px,1.3vw,11px);font-weight:800;letter-spacing:.16em;text-transform:uppercase;opacity:.75;margin-bottom:8px}
+        .cw-hub h2{font-size:clamp(16px,2.6vw,22px);font-weight:800;margin:0;line-height:1.2;max-width:100%;overflow-wrap:break-word;word-break:break-word}
+        .cw-hub .d{font-size:clamp(11px,1.6vw,13.5px);line-height:1.4;margin:10px 0 0;opacity:.92;max-width:100%;overflow-wrap:break-word;word-break:break-word}
+        .cw-hub a{color:#fff;font-weight:800;font-size:clamp(10.5px,1.5vw,13px);margin-top:12px;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.6);max-width:100%;overflow-wrap:break-word;word-break:break-word;line-height:1.3}
         .cw-node{position:absolute;width:118px;margin-left:-59px;margin-top:-34px;text-align:center;cursor:pointer;z-index:6;background:none;border:none;padding:0}
         .cw-dot{width:60px;height:60px;border-radius:50%;margin:0 auto;background:#fff;border:2px solid var(--color-teal);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--color-teal);font-size:15px;font-family:var(--font-sans);box-shadow:0 6px 16px rgba(13,124,124,.18);transition:.2s;animation:cwFloat 6s ease-in-out infinite}
         .cw-node.prog .cw-dot{border-color:var(--color-amber-gold);color:var(--color-amber-gold);box-shadow:0 6px 16px rgba(201,146,42,.2)}
@@ -100,7 +101,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
       `}</style>
       <section className="bg-gradient-to-b from-[#f4f8fc] to-sky-mist px-8 pb-10 pt-14">
         <div className="mx-auto max-w-[900px] text-center">
-          <div className="mb-3 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-teal">Our Work</div>
+          <div className="mb-3 font-sans text-[16px] font-bold uppercase tracking-eyebrow text-teal">Our Work</div>
           <Heading className="mx-auto max-w-[760px] font-sans text-h1 font-bold leading-tight text-vyoma-blue">Current Work</Heading>
           <p className="mx-auto mt-4 max-w-[680px] font-sans text-lg leading-normal text-charcoal">
             Everything Vyoma runs today, the platforms that make Sanskrit accessible to all, and the programmes
@@ -126,7 +127,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
                 <div className="ey">{active.kind === 'prog' ? 'Programme' : 'Platform'}</div>
                 <h2>{active.it.t}</h2>
                 <div className="d">{active.it.d}</div>
-                {active.it.u && (
+                {hasRealLink(active.it.u) && (
                   <a href={active.it.u} target="_blank" rel="noopener noreferrer">
                     {active.it.ul} ↗
                   </a>
@@ -172,7 +173,7 @@ export function CurrentWorkStage({ platforms: allPlatforms, programmes: allProgr
                   >
                     <div className="font-sans text-[17px] font-bold text-vyoma-blue">{it.t}</div>
                     <div className="mt-1 font-sans text-sm leading-normal text-charcoal">{it.d}</div>
-                    {it.u && (
+                    {hasRealLink(it.u) && (
                       <a
                         href={it.u}
                         target="_blank"

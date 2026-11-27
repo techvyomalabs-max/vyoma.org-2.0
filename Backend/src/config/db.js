@@ -1,26 +1,154 @@
 import mongoose from 'mongoose';
 import { env } from './env.js';
+import { assertSafeMongoConnectionUri } from './protectedDbGuard.js';
 
-// Real MongoDB (Atlas/mongod) when MONGODB_URI is set. Otherwise — the
-// expected case for local dev on a machine with no MongoDB installed — boot
-// an in-memory MongoDB so the server runs with zero external setup. Same
-// mongoose models either way; only the connection source differs.
+// Real MongoDB (Atlas/mongod) when MONGODB_URI is set. Otherwise — in local
+// development only — boot an in-memory MongoDB so the server runs with zero
+// external setup. Same mongoose models either way; only the connection
+// source differs.
+//
+// Outside development, a missing/blank MONGODB_URI is a fatal configuration
+// error, not a silent fallback: an ephemeral in-memory database in
+// staging/production would boot successfully and appear to work, while
+// every write (users, content, donations, audit logs) exists only in that
+// one process's memory and is lost on the next restart -- confirmed as a
+// real risk during staging-readiness review, since nothing else in this
+// codebase would otherwise catch a missing MONGODB_URI before data loss.
+// This check lives here (not only in server.js) specifically so it also
+// protects scripts/bootstrapAuth.js and scripts/seed.js, both of which call
+// connectDb() directly.
 let memoryServer = null;
 
-export async function connectDb() {
-  let uri = env.mongodbUri;
+// Connection-lifecycle logging -- observability only, no change to
+// connection/reconnection behavior itself (the MongoDB driver already
+// handles reconnection on its own; this only logs the state transitions it
+// was already going to make). Registered exactly ONCE per process, guarded
+// by `listenersRegistered`: mongoose.connection is a module-level singleton
+// shared across every call to connectDb() in this process (e.g.
+// db.test.js's several tests each call connectDb() against the same
+// connection object) -- attaching these unconditionally inside connectDb()'s
+// own body would re-attach a fresh set of listeners on every call, so a
+// single real event would log once per accumulated listener instead of
+// once, and would eventually trip Node's MaxListenersExceededWarning.
+//
+// Never logs the connection string, credentials, or the raw driver error
+// message -- a driver error's `.message` can itself echo back connection
+// details (hostname, port, or the URI it failed to reach) -- only the event
+// name and, for errors, the error's `name` (e.g. "MongoServerSelectionError").
+let listenersRegistered = false;
 
-  if (!uri) {
-    const { MongoMemoryServer } = await import('mongodb-memory-server');
-    memoryServer = await MongoMemoryServer.create();
-    uri = memoryServer.getUri();
-    console.warn(
-      '[db] MONGODB_URI not set — using an in-memory MongoDB instance. Data will NOT persist across restarts. Set MONGODB_URI for staging/production.'
+function registerConnectionEventListeners() {
+  if (listenersRegistered) return;
+  listenersRegistered = true;
+
+  mongoose.connection.on('connected', () => {
+    console.log('[db] connection event: connected');
+  });
+  mongoose.connection.on('disconnected', () => {
+    console.warn('[db] connection event: disconnected');
+  });
+  mongoose.connection.on('reconnected', () => {
+    console.log('[db] connection event: reconnected');
+  });
+  mongoose.connection.on('error', (err) => {
+    // Defensive even against a hostile/malformed error-like value (not just
+    // a normal Error instance) -- e.g. a getter on `.name` that throws must
+    // never crash this listener (and, by extension, the process) while it's
+    // already in the middle of handling a connection error. Falls back to
+    // 'Unknown' for anything that isn't a plain string `.name`.
+    let name = 'Unknown';
+    try {
+      if (err && typeof err.name === 'string' && err.name) name = err.name;
+    } catch {
+      // Swallow -- `name` stays 'Unknown'.
+    }
+    console.error(`[db] connection event: error (${name})`);
+  });
+}
+
+// Phase 1 Task 4D: explicit, conservative connection/server-selection
+// timeouts, tightened from the MongoDB driver's own 30s defaults so a
+// misconfigured or unreachable MONGODB_URI fails noticeably faster and is
+// less likely to be silently swallowed by a deployment platform's own
+// (typically shorter) startup-health-check window.
+//
+// serverSelectionTimeoutMS is not only a one-time startup setting: the
+// driver re-runs server selection for EVERY operation, not just the initial
+// connect, so this same bound also applies mid-life -- e.g. if the topology
+// is unhealthy (a replica-set election in progress, the current primary
+// unreachable) when some later operation is issued, that operation waits up
+// to this same 10s to find a suitable server before failing. What neither
+// this nor connectTimeoutMS ever bounds is how long an operation takes to
+// RUN once a server has actually been selected and the operation dispatched
+// -- that is socketTimeoutMS's job, deliberately left at the driver's
+// unbounded default and NOT touched here. This distinction matters because
+// connectDb() is shared by this server AND by every script under
+// scripts/wordpress/import/ plus scripts/seed.js and scripts/bootstrapAuth.js
+// -- all of which call connectDb() exactly once, then run their real
+// (sometimes long-running, sometimes genuinely destructive via deleteMany())
+// work on that one already-established connection. Confirmed by inspecting
+// those callers: none of them re-invoke connectDb() mid-run, and since a
+// healthy topology selects a server near-instantly, this change cannot
+// impose any practical limit on their actual data-processing duration --
+// only on how long they'd wait during a genuine, ongoing topology outage.
+const CONNECTION_OPTIONS = {
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000,
+};
+
+// Task 7T.1A — the single chokepoint every mongoose.connect() call in this
+// file goes through, so the protected-database guard can never be
+// forgotten on one branch while present on another. Validates the URI
+// (database name only -- never logs or returns the URI itself) BEFORE
+// calling mongoose.connect(), i.e. before any network connection is
+// attempted, for every caller, including the in-memory fallback below --
+// that branch's URI can never actually resolve to the protected name (it is
+// always freshly generated by a local MongoMemoryServer, never
+// user-supplied), but routing it through the same guard means there is
+// exactly one place or future caller that could forget to check, not two.
+async function connectMongooseSafely(uri, { label }) {
+  assertSafeMongoConnectionUri(uri, { label });
+  await mongoose.connect(uri, CONNECTION_OPTIONS);
+}
+
+export async function connectDb() {
+  registerConnectionEventListeners();
+
+  const uri = env.mongodbUri;
+  const hasRealUri = typeof uri === 'string' && uri.trim().length > 0;
+
+  if (hasRealUri) {
+    await connectMongooseSafely(uri, { label: 'configured' });
+    console.log('[db] connected (configured URI)');
+    return;
+  }
+
+  if (env.nodeEnv !== 'development') {
+    throw new Error(
+      `MONGODB_URI must be set to a real connection string outside local development (NODE_ENV=${env.nodeEnv}) -- refusing to start an ephemeral in-memory database for staging/production.`
     );
   }
 
-  await mongoose.connect(uri);
-  console.log(`[db] connected (${memoryServer ? 'in-memory' : 'configured URI'})`);
+  const { MongoMemoryServer } = await import('mongodb-memory-server');
+  memoryServer = await MongoMemoryServer.create();
+  // Task 7T.1A — an explicit database name, not the bare `memoryServer.getUri()`
+  // this previously called: mongodb-memory-server's own getUri() deliberately
+  // returns an EMPTY database-name segment when called with no argument (its
+  // own generateDbName() returns '' by design, confirmed by reading
+  // node_modules/mongodb-memory-server-core directly) -- i.e.
+  // "mongodb://127.0.0.1:<port>/" with nothing after the final slash. That
+  // URI shape is exactly what connectMongooseSafely()'s guard below now
+  // refuses as an ambiguous target, on purpose, for any CALLER-SUPPLIED URI.
+  // Naming this one explicitly keeps that refusal meaningful (it still
+  // protects against a real ambiguous/ malformed configured URI) without
+  // special-casing this always-safe, freshly-created, local-only instance
+  // out of the same guard every other caller goes through.
+  const memoryUri = memoryServer.getUri('local-dev');
+  console.warn(
+    '[db] MONGODB_URI not set — using an in-memory MongoDB instance. Data will NOT persist across restarts. Set MONGODB_URI for staging/production.'
+  );
+  await connectMongooseSafely(memoryUri, { label: 'in-memory' });
+  console.log('[db] connected (in-memory)');
 }
 
 export async function disconnectDb() {

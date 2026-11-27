@@ -4,21 +4,36 @@ import { PageHero } from '@/components/sections/PageHero';
 import { CtaStrip } from '@/components/sections/CtaStrip';
 import { ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
-export const metadata = pageMetadata({
-  path: '/credibility',
-  title: 'Credibility',
-  description: 'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
-});
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const { SEO } = await getCredibilityContent();
+  const meta = pageMetadata({
+    path: '/credibility',
+    title: SEO?.title || 'Credibility',
+    description:
+      SEO?.description ||
+      'Vyoma opens its record to the people who fund and partner with it — reports, registrations, and recognition, all in one place.',
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 export default async function CredibilityPage() {
   const { CREDIBILITY_SECTIONS: SECTIONS_ALL } = await getCredibilityContent();
-  const CREDIBILITY_SECTIONS = SECTIONS_ALL.filter((s) => s.active !== false);
+  const CREDIBILITY_SECTIONS = toActiveContentArray(SECTIONS_ALL);
 
   return (
     <div className="font-sans">
       <PageHero
         eyebrow="Credibility"
+        eyebrowSize="text-[16px]"
         title="Transparency you can verify."
         body="Vyoma opens its record to the people who fund and partner with it, our reports, registrations, and recognition, all in one place. Look as closely as you like; that's the point."
       />
@@ -33,7 +48,7 @@ export default async function CredibilityPage() {
               key={s.title}
               className="rounded-md border border-[var(--border-subtle)] border-t-[3px] border-t-amber-gold bg-white p-[28px_24px]"
             >
-              <div className="mb-3 font-sans text-[17px] font-bold text-charcoal">{String(i + 1).padStart(2, '0')}</div>
+              <div className="mb-3 font-sans text-[19px] font-bold text-charcoal">{String(i + 1).padStart(2, '0')}</div>
               <div className="mb-2 font-sans text-h3 font-bold text-vyoma-blue">{s.title}</div>
               <p className="mb-4 font-sans text-base text-charcoal">{s.body}</p>
               <Link href={s.href} className="font-sans font-bold text-vyoma-blue">

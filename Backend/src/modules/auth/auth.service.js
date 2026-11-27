@@ -58,6 +58,22 @@ export function verifyMfaPendingToken(token) {
   return payload;
 }
 
+// Issued instead of a full session when a role's mfaRequired is true but the
+// user hasn't enrolled yet (mfaEnabled: false) — narrowly scoped to the two
+// mfa/enroll/* endpoints only (see requireAuth's purpose-claim rejection),
+// so it can never be used to reach any Admin CMS or privileged API.
+export function signMfaEnrollmentToken(user) {
+  return jwt.sign({ sub: String(user._id), purpose: 'mfa_enrollment' }, env.auth.accessTokenSecret, {
+    expiresIn: env.auth.mfaTokenTtl,
+  });
+}
+
+export function verifyMfaEnrollmentToken(token) {
+  const payload = jwt.verify(token, env.auth.accessTokenSecret);
+  if (payload.purpose !== 'mfa_enrollment') throw new Error('Not an MFA enrollment token');
+  return payload;
+}
+
 export function generateTotpSecret() {
   return authenticator.generateSecret();
 }

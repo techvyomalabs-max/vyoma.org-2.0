@@ -1,0 +1,684 @@
+import dns from 'node:dns/promises';
+import net from 'node:net';
+import { fork } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import mongoose from 'mongoose';
+import sharp from 'sharp';
+import { env, isS3Configured } from '../../config/env.js';
+import { PhotoProcessingJobModel } from './photoProcessingJob.model.js';
+import { saveProcessedImage, isLocalDevStorageAllowed } from './localDev.storageAdapter.js';
+import { uploadObject, buildStorageKey } from '../media/s3.adapter.js';
+import { ProcessedImageModel } from './processedImage.model.js';
+import { ApiError } from '../../utils/apiResponse.js';
+
+// QA Bug 7 Stage E: the file forked by runPipelineIsolated() below to run
+// the native-dependency-heavy pipeline in an isolated child process. See
+// runPipelineIsolated()'s own header comment for why.
+const PIPELINE_CHILD_ENTRY = path.join(path.dirname(fileURLToPath(import.meta.url)), 'backgroundRemoval.pipeline.child.js');
+
+export const BG_COLOR = { r: 0xf1, g: 0xf5, b: 0xf9, alpha: 1 }; // #F1F5F9
+
+const MAX_SOURCE_BYTES = 15 * 1024 * 1024; // matches media.admin.controller.js's upload cap
+const MAX_DIMENSION = 6000; // avoid pathological memory use on a corrupt/huge file
+const ALLOWED_FORMATS = new Set(['jpeg', 'png', 'webp']);
+const FETCH_TIMEOUT_MS = 20_000;
+const JOB_TIMEOUT_MS = 90_000; // a job stuck longer than this is marked failed, never left hanging
+// QA Bug 7 Stage C: comfortable headroom under MongoDB's 16MB per-document
+// BSON limit (leaves room for the document's other fields and any driver/
+// index overhead) -- a processed portrait PNG at this module's own
+// existing MAX_DIMENSION/ALLOWED_FORMATS caps should virtually always be
+// far smaller than this in practice; this is a hard safety ceiling, not an
+// expected size.
+export const MAX_STORED_IMAGE_BYTES = 8 * 1024 * 1024;
+
+// --- SSRF protection -------------------------------------------------------
+// The admin only ever supplies a URL indirectly (whatever is already set as
+// a person's photo, or a freshly uploaded Media item's URL) -- but it's
+// still attacker-reachable input in principle, so this never trusts it
+// blindly. Mirrors the exact host allowlist Frontend/next.config.mjs
+// already uses for next/image (vyoma.org/www.vyoma.org + the S3 bucket
+// pattern), plus this server's own local-dev storage host -- nothing else,
+// ever. Also resolves the hostname and rejects private/loopback/link-local
+// IPs, so even an allowed-looking hostname can't be re-pointed (DNS
+// rebinding) at an internal service.
+const ALLOWED_HOSTS = new Set(['vyoma.org', 'www.vyoma.org']);
+const S3_HOST_RE = /^[a-z0-9.-]+\.s3\.[a-z0-9-]+\.amazonaws\.com$/i;
+
+function isPrivateOrLoopback(address, family) {
+  if (family === 6) {
+    return address === '::1' || address.startsWith('fc') || address.startsWith('fd') || address.startsWith('fe80');
+  }
+  const parts = address.split('.').map(Number);
+  if (parts[0] === 10) return true;
+  if (parts[0] === 127) return true;
+  if (parts[0] === 169 && parts[1] === 254) return true;
+  if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
+  if (parts[0] === 192 && parts[1] === 168) return true;
+  if (parts[0] === 0) return true;
+  return false;
+}
+
+// Throws ApiError (the same error class every other controller/service in
+// this app throws -- see settings.controller.js, documents.controller.js
+// uses its own raw-response convention instead, but this module's caller,
+// photoProcessing.admin.controller.js, follows the ApiError/errorHandler
+// convention) so that errorHandler.js's `err instanceof ApiError` check
+// actually recognizes these as the intended 422/UNTRUSTED_HOST responses,
+// instead of falling through to a generic 500 -- confirmed as a real bug
+// during Phase 1 Task 1 regression testing: a plain Error decorated with
+// .status/.code properties is not an ApiError instance, so the admin UI was
+// receiving 500 INTERNAL_ERROR for every invalid/untrusted sourceUrl.
+export async function assertSafeSourceUrl(rawUrl) {
+  let url;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new ApiError(422, 'VALIDATION_ERROR', 'Not a valid URL.');
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new ApiError(422, 'VALIDATION_ERROR', 'Only http/https URLs are allowed.');
+  }
+
+  const isLocalDevHost = url.hostname === 'localhost' && String(url.port || '') === String(env.port) && url.pathname.startsWith('/local-media/');
+  const isAllowedHost = ALLOWED_HOSTS.has(url.hostname) || S3_HOST_RE.test(url.hostname);
+  if (!isLocalDevHost && !isAllowedHost) {
+    throw new ApiError(422, 'UNTRUSTED_HOST', 'That image is not on a trusted host -- only the site\'s own media hosts are allowed.');
+  }
+
+  if (!isLocalDevHost) {
+    // DNS-rebinding guard -- skipped for our own literal "localhost" dev
+    // host, since that one is intentionally loopback.
+    if (net.isIP(url.hostname)) {
+      if (isPrivateOrLoopback(url.hostname, net.isIP(url.hostname))) {
+        throw new ApiError(422, 'UNTRUSTED_HOST', 'That host is not reachable.');
+      }
+    } else {
+      const records = await dns.lookup(url.hostname, { all: true }).catch(() => []);
+      for (const r of records) {
+        if (isPrivateOrLoopback(r.address, r.family)) {
+          throw new ApiError(422, 'UNTRUSTED_HOST', 'That host is not reachable.');
+        }
+      }
+    }
+  }
+
+  return url;
+}
+
+async function fetchSourceImage(url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: controller.signal, redirect: 'error' });
+    if (!res.ok) throw Object.assign(new Error(`Could not fetch the source image (HTTP ${res.status}).`), { status: 502, code: 'FETCH_FAILED' });
+    const contentLength = Number(res.headers.get('content-length') || 0);
+    if (contentLength && contentLength > MAX_SOURCE_BYTES) {
+      throw Object.assign(new Error('Source image is too large.'), { status: 422, code: 'FILE_TOO_LARGE' });
+    }
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length > MAX_SOURCE_BYTES) {
+      throw Object.assign(new Error('Source image is too large.'), { status: 422, code: 'FILE_TOO_LARGE' });
+    }
+    return buffer;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function validateImage(buffer) {
+  let meta;
+  try {
+    meta = await sharp(buffer).metadata();
+  } catch {
+    throw Object.assign(new Error('Could not read that file as an image.'), { status: 422, code: 'UNSUPPORTED_FILE_TYPE' });
+  }
+  if (!meta.format || !ALLOWED_FORMATS.has(meta.format)) {
+    throw Object.assign(new Error(`Unsupported image format "${meta.format}".`), { status: 422, code: 'UNSUPPORTED_FILE_TYPE' });
+  }
+  if (!meta.width || !meta.height || meta.width > MAX_DIMENSION || meta.height > MAX_DIMENSION) {
+    throw Object.assign(new Error('Image dimensions are outside the supported range.'), { status: 422, code: 'UNSUPPORTED_FILE_TYPE' });
+  }
+  return meta;
+}
+
+// Same matte-cleanup routine validated in the local POC: 1px alpha erosion,
+// alpha-only feather, nearest-opaque-pixel color decontamination. Operates
+// only on the edge transition band -- never the face/hair/clothing pixels
+// a confidently-opaque region already has.
+function refineAlpha(data, width, height) {
+  const n = width * height;
+  const alphaIn = new Uint8ClampedArray(n);
+  for (let i = 0; i < n; i++) alphaIn[i] = data[i * 4 + 3];
+
+  const eroded = new Uint8ClampedArray(n);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x;
+      let m = alphaIn[idx];
+      if (x > 0) m = Math.min(m, alphaIn[idx - 1]);
+      if (x < width - 1) m = Math.min(m, alphaIn[idx + 1]);
+      if (y > 0) m = Math.min(m, alphaIn[idx - width]);
+      if (y < height - 1) m = Math.min(m, alphaIn[idx + width]);
+      eroded[idx] = m;
+    }
+  }
+
+  const feathered = new Uint8ClampedArray(n);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let sum = 0, count = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= height) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= width) continue;
+          sum += eroded[yy * width + xx];
+          count++;
+        }
+      }
+      feathered[y * width + x] = Math.round(sum / count);
+    }
+  }
+
+  const out = Buffer.from(data);
+  const RADIUS = 4;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = y * width + x;
+      const a = feathered[idx];
+      out[idx * 4 + 3] = a;
+      if (a > 0 && a < 250) {
+        let found = null;
+        for (let r = 1; r <= RADIUS && !found; r++) {
+          for (let dy = -r; dy <= r && !found; dy++) {
+            for (let dx = -r; dx <= r && !found; dx++) {
+              if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+              const yy = y + dy, xx = x + dx;
+              if (yy < 0 || yy >= height || xx < 0 || xx >= width) continue;
+              const nIdx = yy * width + xx;
+              if (alphaIn[nIdx] >= 250) { found = nIdx; break; }
+            }
+          }
+        }
+        if (found !== null) {
+          out[idx * 4 + 0] = data[found * 4 + 0];
+          out[idx * 4 + 1] = data[found * 4 + 1];
+          out[idx * 4 + 2] = data[found * 4 + 2];
+        }
+      }
+    }
+  }
+  return out;
+}
+
+// Exported (previously module-private) solely so backgroundRemoval.pipeline.
+// child.js -- the isolated child process runPipelineIsolated() below forks
+// -- can import and call this exact, unchanged function. No other caller
+// exists or is intended; processJob()'s own `pipeline` parameter now
+// defaults to runPipelineIsolated(), never this directly.
+//
+// QA Bug 7 Stage G: @imgly/background-removal-node is imported dynamically,
+// here, immediately before use -- not as a static top-level import -- for a
+// confirmed reason, not stylistic preference: its own bundled dist/index.cjs
+// does `require("sharp")` and `require("onnxruntime-node")` at ITS OWN module
+// top level (confirmed directly by inspecting that file), which pulls in a
+// second, separately-versioned, nested native sharp/libvips build the
+// instant @imgly is loaded -- regardless of whether removeBackground() is
+// ever actually called. A static top-level import here would load that
+// second native build into WHICHEVER process loads this file, including the
+// parent Express server (which imports this file unconditionally at startup
+// for enqueueJob()/getJob()/persistProcessedImage()), giving the parent the
+// exact same dual-native-libvips hazard Stage D identified -- independent of
+// Stage E's own child-process isolation, since that isolation only ever
+// moved the *call* to removeBackground(), never this *import*. A dynamic
+// import here means only whichever process actually calls runPipeline() --
+// since Stage E, only the forked child -- ever loads @imgly or its nested
+// dependencies at all; the parent's own sharp (used by validateImage()
+// below, and by persistProcessedImage()'s PNG validation) stays the only
+// native image library in its process, eliminating the parent's own
+// exposure to this crash class.
+export async function runPipeline(sourceBuffer, mimeType) {
+  const meta = await validateImage(sourceBuffer);
+  const inputBlob = new Blob([sourceBuffer], { type: mimeType });
+  const { removeBackground } = await import('@imgly/background-removal-node');
+  const cutoutBlob = await removeBackground(inputBlob, { model: 'medium' });
+  const cutoutBuffer = Buffer.from(await cutoutBlob.arrayBuffer());
+
+  const { data, info } = await sharp(cutoutBuffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const refinedRaw = refineAlpha(data, info.width, info.height);
+  const refinedCutoutPng = await sharp(refinedRaw, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toBuffer();
+
+  return sharp({ create: { width: meta.width, height: meta.height, channels: 4, background: BG_COLOR } })
+    .composite([{ input: refinedCutoutPng, left: 0, top: 0 }])
+    .png()
+    .toBuffer();
+}
+
+// QA Bug 7 Stage E: runs runPipeline() above in an isolated child process
+// (node:child_process.fork(), no new external dependency) instead of in
+// this process directly.
+//
+// Confirmed root cause (QA Bug 7 Stage D investigation): @imgly/background-
+// removal-node pulls in its own separately-versioned, nested native sharp/
+// libvips build (sharp@0.32.6, bundled alongside onnxruntime-node) alongside
+// this file's own top-level sharp (0.35.5) -- two independently-built
+// native libvips/GLib copies active in one process is a known class of bug
+// matching the exact Render QA crash signature ("GLib-GObject-CRITICAL:
+// invalid unclassed type" immediately followed by a segmentation fault). A
+// plain JS try/catch (processJob()'s own, below) can never catch a true
+// native SIGSEGV -- it terminates the whole process instantly, which is
+// exactly what "Instance restarted" on Render confirmed was happening.
+// Isolating runPipeline() in its own process means a crash there only
+// kills that one child; this server, and every other in-flight request, is
+// unaffected.
+//
+// `childEntry`/`forkFn`/`timeoutMs`/`onChildSpawned` are optional,
+// injectable overrides (the same established pattern every other testable
+// function in this file already uses -- node:test's mock.method() cannot
+// redefine a plain ES module's named export), defaulting to the real child
+// script, the real node:child_process.fork, and this file's own
+// JOB_TIMEOUT_MS. No production caller (processJob() below) ever passes
+// any of them; `onChildSpawned` exists solely so this function's own tests
+// can grab a handle to the real forked child (e.g. to kill it mid-flight,
+// simulating an unexpected crash) without needing a real native crash.
+export function runPipelineIsolated(
+  sourceBuffer,
+  mimeType,
+  { childEntry = PIPELINE_CHILD_ENTRY, forkFn = fork, timeoutMs = JOB_TIMEOUT_MS, onChildSpawned } = {}
+) {
+  return new Promise((resolve, reject) => {
+    const child = forkFn(childEntry, [], { serialization: 'advanced' });
+    if (typeof onChildSpawned === 'function') onChildSpawned(child);
+
+    let settled = false;
+    let timer;
+
+    // Guarantees this child is never left running regardless of which of
+    // the four outcomes below actually settles this promise -- kill() is a
+    // harmless no-op if the child has already exited on its own. Listeners
+    // are deliberately never removed (see settleOnce below): detaching the
+    // lone 'error' listener here could leave a later, genuinely-unlucky
+    // 'error' event with zero listeners, which Node treats as a special
+    // case and throws synchronously for.
+    function cleanup() {
+      clearTimeout(timer);
+      child.kill('SIGKILL');
+    }
+
+    // Every one of this promise's four possible triggers (message, exit,
+    // spawn error, timeout) is wrapped through this -- whichever fires
+    // first settles the promise and runs cleanup(); every later trigger
+    // (e.g. 'exit' arriving just after 'message' already resolved it, or
+    // vice versa) becomes a harmless no-op. This is what prevents both
+    // duplicate completion and an orphaned child process.
+    function settleOnce(handler) {
+      return (...args) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        handler(...args);
+      };
+    }
+
+    const handleMessage = settleOnce((msg) => {
+      if (!msg || typeof msg !== 'object' || typeof msg.ok !== 'boolean') {
+        reject(Object.assign(new Error('Background removal process returned an invalid response.'), { code: 'PIPELINE_CRASHED' }));
+        return;
+      }
+      if (!msg.ok) {
+        reject(new Error(msg.message || 'Background removal failed.'));
+        return;
+      }
+      if (!(msg.resultBuffer instanceof Uint8Array)) {
+        reject(Object.assign(new Error('Background removal process returned an invalid result.'), { code: 'PIPELINE_CRASHED' }));
+        return;
+      }
+      resolve(Buffer.from(msg.resultBuffer));
+    });
+
+    // Covers both "terminated by a signal" (e.g. the native SIGSEGV this
+    // whole fix exists for) and "exited with a nonzero code" (e.g. an
+    // uncaught JS exception escaping even the child script's own try/catch)
+    // -- neither ever reaches this process as a thrown exception; both
+    // surface only as this ordinary 'exit' event. The message intentionally
+    // reports only the signal/exit code, never any internal detail from the
+    // crash itself (no stack trace, no path, no env value).
+    const handleExit = settleOnce((code, signal) => {
+      const detail = signal ? `signal ${signal}` : `code ${code}`;
+      reject(Object.assign(new Error(`Background removal process crashed unexpectedly (${detail}).`), { code: 'PIPELINE_CRASHED' }));
+    });
+
+    const handleError = settleOnce((err) => {
+      reject(Object.assign(new Error(`Background removal process failed to start: ${err.message}`), { code: 'PIPELINE_CRASHED' }));
+    });
+
+    child.on('message', handleMessage);
+    child.on('exit', handleExit);
+    child.on('error', handleError);
+
+    // Reuses the exact same JOB_TIMEOUT_MS boundary and message text as the
+    // existing outer withTimeout(pipeline(...), JOB_TIMEOUT_MS, ...) call in
+    // processJob() below -- this is a second, independent enforcement of
+    // that same preserved timeout semantics, not a new/different one: the
+    // outer withTimeout() alone would abandon this promise without ever
+    // killing the still-running child, which is exactly the orphan-process
+    // outcome this inner timer exists to prevent.
+    timer = setTimeout(
+      settleOnce(() => {
+        reject(Object.assign(new Error('Background removal took too long and was stopped.'), { status: 504, code: 'PROCESSING_TIMEOUT' }));
+      }),
+      timeoutMs
+    );
+
+    child.send({ sourceBuffer, mimeType });
+  });
+}
+
+function mimeFromFormat(format) {
+  if (format === 'jpeg') return 'image/jpeg';
+  if (format === 'png') return 'image/png';
+  if (format === 'webp') return 'image/webp';
+  return 'application/octet-stream';
+}
+
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Object.assign(new Error(message), { status: 504, code: 'PROCESSING_TIMEOUT' })), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+// QA Bug 7 Stage C: MongoDB is already connected wherever this app is
+// actually running (every other feature depends on it) -- unlike
+// isLocalDevStorageAllowed() (dev-only, ephemeral Render disk) and
+// isS3Configured() (requires AWS credentials not yet provisioned for QA),
+// this needs no new external configuration at all. Checked defensively
+// via mongoose's own readyState (same signal GET /api/v1/ready already
+// uses) rather than assumed, since persistProcessedImage() can in
+// principle be called while a connection is mid-reconnect.
+export function isMongoProcessedImageStorageAllowed() {
+  return mongoose.connection.readyState === 1;
+}
+
+// QA Bug 7 Stage C follow-up: distinct from isMongoProcessedImageStorageAllowed()
+// above, which only answers "is Mongo reachable at all" -- persistProcessedImage()'s
+// own branch-selection deliberately keeps using that narrower check unchanged,
+// since it must still save a document and surface a clear NOT_CONFIGURED
+// failure if only the public URL is missing (see its own buildProcessedImagePublicUrl()
+// call and processedImage.test.js's dedicated coverage for that exact case).
+// This wider check additionally requires BACKEND_PUBLIC_URL, and is used only
+// by the admin controller's upfront accept/reject gate, so a job that is
+// already known to be unable to ever succeed (Mongo connected, but no public
+// URL to serve the result from) is rejected with 503 immediately -- before a
+// job row is even created -- instead of being accepted and failing
+// asynchronously once the worker runs.
+export function isMongoProcessedImageStorageReady() {
+  return isMongoProcessedImageStorageAllowed() && !!env.backendPublicUrl;
+}
+
+// Confirms the buffer is genuinely a PNG that still carries its alpha
+// channel before it's ever stored -- "accept only validated processed PNG
+// output" / "preserve transparent alpha channels" are checked here, not
+// assumed from the caller. Throws the same shape of error (status/code)
+// as validateImage() above for consistency within this file.
+async function validateProcessedPngBuffer(buffer) {
+  let meta;
+  try {
+    meta = await sharp(buffer).metadata();
+  } catch {
+    throw Object.assign(new Error('Processed image could not be read.'), { status: 422, code: 'INVALID_PROCESSED_IMAGE' });
+  }
+  if (meta.format !== 'png') {
+    throw Object.assign(new Error('Processed image must be a PNG.'), { status: 422, code: 'INVALID_PROCESSED_IMAGE' });
+  }
+  if (!meta.hasAlpha) {
+    throw Object.assign(new Error('Processed image is missing its transparency channel.'), { status: 422, code: 'INVALID_PROCESSED_IMAGE' });
+  }
+  return meta;
+}
+
+// Builds this server's own externally-reachable URL for a stored
+// ProcessedImage document -- never localhost, ever. Throws a clear,
+// actionable, code-tagged error (the same "no fake success" rule every
+// not-yet-configured integration in this app already follows -- Razorpay,
+// S3, SMTP) if BACKEND_PUBLIC_URL has not been set, rather than ever
+// guessing or falling back to anything resembling localhost.
+function buildProcessedImagePublicUrl(id) {
+  if (!env.backendPublicUrl) {
+    throw Object.assign(
+      new Error('BACKEND_PUBLIC_URL is not configured on this server yet -- cannot build a public URL for a stored processed image.'),
+      { code: 'NOT_CONFIGURED' }
+    );
+  }
+  return `${env.backendPublicUrl.replace(/\/+$/, '')}/api/v1/public/processed-images/${id}`;
+}
+
+// Task 7D.2 / QA Bug 7 Stage C — processed-output persistence, in priority
+// order: local disk (development only, unchanged, via
+// localDev.storageAdapter.js) -> S3 (unchanged, via the EXACT same adapter
+// media.admin.controller.js's direct upload path already uses -- no second
+// upload implementation) -> MongoDB (new: always available once connected,
+// requires no AWS configuration, intended as the QA-phase persistent
+// storage until AWS migration). Neither of the first two branches' own
+// conditions is weakened by this change -- dev storage is still gated on
+// NODE_ENV==='development' exactly as Task 7T.3 left it, and S3 is still
+// only used when isS3Configured() is genuinely true. Mirrors this file's
+// own "no fake success" rule throughout: if none of the three is
+// available, this throws a clear, code-tagged error rather than silently
+// losing the processed image or inventing a fake URL.
+//
+// `upload`/`buildKey`/`Model` are optional, injectable overrides
+// (defaulting to the real imports), the same established pattern this
+// function already used for its S3 branch -- the smallest mechanism that
+// lets this function's success/failure behavior be unit-tested directly,
+// with zero real network/AWS/Mongo calls required for a given test, without
+// changing any production caller (none of which ever pass these arguments).
+export async function persistProcessedImage(
+  buffer,
+  { upload = uploadObject, buildKey = buildStorageKey, Model = ProcessedImageModel, jobId } = {}
+) {
+  if (isLocalDevStorageAllowed()) {
+    return saveProcessedImage(buffer);
+  }
+  if (isS3Configured()) {
+    const key = buildKey('processed.png');
+    const result = await upload({ key, buffer, mimeType: 'image/png' });
+    if (!result) {
+      throw Object.assign(new Error('Background removal storage is not configured on this server yet.'), { code: 'NOT_CONFIGURED' });
+    }
+    return result;
+  }
+  if (isMongoProcessedImageStorageAllowed()) {
+    if (buffer.length > MAX_STORED_IMAGE_BYTES) {
+      throw Object.assign(
+        new Error(`Processed image exceeds the ${Math.round(MAX_STORED_IMAGE_BYTES / (1024 * 1024))}MB storage limit.`),
+        { status: 422, code: 'PROCESSED_IMAGE_TOO_LARGE' }
+      );
+    }
+    await validateProcessedPngBuffer(buffer);
+    // Saved before the URL is ever returned -- the document (and therefore
+    // its real, dereferenceable _id) must exist first, or there would be
+    // nothing for the returned URL to actually point at.
+    const doc = await Model.create({ data: buffer, mimeType: 'image/png', byteLength: buffer.length, sourceJobId: jobId });
+    return { url: buildProcessedImagePublicUrl(doc._id.toString()) };
+  }
+  throw Object.assign(new Error('Background removal storage is not configured on this server yet.'), { code: 'NOT_CONFIGURED' });
+}
+
+// --- Strictly sequential in-process worker ----------------------------------
+// No queue library exists in this codebase and none is needed for an
+// admin-triggered, one-at-a-time action. `running` guarantees only one
+// image is ever being processed at a time, regardless of how many jobs get
+// enqueued, which is the whole point -- bounded, predictable memory use.
+//
+// Task 7D.7 — `pending` is exported as a mutable array reference solely so
+// this module's own regression tests can deterministically seed "multiple
+// jobs already queued" (e.g. push two job ids, then call workLoop() once)
+// without racing enqueueJob()'s own async job-creation step. No production
+// code outside this file ever imports or touches it; every real caller
+// still goes through enqueueJob()/getJob() exactly as before.
+export const pending = [];
+let running = false;
+
+// Task 7D.7 — logs a worker-level failure using this module's own prefix,
+// consistent with this project's existing console.error-based logging
+// convention (see errorHandler.js). Never logs more than a job id and an
+// error message/string -- no sourceUrl, no buffer, no stack trace that
+// could embed request data, matching this file's existing
+// never-log-sensitive-data posture (see assertSafeSourceUrl's own header
+// comment).
+function logWorkerError(label, jobId, err) {
+  console.error(`[photoProcessing worker] ${label} (job ${jobId}): ${err?.message || err}`);
+}
+
+// Task 7D.7 — exported (previously module-private) solely so this module's
+// own regression tests can exercise the worker's failure-handling paths
+// directly (e.g. calling processJob() on a job whose save() is mocked to
+// fail, or calling workLoop() directly to assert `running` is correctly
+// reset after an exception) without needing a real HTTP request or a timing
+// race against enqueueJob()'s fire-and-forget workLoop() call. No
+// production caller's behavior changes: enqueueJob() below still calls
+// workLoop() the exact same way.
+// `jobOptions` is forwarded as-is to each processJob() call below -- the
+// same injectable-overrides object processJob() itself accepts, so a test
+// can drain a multi-job queue with fast/deterministic mocked pipeline steps
+// instead of the real network/ML calls. Never passed by any production
+// caller (enqueueJob() below calls workLoop() with no arguments).
+export async function workLoop(jobOptions) {
+  if (running) return;
+  running = true;
+  try {
+    while (pending.length) {
+      // Task 7D.7 — if MongoDB is not currently connected, every job below
+      // would fail at its very first save (marking it 'processing')
+      // regardless of that job's own content, for the same underlying
+      // reason. Draining the whole queue in that state would just be a
+      // tight loop of guaranteed failures, not real progress, and the task
+      // explicitly asks not to do that. Reusing the existing
+      // mongoose.connection.readyState signal (already used by
+      // GET /api/v1/ready, Task 7T.3) rather than inventing a new
+      // retry/backoff timer: pause here and leave whatever remains in
+      // `pending` for the next enqueueJob() call to pick back up once
+      // connectivity is restored -- a bounded, natural recovery with no new
+      // queue infrastructure.
+      if (mongoose.connection.readyState !== 1) {
+        console.error(
+          `[photoProcessing worker] MongoDB is not connected (readyState=${mongoose.connection.readyState}); pausing with ${pending.length} job(s) still queued.`
+        );
+        break;
+      }
+      const jobId = pending.shift();
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await processJob(jobId, jobOptions);
+      } catch (err) {
+        // processJob() already handles every expected failure path
+        // internally (marking the job 'failed' and saving that, with its
+        // own nested safeguard if even that save fails -- see its own
+        // comment below). Reaching here means something escaped it
+        // entirely regardless -- e.g. the initial findById/job.save() above
+        // its own try block failing. This is the last line of defense: it
+        // must never crash or stall this loop, and remaining queued jobs
+        // must still get their turn.
+        logWorkerError('unexpected error processing job', jobId, err);
+      }
+    }
+  } finally {
+    running = false;
+  }
+}
+
+// Task 7D.7 — `fetchImage`/`pipeline`/`persist` are optional, injectable
+// overrides (defaulting to the real implementations), the exact same
+// pattern persistProcessedImage() above already established in this file:
+// the smallest mechanism that lets this module's own tests exercise the
+// success path and every failure path deterministically, with zero real
+// network/ML/S3 calls, without changing any production caller (every real
+// caller -- workLoop() below -- simply never passes the second argument).
+export async function processJob(
+  jobId,
+  { fetchImage = fetchSourceImage, pipeline = runPipelineIsolated, persist = persistProcessedImage } = {}
+) {
+  const job = await PhotoProcessingJobModel.findById(jobId);
+  if (!job) return;
+  job.status = 'processing';
+  await job.save();
+
+  try {
+    // Task 7D.2: the old `if (!isLocalDevStorageAllowed()) throw ...` gate
+    // here is removed -- it only ever checked the dev-local-disk path, so
+    // it would have incorrectly rejected every S3-configured staging/
+    // production job before any processing even started. The controller
+    // (enqueuePhotoProcessing) already gates this the same way persistence
+    // now does -- dev OR S3-configured OR Mongo-connected (QA Bug 7 Stage
+    // C) -- before a job is even created; persistProcessedImage() below
+    // performs the one remaining, final check (defensive against the
+    // narrow case where configuration/connectivity changed between enqueue
+    // and processing) immediately before it would need storage, not before
+    // the real processing work.
+    const url = await assertSafeSourceUrl(job.sourceUrl);
+    const sourceBuffer = await withTimeout(fetchImage(url), FETCH_TIMEOUT_MS + 5000, 'Timed out fetching the source image.');
+    const meta = await sharp(sourceBuffer).metadata();
+    const resultBuffer = await withTimeout(
+      pipeline(sourceBuffer, mimeFromFormat(meta.format)),
+      JOB_TIMEOUT_MS,
+      'Background removal took too long and was stopped.'
+    );
+    // QA Bug 7 Stage C: `jobId` is forwarded so persistProcessedImage()'s
+    // Mongo branch can tag the stored ProcessedImage document with the job
+    // that produced it (traceability only -- never read back by the public
+    // serving endpoint). The dev/S3 branches both ignore this argument
+    // entirely, so their behavior is completely unchanged.
+    const { url: resultUrl } = await persist(resultBuffer, { jobId });
+
+    job.status = 'done';
+    job.resultUrl = resultUrl;
+    await job.save();
+  } catch (err) {
+    job.status = 'failed';
+    job.errorMessage = err.message || 'Background removal failed.';
+    try {
+      await job.save();
+    } catch (saveErr) {
+      // Task 7D.7 — the confirmed Medium-severity gap this task fixes: if
+      // persisting the FAILED status also fails (e.g. a transient DB
+      // hiccup right after the real processing failure), this must never
+      // escape processJob() uncaught -- doing so previously could reject
+      // workLoop()'s own promise, which (enqueueJob() calls workLoop()
+      // fire-and-forget, with no .catch()) became an unhandled promise
+      // rejection: able to crash the whole Node process, and at minimum
+      // stalling every other already-queued job until a new one triggered
+      // a fresh workLoop(). Logging and swallowing it here means the job
+      // simply remains at its last successfully-saved status ('processing')
+      // rather than ever silently reporting a fake success -- never worse
+      // than that.
+      logWorkerError('failed to persist failed status for', jobId, saveErr);
+    }
+  }
+}
+
+export async function enqueueJob({ sourceUrl, actor }) {
+  await assertSafeSourceUrl(sourceUrl); // fail fast, before creating a job row
+  const job = await PhotoProcessingJobModel.create({
+    sourceUrl,
+    status: 'queued',
+    createdBy: actor._id,
+    createdByEmail: actor.email,
+  });
+  pending.push(job._id.toString());
+  // Task 7D.7 — workLoop() is intentionally fire-and-forget (the HTTP
+  // request that enqueued this job must not block on processing), and its
+  // own try/finally plus the per-job catch above mean it should never
+  // actually reject -- but this .catch() is the last line of defense
+  // against an unhandled promise rejection reaching the Node process if
+  // something still unexpected escapes both of those layers.
+  workLoop().catch((err) => console.error(`[photoProcessing worker] workLoop() rejected unexpectedly: ${err?.message || err}`));
+  return job;
+}
+
+export async function getJob(jobId) {
+  return PhotoProcessingJobModel.findById(jobId);
+}

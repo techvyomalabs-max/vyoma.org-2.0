@@ -5,21 +5,35 @@ import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { MetricCard } from '@/components/sections/impact/MetricCard';
 import { KpiDashboard } from '@/components/sections/impact/KpiDashboard';
 import { pageMetadata } from '@/lib/seo';
+import { toActiveContentArray } from '@/lib/contentArrays';
 
-export const metadata = pageMetadata({
-  path: '/impact',
-  title: 'Impact',
-  description: "Every number here represents a step in making Sanskrit and India's knowledge systems accessible to all — reported openly, with full financial transparency.",
-});
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata() {
+  const { SEO } = await getImpactContent();
+  const meta = pageMetadata({
+    path: '/impact',
+    title: SEO?.title || 'Impact',
+    description:
+      SEO?.description ||
+      "Every number here represents a step in making Sanskrit and India's knowledge systems accessible to all — reported openly, with full financial transparency.",
+  });
+  if (SEO?.ogImage?.url) meta.openGraph = { images: [{ url: SEO.ogImage.url }] };
+  return meta;
+}
 
 function MetricSection({ eyebrow, title, items }) {
   return (
     <section className="bg-white px-8 py-14">
       <div className="mx-auto max-w-[1100px]">
-        <div className="mb-2.5 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
+        <div className="mb-2.5 font-sans text-[13px] font-bold uppercase tracking-eyebrow text-charcoal">{eyebrow}</div>
         <h2 className="mb-6 font-sans text-h2 font-bold text-vyoma-blue">{title}</h2>
         <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))' }}>
-          {items.filter((m) => m.active !== false).map((m) => (
+          {toActiveContentArray(items).map((m) => (
             <MetricCard key={m.label} value={m.value} label={m.label} />
           ))}
         </div>
@@ -34,7 +48,7 @@ export default async function ImpactPage() {
   return (
     <div className="font-sans">
       <section className="bg-vyoma-blue px-8 py-14 text-center">
-        <div className="mb-3 font-sans text-eyebrow font-bold uppercase tracking-eyebrow text-[var(--text-inverse-muted)]">
+        <div className="mb-3 font-sans text-[16px] font-bold uppercase tracking-eyebrow text-[var(--text-inverse-muted)]">
           Impact
         </div>
         <h1 className="mx-auto mb-3 max-w-[720px] font-sans text-h1 font-bold leading-tight text-white">
@@ -48,7 +62,7 @@ export default async function ImpactPage() {
         <DonateCta>Support this work</DonateCta>
       </section>
 
-      <KpiDashboard />
+      <KpiDashboard input={INPUT} impact={IMPACT} />
       <MetricSection eyebrow="Impact" title="Reach at scale" items={IMPACT} />
       <MetricSection eyebrow="Input" title="What we invest" items={INPUT} />
       <MetricSection eyebrow="Output achieved" title="What we've built" items={OUTPUT} />

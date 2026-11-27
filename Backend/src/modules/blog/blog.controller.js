@@ -1,5 +1,6 @@
 import { BlogPostModel } from './blogPost.model.js';
 import { sendSuccess, ApiError } from '../../utils/apiResponse.js';
+import { expectScalarQueryParam } from '../../utils/queryValidation.js';
 import { env } from '../../config/env.js';
 
 // Flattens {slug, status, publishedAt, data|draftData} into the one shape
@@ -28,9 +29,11 @@ export async function listPostsPublic(req, res, next) {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 9));
+    const category = expectScalarQueryParam(req.query.category, 'category');
+    const tag = expectScalarQueryParam(req.query.tag, 'tag');
     const filter = { status: 'published' };
-    if (req.query.category) filter['data.categories'] = req.query.category;
-    if (req.query.tag) filter['data.tags'] = req.query.tag;
+    if (category) filter['data.categories'] = category;
+    if (tag) filter['data.tags'] = tag;
 
     const [docs, total] = await Promise.all([
       BlogPostModel.find(filter).sort({ publishedAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAdminAuth } from '@/lib/AdminAuthContext';
 import { useToast } from '@/components/admin/ui/Toast';
 
@@ -35,6 +35,14 @@ export function useContentEditor(typeOrTypes) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(null);
+  // The last value actually confirmed saved to the server (right after
+  // load() populates draftValue, and again after every successful
+  // save/publish/unpublish/restore, since each of those ends by calling
+  // load() again). Used only to detect "does the screen currently hold an
+  // edit that was never saved" — e.g. accepting a background-removed photo
+  // and then reloading/navigating away before clicking Save Draft, which
+  // would otherwise silently discard it with no warning at all.
+  const lastSyncedValueRef = useRef(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -44,8 +52,10 @@ export function useContentEditor(typeOrTypes) {
         apiFetch(`/admin/content?type=${encodeURIComponent(type)}`),
         apiFetch(`/admin/content/revisions?type=${encodeURIComponent(type)}`),
       ]);
+      const value = contentDoc.draftData ?? contentDoc.data ?? null;
       setDoc(contentDoc);
-      setDraftValue(contentDoc.draftData ?? contentDoc.data ?? null);
+      setDraftValue(value);
+      lastSyncedValueRef.current = value;
       setRevisions(revisionList);
     } catch (err) {
       setError(err.message);
@@ -57,6 +67,22 @@ export function useContentEditor(typeOrTypes) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Warns before a reload/close/external-navigation would silently discard
+  // an edit that hasn't been saved yet — there was previously no protection
+  // against this at all. Does not (and cannot, without deeper Next.js
+  // router integration) cover navigating to a different admin page via an
+  // in-app link; this is deliberately the smallest safe guard against the
+  // most common way to lose an accepted edit, not a complete solution.
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (JSON.stringify(draftValue) === JSON.stringify(lastSyncedValueRef.current)) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [draftValue]);
 
   const setSectionValue = (key, value) => setDraftValue((prev) => ({ ...prev, [key]: value }));
 
@@ -79,8 +105,28 @@ export function useContentEditor(typeOrTypes) {
   const mirrorDraftToSecondaries = (data) =>
     Promise.all(secondaryTypes.map((t) => apiFetch('/admin/content', { method: 'PUT', body: { type: t, data } })));
 
+  // QA Bug 19 Stage 5D — `validate` may now optionally take a second
+  // argument: the baseline this edit is replacing, so a validator can
+  // distinguish an unchanged, pre-existing (legacy) value from a genuinely
+  // new or modified one — the same baseline-diffing the Backend's
+  // equivalent validation performs (see lib/testimonialCms.mjs's
+  // validateTestimonialsContent() and Backend/.../validateTestimonialContent.js's
+  // own header comment for the full per-operation policy this mirrors).
+  // Purely additive: every existing `validate` function here (validateJoinUs,
+  // etc.) takes only one parameter and simply ignores the second —
+  // unchanged behavior for all of them.
+  //
+  // Save Draft's baseline is `doc?.draftData ?? doc?.data ?? null` — the
+  // existing persisted draft if one exists, else the currently published
+  // data — deliberately NOT `draftValue` itself (the in-progress, unsaved
+  // candidate this very call is about to save): using the candidate as its
+  // own baseline would let any item exempt itself from completeness simply
+  // by existing in the thing being validated, which is not a legacy
+  // exemption at all. Publish's baseline is `doc?.data ?? null` only — the
+  // currently published data — since publish always promotes whatever is
+  // already the server's stored draftData, never draftValue directly.
   const saveDraft = (validate) => {
-    const validationError = validate?.(draftValue);
+    const validationError = validate?.(draftValue, doc?.draftData ?? doc?.data ?? null);
     if (validationError) return toast.error(validationError);
     return runAction(
       'draft',
@@ -94,19 +140,29 @@ export function useContentEditor(typeOrTypes) {
   };
 
   const publish = (validate) => {
-    const validationError = validate?.(draftValue);
+    const validationError = validate?.(draftValue, doc?.data ?? null);
     if (validationError) return toast.error(validationError);
     return runAction(
       'publish',
       async () => {
+        // Always persist exactly what's currently on screen *first* — the
+        // publish endpoint itself only promotes whatever draftData is
+        // already stored server-side, it is never sent the in-memory
+        // draftValue. "Save draft" and "Publish" are two independent
+        // buttons with no enforced order, so clicking Publish without an
+        // immediately-preceding successful Save (the common case: edit,
+        // then go straight to Publish) silently re-published stale,
+        // previously-saved data — discarding any newer edit (including a
+        // deletion) with no warning, while still showing a "Published" success
+        // toast. This was the root cause of a category deletion that
+        // appeared to work locally but never actually left the published
+        // data. Mirroring saveDraft's own PUT here closes that gap: publish
+        // now always reflects the current draftValue, regardless of
+        // whether "Save draft" was clicked beforehand.
+        await apiFetch('/admin/content', { method: 'PUT', body: { type, data: draftValue } });
+        await mirrorDraftToSecondaries(draftValue);
         await apiFetch('/admin/content/publish', { method: 'POST', body: { type } });
         if (secondaryTypes.length) {
-          // Mirror the primary's just-published data onto each secondary,
-          // then publish each secondary too, so every type in the group
-          // ends up published with identical `data` — not just identical
-          // draftData.
-          const primaryDoc = await apiFetch(`/admin/content?type=${encodeURIComponent(type)}`);
-          await mirrorDraftToSecondaries(primaryDoc.data);
           await Promise.all(
             secondaryTypes.map((t) => apiFetch('/admin/content/publish', { method: 'POST', body: { type: t } }))
           );

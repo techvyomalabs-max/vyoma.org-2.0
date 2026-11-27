@@ -5,6 +5,12 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/about/roadmap',
   title: 'Roadmap',
@@ -22,6 +28,7 @@ export default async function RoadmapPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="Our roadmap"
+        eyebrowSize="text-[16px]"
         title="From a Sanskrit ecosystem to a global virtual university."
         body={[
           "Vyoma's seven Schools are growing, step by step, into a Vyoma Global Virtual University for Sanskrit and Indian Knowledge Systems.",

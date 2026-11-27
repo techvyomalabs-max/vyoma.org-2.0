@@ -5,6 +5,12 @@ import { CtaStrip } from '@/components/sections/CtaStrip';
 import { DonateCta, ContactCta } from '@/components/sections/CtaButtons';
 import { pageMetadata } from '@/lib/seo';
 
+// Task 7R.1: deferred to request time so a build-time-unreachable backend
+// (DNS failure, transient outage) cannot fail `next build` — see
+// Frontend/lib/apiConfig.js and services/apiClient.js's networkError
+// handling for the request-time behavior this preserves.
+export const dynamic = 'force-dynamic';
+
 export const metadata = pageMetadata({
   path: '/about/our-story',
   title: 'Our Story',
@@ -19,6 +25,7 @@ export default async function OurStoryPage() {
     <div className="font-sans">
       <PageHero
         eyebrow="About Vyoma"
+        eyebrowSize="text-[16px]"
         title="Our story"
         body="Vyoma began in 2010 with a single Sanskrit self-learning product and a simple conviction: that this profound language belongs to everyone, not just a few. What started as an experiment in digital learning has grown into India's largest free Sanskrit e-learning ecosystem. This is the story of how we got here, year by year."
       />
